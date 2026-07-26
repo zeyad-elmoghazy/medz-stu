@@ -1,0 +1,243 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    /* Subjects-page design tokens — kept on :root so any
+       descendant component can read them with var(--token). */
+    --bg-primary: #030617;
+    --bg-secondary: #070B24;
+    --card-bg: #0B102B;
+    --card-hover: #12183D;
+    --purple-primary: #8B5CF6;
+    --purple-bright: #A855F7;
+    --purple-electric: #C084FC;
+    --neon-blue: #3B82F6;
+    --cyan: #06B6D4;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A8B0D3;
+    --text-muted: #6B7280;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    @apply bg-background text-text-primary antialiased;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+  }
+
+  ::selection {
+    @apply bg-accent/50 text-text-primary;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: linear-gradient(
+      180deg,
+      rgba(15, 15, 26, 0.7) 0%,
+      rgba(9, 9, 14, 0.6) 100%
+    );
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-strong {
+    background: linear-gradient(
+      180deg,
+      rgba(20, 20, 32, 0.92) 0%,
+      rgba(12, 12, 20, 0.88) 100%
+    );
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .shimmer-bg {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(159, 103, 255, 0.12) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
+  }
+
+  /* Loading skeletons — bigger contrast band, faster cadence
+     than the marketing shimmer-bg so users feel "actively
+     loading" rather than "ambient idle". */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      #1E1E2E 25%,
+      #2D2D3F 50%,
+      #1E1E2E 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+  }
+  @keyframes skeleton-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Subjects page — floating doctor card, glow rings, gradient
+     headline shimmer. Named with a `subjects-` prefix so they
+     don't collide with the existing `shimmer` animation defined
+     in tailwind.config.js. */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-14px); }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(139,92,246,0.2);
+    }
+    50% {
+      box-shadow: 0 0 50px rgba(168,85,247,0.5),
+                  0 0 100px rgba(168,85,247,0.2);
+    }
+  }
+
+  @keyframes borderShimmer {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Student-home imported design: pulsing violet halo on the
+     featured (Histology) subject card + slowly-rotating outer
+     ring behind the Dr. Zahra photo. */
+  @keyframes medzGlow {
+    0%, 100% {
+      box-shadow: 0 0 0 1px rgba(124,58,237,0.45),
+                  0 0 30px rgba(124,58,237,0.28);
+    }
+    50% {
+      box-shadow: 0 0 0 1px rgba(139,92,246,0.75),
+                  0 0 46px rgba(124,58,237,0.5);
+    }
+  }
+  @keyframes ringSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Gradient-text shimmer. Named `subjects-shimmer` (not plain
+     `shimmer`) so it never collides with the `shimmer` animation
+     defined in tailwind.config.js. */
+  @keyframes subjects-shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  /* Hide scrollbar on horizontal carousels. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(124, 58, 237, 0.5) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(124, 58, 237, 0.4);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(159, 103, 255, 0.7);
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(rgba(124, 58, 237, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .glow-ring {
+    box-shadow:
+      0 0 0 1px rgba(124, 58, 237, 0.5),
+      0 0 24px rgba(159, 103, 255, 0.35);
+  }
+
+  /* Lightweight fade-in used on auth cards and error banners in
+     place of framer-motion. Pure CSS = ~0 kB vs. ~40 kB gzipped. */
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translate3d(0, 16px, 0) scale(0.98); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.45s ease-out both;
+    will-change: transform, opacity;
+  }
+
+  @keyframes fade-in-down {
+    from { opacity: 0; transform: translate3d(0, -4px, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  .animate-fade-in-down {
+    animation: fade-in-down 0.3s ease-out both;
+  }
+
+  /* Landing page particles — drift loop on the compositor. Ported
+     from framer-motion.animate={{ x, y, opacity }} so we don't pay
+     the framer-motion runtime on the marketing splash. */
+  @keyframes particle-drift {
+    0%   { transform: translate3d(0, 0, 0);           opacity: 0; }
+    20%  { opacity: var(--p-opacity, 0.3); }
+    50%  { transform: translate3d(var(--p-dx, 20px), var(--p-dy, -20px), 0); opacity: calc(var(--p-opacity, 0.3) * 1.4); }
+    80%  { opacity: var(--p-opacity, 0.3); }
+    100% { transform: translate3d(0, 0, 0);           opacity: 0; }
+  }
+  .particle {
+    position: absolute;
+    border-radius: 9999px;
+    animation: particle-drift var(--p-duration, 18s) ease-in-out infinite;
+    animation-delay: var(--p-delay, 0s);
+    will-change: transform, opacity;
+    filter: blur(0.5px);
+  }
+
+  /* Hero CTA halo — replaces framer boxShadow keyframes. */
+  @keyframes hero-halo {
+    0%, 100% { box-shadow: 0 0 20px #7C3AED; }
+    50%      { box-shadow: 0 0 40px #7C3AED; }
+  }
+  .hero-halo {
+    animation: hero-halo 2s ease-in-out infinite;
+    animation-delay: 0.6s;
+  }
+
+  /* Respect the user's "prefers-reduced-motion" setting for all
+     purely decorative loops introduced above. */
+  @media (prefers-reduced-motion: reduce) {
+    .particle,
+    .hero-halo,
+    .animate-fade-in-up,
+    .animate-fade-in-down {
+      animation: none !important;
+    }
+  }
+}

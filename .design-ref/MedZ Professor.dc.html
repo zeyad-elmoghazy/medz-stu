@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: #09090E; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: #F8FAFC; }
+  a { color: #8B5CF6; text-decoration: none; }
+  a:hover { color: #A78BFA; }
+  input, textarea, select, button { font-family: inherit; }
+  input:focus, textarea:focus, select:focus { outline: none; }
+  ::placeholder { color: #475569; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  @keyframes medzSpin { to { transform: rotate(360deg); } }
+  @keyframes medzPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @keyframes medzUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+
+<div style="display:flex; min-height:100vh; background:#09090E;">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:248px; flex:none; background:#0F0F1A; border-right:1px solid rgba(255,255,255,0.06); padding:24px 16px; display:flex; flex-direction:column; gap:26px; position:sticky; top:0; height:100vh;">
+    <div style="display:flex; align-items:center; gap:11px; padding:0 8px;">
+      <div style="width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,#7C3AED,#8B5CF6); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; color:#fff; box-shadow:0 0 18px rgba(124,58,237,0.5);">M</div>
+      <div style="font-weight:800; font-size:17px; letter-spacing:-0.02em;">MedZ <span style="font-size:10px; font-weight:700; color:#8B5CF6; letter-spacing:0.08em; text-transform:uppercase; margin-left:2px;">Faculty</span></div>
+    </div>
+
+    <nav style="display:flex; flex-direction:column; gap:3px;">
+      <div style="font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#64748B; padding:0 10px 8px;">Teach</div>
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="5">
+        <div onClick="{{ item.onClick }}" style="{{ item.style }}">
+          <span style="width:7px; height:7px; border-radius:2px; background:{{ item.dot }}; flex:none;"></span>
+          <span style="flex:1;">{{ item.label }}</span>
+          <sc-if value="{{ item.badge }}" hint-placeholder-val="{{ true }}"><span style="{{ item.badgeStyle }}">{{ item.badge }}</span></sc-if>
+        </div>
+      </sc-for>
+    </nav>
+
+    <div style="margin-top:auto; display:flex; align-items:center; gap:11px; padding:12px; background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:12px;">
+      <div style="width:38px; height:38px; border-radius:50%; overflow:hidden; flex:none; border:1px solid rgba(124,58,237,0.5); background:linear-gradient(135deg,#7C3AED,#8B5CF6); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;">AZ</div>
+      <div style="min-width:0;">
+        <div style="font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Dr. Ahmed Zahra</div>
+        <div style="font-size:10px; color:#94A3B8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Histology · Cairo University</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main style="flex:1; min-width:0; padding:28px 40px 64px; max-width:1440px;">
+
+    <!-- HEADER -->
+    <header style="display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin-bottom:28px;">
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#7C3AED; letter-spacing:0.03em; margin-bottom:6px;">Professor Dashboard</div>
+        <h1 style="margin:0; font-size:30px; font-weight:800; letter-spacing:-0.025em;">{{ pageTitle }}</h1>
+        <p style="margin:8px 0 0; font-size:13px; color:#94A3B8; max-width:560px;">{{ pageSubtitle }}</p>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; flex:none;">
+        <div onClick="{{ goChallenges }}" style="display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#C4B5FD; background:rgba(124,58,237,0.1); border:1px solid rgba(139,92,246,0.45); padding:12px 18px; border-radius:12px; cursor:pointer;"><span style="font-size:15px;">🎓</span> Post-Lecture</div>
+        <div onClick="{{ goUpload }}" style="display:inline-flex; align-items:center; gap:9px; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:12px 20px; border-radius:12px; box-shadow:0 0 22px rgba(124,58,237,0.4); cursor:pointer;"><span style="font-size:15px;">+</span> Upload Content</div>
+      </div>
+    </header>
+
+    <!-- ============ OVERVIEW ============ -->
+    <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:24px;">
+
+      <!-- personalized banner -->
+      <div style="position:relative; overflow:hidden; border-radius:22px; border:1px solid rgba(124,58,237,0.35); background:radial-gradient(1000px 360px at 84% -20%, rgba(124,58,237,0.3), transparent 60%), linear-gradient(150deg,#140f26 0%,#0F0F1A 62%); padding:26px 28px;">
+        <div style="display:flex; align-items:center; gap:22px; flex-wrap:wrap;">
+          <div style="position:relative; flex:none;">
+            <div style="position:absolute; inset:-6px; border-radius:20px; background:linear-gradient(135deg,rgba(124,58,237,0.5),rgba(139,92,246,0.12)); filter:blur(12px);"></div>
+            <div style="position:relative; width:96px; height:96px; border-radius:18px; overflow:hidden; border:1px solid rgba(124,58,237,0.5);">
+              <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="prof-photo" shape="rect" fit="cover" placeholder="Photo" hint-size="100%,100%"></x-import>
+            </div>
+          </div>
+          <div style="flex:1; min-width:260px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+              
+              <span style="font-size:11px; color:#94A3B8;">{{ today }}</span>
+            </div>
+            <h2 style="margin:0; font-size:28px; font-weight:800; letter-spacing:-0.025em;">{{ greeting }}, Dr. Zahra</h2>
+            <p style="margin:8px 0 0; font-size:13px; color:#94A3B8; max-width:520px;">Your Histology module reaches more students than any other on MedZ. Here's where things stand today.</p>
+          </div>
+          <div style="display:flex; gap:26px; flex:none; padding-left:8px;">
+            <div><div style="font-size:28px; font-weight:900; letter-spacing:-0.02em;">18<span style="font-size:14px; color:#F97316;"> 🔥</span></div><div style="font-size:10px; color:#94A3B8; margin-top:2px;">Active weeks</div></div>
+            
+            <div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- teaching stats -->
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+          <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:20px;">
+            <div style="font-size:11px; color:#94A3B8; font-weight:500;">{{ s.label }}</div>
+            <div style="font-size:30px; font-weight:800; margin-top:8px; letter-spacing:-0.02em; color:{{ s.color }};">{{ s.value }}</div>
+            <div style="font-size:10px; color:#64748B; margin-top:6px;">{{ s.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 360px; gap:22px; align-items:start;">
+        <!-- needs attention -->
+        <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:22px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <div style="font-size:15px; font-weight:700;">Needs your attention</div>
+            <span style="font-size:10px; font-weight:700; color:#F97316; background:rgba(249,115,22,0.12); padding:4px 10px; border-radius:6px;">{{ attentionCount }} items</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <sc-for list="{{ attention }}" as="a" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:14px; padding:14px 16px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
+                <div style="width:36px; height:36px; border-radius:10px; flex:none; display:flex; align-items:center; justify-content:center; font-size:16px; background:{{ a.bg }}; color:{{ a.color }};">{{ a.icon }}</div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:13px; font-weight:600;">{{ a.title }}</div>
+                  <div style="font-size:11px; color:#94A3B8; margin-top:2px;">{{ a.sub }}</div>
+                </div>
+                <div onClick="{{ a.onClick }}" style="font-size:11.5px; font-weight:700; color:{{ a.color }}; border:1px solid {{ a.border }}; padding:8px 14px; border-radius:9px; cursor:pointer; white-space:nowrap; flex:none;">{{ a.cta }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- recent activity -->
+        <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:22px;">
+          <div style="font-size:15px; font-weight:700; margin-bottom:16px;">Recent activity</div>
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <sc-for list="{{ activity }}" as="a" hint-placeholder-count="5">
+              <div style="display:flex; gap:11px; align-items:flex-start;">
+                <div style="width:26px; height:26px; border-radius:8px; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; background:{{ a.bg }}; color:{{ a.color }};">{{ a.icon }}</div>
+                <div style="min-width:0;"><div style="font-size:12px; line-height:1.4;">{{ a.text }}</div><div style="font-size:10px; color:#64748B; margin-top:2px;">{{ a.time }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- chapter performance -->
+      <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:22px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+          <div><div style="font-size:15px; font-weight:700;">How your chapters are performing</div><div style="font-size:11px; color:#94A3B8; margin-top:3px;">Average class accuracy per chapter — the lowest are where students struggle most</div></div>
+          <div onClick="{{ goBank }}" style="font-size:11.5px; font-weight:600; color:#8B5CF6; cursor:pointer;">Open Question Bank →</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 40px;">
+          <sc-for list="{{ chapterPerf }}" as="c" hint-placeholder-count="6">
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:7px;"><span style="font-weight:600;">{{ c.name }}</span><span style="color:{{ c.color }}; font-weight:700;">{{ c.acc }}</span></div>
+              <div style="height:7px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden;"><div style="width:{{ c.acc }}; height:100%; background:{{ c.color }}; border-radius:4px;"></div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ UPLOAD CONTENT (WIZARD) ============ -->
+    <sc-if value="{{ isUpload }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:24px;">
+
+      <!-- stepper -->
+      <div style="display:flex; align-items:center; gap:0; background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 24px;">
+        <sc-for list="{{ steps }}" as="st" hint-placeholder-count="4">
+          <div onClick="{{ st.onClick }}" style="display:flex; align-items:center; gap:11px; flex:none; cursor:{{ st.cursor }};">
+            <div style="width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; background:{{ st.dotBg }}; color:{{ st.dotColor }}; border:1px solid {{ st.dotBorder }};">{{ st.num }}</div>
+            <div><div style="font-size:12.5px; font-weight:700; color:{{ st.textColor }};">{{ st.label }}</div><div style="font-size:9.5px; color:#64748B;">{{ st.hint }}</div></div>
+          </div>
+          <div style="flex:1; height:2px; margin:0 16px; background:{{ st.lineColor }};"></div>
+        </sc-for>
+        <div style="flex:none; font-size:9.5px; color:#64748B; font-weight:600;">Publish</div>
+      </div>
+
+      <!-- STEP 1 — DESTINATION -->
+      <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; animation:medzUp .25s ease;">
+        <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:24px;">
+          <div style="font-size:15px; font-weight:700;">1 · Choose a module</div>
+          <div style="font-size:11px; color:#94A3B8; margin-top:4px; margin-bottom:18px;">Which module will these questions be published under?</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <sc-for list="{{ moduleChoices }}" as="m" hint-placeholder-count="4">
+              <div onClick="{{ m.onClick }}" style="{{ m.style }}">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                  <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#C4B5FD; background:rgba(124,58,237,0.16); border:1px solid rgba(139,92,246,0.35); padding:4px 8px; border-radius:6px; flex:none;">HIST {{ m.code }}</span>
+                    <span style="font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ m.name }}</span>
+                  </div>
+                  <span style="font-size:10px; color:#64748B; flex:none;">{{ m.chapterCount }} ch</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:24px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:15px; font-weight:700;">2 · Choose a chapter</div>
+              <div style="font-size:11px; color:#94A3B8; margin-top:4px;">In <b style="color:#C4B5FD;">HIST {{ upModule }}</b></div>
+            </div>
+            <div onClick="{{ toggleAddChapter }}" style="font-size:11.5px; font-weight:700; color:#8B5CF6; border:1px solid rgba(124,58,237,0.4); padding:7px 12px; border-radius:9px; cursor:pointer;">{{ addChapterLabel }}</div>
+          </div>
+
+          <sc-if value="{{ addingChapter }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:16px; padding:16px; background:#0F0F1A; border:1px dashed rgba(139,92,246,0.4); border-radius:12px;">
+            <div style="font-size:11px; font-weight:600; color:#C4B5FD; margin-bottom:9px;">New chapter name</div>
+            <div style="display:flex; gap:9px;">
+              <input value="{{ newChapterName }}" onInput="{{ onNewChapterInput }}" placeholder="e.g. Connective Tissue Proper" style="flex:1; background:#161B26; border:1px solid rgba(255,255,255,0.12); border-radius:9px; padding:11px 13px; color:#F8FAFC; font-size:13px;">
+              <div onClick="{{ confirmAddChapter }}" style="font-size:12.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:11px 18px; border-radius:9px; cursor:pointer; white-space:nowrap;">Add</div>
+            </div>
+          </div>
+          </sc-if>
+
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px; max-height:300px; overflow:auto;">
+            <sc-for list="{{ chapterChoices }}" as="c" hint-placeholder-count="5">
+              <div onClick="{{ c.onClick }}" style="{{ c.style }}">
+                <span style="width:8px; height:8px; border-radius:50%; background:{{ c.dot }}; flex:none;"></span>
+                <span style="flex:1; font-size:13px; font-weight:{{ c.weight }};">{{ c.name }}</span>
+                <sc-if value="{{ c.isNew }}" hint-placeholder-val="{{ true }}"><span style="font-size:8px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#10B981; background:rgba(16,185,129,0.14); padding:3px 7px; border-radius:5px;">New</span></sc-if>
+                <sc-if value="{{ c.selected }}" hint-placeholder-val="{{ true }}"><span style="font-size:13px; color:#8B5CF6;">✓</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; padding-top:2px;">
+          <div style="font-size:12px; color:#94A3B8;">Publishing to <b style="color:#F8FAFC;">HIST {{ upModule }} · {{ upChapter }}</b></div>
+          <div onClick="{{ toStep2 }}" style="font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:13px 26px; border-radius:12px; box-shadow:0 0 22px rgba(124,58,237,0.4); cursor:pointer;">Continue →</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- STEP 2 — METHOD -->
+      <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:medzUp .25s ease;">
+        <div style="font-size:13px; color:#94A3B8; margin-bottom:16px;">Publishing to <b style="color:#F8FAFC;">HIST {{ upModule }} · {{ upChapter }}</b> — how would you like to add questions?</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+          <!-- manual -->
+          <div onClick="{{ pickManual }}" style="position:relative; overflow:hidden; background:#161B26; border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:28px; cursor:pointer;">
+            <div style="width:52px; height:52px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:18px;">✍️</div>
+            <div style="font-size:18px; font-weight:800; letter-spacing:-0.01em;">Write manually</div>
+            <p style="font-size:12.5px; color:#94A3B8; margin:10px 0 18px; line-height:1.55;">Type each question yourself, add up to 5 multiple-choice options, mark the correct answer, and write your own explanation and reference.</p>
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px; color:#CBD5E1;">
+              <div style="display:flex; gap:9px;"><span style="color:#8B5CF6;">◆</span>Full control over wording</div>
+              <div style="display:flex; gap:9px;"><span style="color:#8B5CF6;">◆</span>Up to 5 options per question</div>
+            </div>
+            <div style="margin-top:22px; text-align:center; font-size:13px; font-weight:700; color:#F8FAFC; border:1px solid rgba(255,255,255,0.14); padding:12px; border-radius:11px;">Start writing →</div>
+          </div>
+          <!-- AI -->
+          <div onClick="{{ pickAi }}" style="{{ aiCardStyle }}">
+            <sc-if value="{{ aiEnabled }}" hint-placeholder-val="{{ true }}">
+            <div style="position:absolute; top:16px; right:16px; font-size:9px; font-weight:800; letter-spacing:0.08em; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:4px 10px; border-radius:6px;">RECOMMENDED</div>
+            </sc-if>
+            <div style="width:52px; height:52px; border-radius:14px; background:rgba(124,58,237,0.18); border:1px solid rgba(139,92,246,0.4); display:flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:18px;">✨</div>
+            <div style="font-size:18px; font-weight:800; letter-spacing:-0.01em;">AI authoring</div>
+            <p style="font-size:12.5px; color:#94A3B8; margin:10px 0 18px; line-height:1.55;">Upload a PDF or DOCX of your questions or lecture notes. AI extracts the questions, matches the correct answers, and pulls the reference page automatically.</p>
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px; color:#CBD5E1;">
+              <div style="display:flex; gap:9px;"><span style="color:#8B5CF6;">◆</span>Extracts questions &amp; answers</div>
+              <div style="display:flex; gap:9px;"><span style="color:#8B5CF6;">◆</span>Auto-cites the reference page</div>
+            </div>
+            <div style="margin-top:22px; text-align:center; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:12px; border-radius:11px; box-shadow:0 0 20px rgba(124,58,237,0.4);">Upload a document →</div>
+          </div>
+        </div>
+        <div style="margin-top:18px;"><span onClick="{{ toStep1 }}" style="font-size:12px; color:#94A3B8; cursor:pointer;">← Back to destination</span></div>
+      </div>
+      </sc-if>
+
+      <!-- STEP 3 — MANUAL BUILDER -->
+      <sc-if value="{{ isStep3Manual }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid; grid-template-columns:1fr 340px; gap:22px; align-items:start; animation:medzUp .25s ease;">
+        <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:24px;">
+          <div style="font-size:15px; font-weight:700; margin-bottom:4px;">Write a question</div>
+          <div style="font-size:11px; color:#94A3B8; margin-bottom:20px;">HIST {{ upModule }} · {{ upChapter }}</div>
+
+          <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Question stem</div>
+          <textarea value="{{ mqStem }}" onInput="{{ onStemInput }}" placeholder="e.g. Which type of epithelium lines the alveoli of the lung?" style="width:100%; min-height:74px; resize:vertical; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:13px; color:#F8FAFC; font-size:13.5px; line-height:1.5;"></textarea>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; margin:20px 0 10px;">
+            <div style="font-size:11px; font-weight:600; color:#CBD5E1;">Answer options <span style="color:#64748B;">· click the circle to mark correct</span></div>
+            <div onClick="{{ addOption }}" style="{{ addOptStyle }}">+ Add option</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <sc-for list="{{ mqOptions }}" as="o" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:11px;">
+                <div onClick="{{ o.onSetCorrect }}" style="{{ o.radioStyle }}">{{ o.check }}</div>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#64748B; width:14px; flex:none;">{{ o.label }}</span>
+                <input value="{{ o.value }}" onInput="{{ o.onInput }}" placeholder="{{ o.placeholder }}" style="{{ o.inputStyle }}">
+                <sc-if value="{{ o.showRemove }}" hint-placeholder-val="{{ true }}"><div onClick="{{ o.onRemove }}" style="width:30px; height:30px; flex:none; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; color:#64748B; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">×</div></sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin:20px 0 8px;">Explanation</div>
+          <textarea value="{{ mqExplanation }}" onInput="{{ onExplInput }}" placeholder="Explain why the correct answer is right — shown to students after they answer." style="width:100%; min-height:60px; resize:vertical; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:13px; color:#F8FAFC; font-size:13px; line-height:1.5;"></textarea>
+
+          <div style="display:grid; grid-template-columns:1fr 160px; gap:14px; margin-top:16px;">
+            <div>
+              <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Reference</div>
+              <input value="{{ mqReference }}" onInput="{{ onRefInput }}" placeholder="e.g. Zahra Lecture Notes, p. 142" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:11px 13px; color:#F8FAFC; font-size:13px;">
+            </div>
+            <div>
+              <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Difficulty</div>
+              <select value="{{ mqDifficulty }}" onChange="{{ onDiffChange }}" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:11px 13px; color:#F8FAFC; font-size:13px;">
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+          </div>
+
+          <div onClick="{{ addQuestion }}" style="{{ addQStyle }}">+ Add this question</div>
+        </div>
+
+        <!-- added list -->
+        <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:22px; position:sticky; top:20px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <div style="font-size:14px; font-weight:700;">Added questions</div>
+            <span style="font-size:11px; font-weight:800; color:#8B5CF6; background:rgba(124,58,237,0.14); padding:4px 10px; border-radius:6px;">{{ draftCount }}</span>
+          </div>
+          <sc-if value="{{ hasDrafts }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; flex-direction:column; gap:9px; max-height:340px; overflow:auto;">
+            <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="2">
+              <div style="padding:12px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.06); border-radius:11px;">
+                <div style="display:flex; align-items:flex-start; gap:8px;">
+                  <span style="font-size:12px; line-height:1.4; flex:1;">{{ d.stemShort }}</span>
+                  <div onClick="{{ d.onRemove }}" style="font-size:14px; color:#64748B; cursor:pointer; flex:none;">×</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:7px; margin-top:8px;">
+                  <span style="{{ d.diffStyle }}">{{ d.difficulty }}</span>
+                  <span style="font-size:10px; color:#64748B;">{{ d.optCount }} options</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+          <sc-if value="{{ noDrafts }}" hint-placeholder-val="{{ true }}">
+          <div style="text-align:center; padding:30px 10px; color:#64748B; font-size:12px;">No questions yet. Write one on the left and add it here.</div>
+          </sc-if>
+          <div onClick="{{ toStep4 }}" style="{{ reviewBtnStyle }}">Review &amp; publish →</div>
+          <div style="margin-top:12px; text-align:center;"><span onClick="{{ toStep2 }}" style="font-size:11.5px; color:#94A3B8; cursor:pointer;">← Change method</span></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- STEP 3 — AI -->
+      <sc-if value="{{ isStep3Ai }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:medzUp .25s ease;">
+        <!-- drop zone / processing -->
+        <sc-if value="{{ aiIdle }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:24px;">
+          <div style="font-size:15px; font-weight:700;">Upload your document</div>
+          <div style="font-size:11px; color:#94A3B8; margin-top:4px; margin-bottom:18px;">PDF or DOCX — a question sheet or your lecture notes. Publishing to HIST {{ upModule }} · {{ upChapter }}.</div>
+          <div onClick="{{ startAi }}" style="border:1.5px dashed rgba(139,92,246,0.45); border-radius:16px; padding:44px; text-align:center; cursor:pointer; background:radial-gradient(500px 200px at 50% -30%, rgba(124,58,237,0.14), transparent 60%);">
+            <div style="font-size:40px; margin-bottom:14px;">📄</div>
+            <div style="font-size:15px; font-weight:700;">Drop a file here, or click to browse</div>
+            <div style="font-size:11.5px; color:#94A3B8; margin-top:8px;">Supports .pdf and .docx up to 40 MB</div>
+            <div style="display:inline-flex; margin-top:18px; font-size:12.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:11px 22px; border-radius:11px; box-shadow:0 0 20px rgba(124,58,237,0.4);">Select document</div>
+          </div>
+          <div style="display:flex; gap:12px; margin-top:16px;">
+            <sc-for list="{{ sampleFiles }}" as="f" hint-placeholder-count="2">
+              <div onClick="{{ f.onClick }}" style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.08); border-radius:11px; cursor:pointer; flex:1;">
+                <span style="font-size:18px;">{{ f.icon }}</span>
+                <div style="min-width:0;"><div style="font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ f.name }}</div><div style="font-size:10px; color:#64748B;">{{ f.meta }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:18px;"><span onClick="{{ toStep2 }}" style="font-size:12px; color:#94A3B8; cursor:pointer;">← Change method</span></div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ aiProcessing }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:40px 24px;">
+          <div style="display:flex; align-items:center; gap:14px; justify-content:center; margin-bottom:8px;">
+            <div style="width:40px; height:40px; border-radius:50%; border:3px solid rgba(139,92,246,0.2); border-top-color:#8B5CF6; animation:medzSpin .8s linear infinite;"></div>
+            <div><div style="font-size:15px; font-weight:700;">Reading {{ aiFileName }}</div><div style="font-size:11px; color:#94A3B8;">This usually takes a few seconds…</div></div>
+          </div>
+          <div style="max-width:520px; margin:26px auto 0; display:flex; flex-direction:column; gap:14px;">
+            <sc-for list="{{ aiSteps }}" as="s" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; gap:13px;">
+                <div style="width:26px; height:26px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; background:{{ s.bg }}; color:{{ s.color }}; border:1px solid {{ s.border }};">{{ s.icon }}</div>
+                <span style="font-size:13px; font-weight:{{ s.weight }}; color:{{ s.textColor }};">{{ s.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ aiDone }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:14px; padding:16px 20px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:34px; height:34px; border-radius:10px; background:rgba(16,185,129,0.16); color:#10B981; display:flex; align-items:center; justify-content:center; font-size:16px;">✓</div>
+              <div><div style="font-size:13.5px; font-weight:700;">Extracted {{ draftCount }} questions from {{ aiFileName }}</div><div style="font-size:11px; color:#94A3B8; margin-top:2px;">Review the drafts below — edit or remove any before publishing.</div></div>
+            </div>
+            <div onClick="{{ resetAi }}" style="font-size:11.5px; font-weight:600; color:#94A3B8; border:1px solid rgba(255,255,255,0.12); padding:8px 14px; border-radius:9px; cursor:pointer; white-space:nowrap;">Upload another</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <sc-for list="{{ drafts }}" as="d" hint-placeholder-count="3">
+              <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:18px 20px;">
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px;">
+                  <div style="flex:1; min-width:0;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:9px;">
+                      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#64748B;">Q{{ d.num }}</span>
+                      <span style="{{ d.diffStyle }}">{{ d.difficulty }}</span>
+                      <span style="font-size:9px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#0EA5E9; background:rgba(14,165,233,0.12); padding:3px 8px; border-radius:5px;">AI draft</span>
+                    </div>
+                    <div style="font-size:13.5px; font-weight:600; line-height:1.45;">{{ d.stem }}</div>
+                  </div>
+                  <div style="display:flex; gap:8px; flex:none;">
+                    <div onClick="{{ d.onEdit }}" style="font-size:11px; font-weight:600; color:#8B5CF6; border:1px solid rgba(124,58,237,0.4); padding:6px 12px; border-radius:8px; cursor:pointer;">Edit</div>
+                    <div onClick="{{ d.onRemove }}" style="font-size:11px; font-weight:600; color:#94A3B8; border:1px solid rgba(255,255,255,0.12); padding:6px 12px; border-radius:8px; cursor:pointer;">Remove</div>
+                  </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;">
+                  <sc-for list="{{ d.options }}" as="op" hint-placeholder-count="4">
+                    <div style="{{ op.style }}"><span style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; margin-right:8px;">{{ op.label }}</span>{{ op.text }}<sc-if value="{{ op.correct }}" hint-placeholder-val="{{ true }}"><span style="float:right; color:#10B981; font-size:12px;">✓</span></sc-if></div>
+                  </sc-for>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:13px; font-size:11px; color:#94A3B8;"><span style="color:#8B5CF6;">📎</span> Reference: <b style="color:#CBD5E1;">{{ d.reference }}</b></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span onClick="{{ toStep2 }}" style="font-size:12px; color:#94A3B8; cursor:pointer;">← Change method</span>
+            <div onClick="{{ toStep4 }}" style="font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:13px 26px; border-radius:12px; box-shadow:0 0 22px rgba(124,58,237,0.4); cursor:pointer;">Review &amp; publish →</div>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- STEP 4 — PUBLISH -->
+      <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:medzUp .25s ease;">
+        <sc-if value="{{ notPublished }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:640px; margin:0 auto; background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:18px; padding:30px;">
+          <div style="font-size:18px; font-weight:800; letter-spacing:-0.01em;">Ready to publish</div>
+          <p style="font-size:12.5px; color:#94A3B8; margin:8px 0 22px;">Once published, these questions become available to students in this chapter.</p>
+          <div style="display:flex; flex-direction:column; gap:1px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); border-radius:13px; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; padding:15px 18px; background:#0F0F1A;"><span style="font-size:12.5px; color:#94A3B8;">Questions</span><span style="font-size:13px; font-weight:700;">{{ draftCount }} new</span></div>
+            <div style="display:flex; justify-content:space-between; padding:15px 18px; background:#0F0F1A;"><span style="font-size:12.5px; color:#94A3B8;">Module</span><span style="font-size:13px; font-weight:700;">HIST {{ upModule }}</span></div>
+            <div style="display:flex; justify-content:space-between; padding:15px 18px; background:#0F0F1A;"><span style="font-size:12.5px; color:#94A3B8;">Chapter</span><span style="font-size:13px; font-weight:700;">{{ upChapter }}</span></div>
+            <div style="display:flex; justify-content:space-between; padding:15px 18px; background:#0F0F1A;"><span style="font-size:12.5px; color:#94A3B8;">Method</span><span style="font-size:13px; font-weight:700;">{{ methodLabel }}</span></div>
+          </div>
+          <label style="display:flex; align-items:center; gap:11px; margin-top:18px; cursor:pointer;">
+            <div onClick="{{ toggleNotify }}" style="{{ notifyBox }}">{{ notifyCheck }}</div>
+            <span style="font-size:12.5px; color:#CBD5E1;">Notify enrolled students that new questions are available</span>
+          </label>
+          <div style="display:flex; gap:12px; margin-top:24px;">
+            <div onClick="{{ backFromPublish }}" style="font-size:13px; font-weight:600; color:#F8FAFC; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); padding:13px 22px; border-radius:12px; cursor:pointer;">← Back</div>
+            <div onClick="{{ doPublish }}" style="flex:1; text-align:center; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:13px; border-radius:12px; box-shadow:0 0 22px rgba(124,58,237,0.45); cursor:pointer;">Publish {{ draftCount }} questions</div>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ isPublished }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:560px; margin:20px auto 0; text-align:center; background:#161B26; border:1px solid rgba(16,185,129,0.3); border-radius:20px; padding:44px 30px;">
+          <div style="width:64px; height:64px; margin:0 auto 20px; border-radius:50%; background:rgba(16,185,129,0.14); border:1px solid rgba(16,185,129,0.4); display:flex; align-items:center; justify-content:center; font-size:30px; color:#10B981;">✓</div>
+          <div style="font-size:22px; font-weight:800; letter-spacing:-0.02em;">Published!</div>
+          <p style="font-size:13px; color:#94A3B8; margin:10px 0 26px;">{{ publishedCount }} questions are now live in <b style="color:#C4B5FD;">HIST {{ upModule }} · {{ upChapter }}</b>. 1,284 students can start answering them immediately.</p>
+          <div style="display:flex; gap:12px; justify-content:center;">
+            <div onClick="{{ goBank }}" style="font-size:13px; font-weight:700; color:#F8FAFC; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); padding:12px 22px; border-radius:12px; cursor:pointer;">View in Question Bank</div>
+            <div onClick="{{ uploadMore }}" style="font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:12px 22px; border-radius:12px; box-shadow:0 0 20px rgba(124,58,237,0.4); cursor:pointer;">Upload more</div>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ============ QUESTION BANK ============ -->
+    <sc-if value="{{ isBank }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+      <!-- tabs + search -->
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div style="display:flex; gap:4px; padding:4px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.07); border-radius:12px;">
+          <div onClick="{{ setTabPublished }}" style="{{ tabPublishedStyle }}">Published <span style="opacity:0.7;">{{ publishedCountLabel }}</span></div>
+          <div onClick="{{ setTabDrafts }}" style="{{ tabDraftsStyle }}">AI Drafts <span style="opacity:0.7;">{{ draftCountLabel }}</span></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; background:#161B26; border:1px solid rgba(255,255,255,0.09); border-radius:11px; padding:0 14px; flex:1; max-width:340px;">
+          <span style="font-size:13px; color:#64748B;">🔍</span>
+          <input value="{{ qbSearch }}" onInput="{{ onQbSearch }}" placeholder="Search questions…" style="flex:1; background:transparent; border:none; padding:11px 0; color:#F8FAFC; font-size:13px;">
+        </div>
+      </div>
+
+      <!-- chapter filter chips -->
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <sc-for list="{{ qbFilters }}" as="f" hint-placeholder-count="6">
+          <div onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</div>
+        </sc-for>
+      </div>
+
+      <!-- list -->
+      <div style="display:flex; flex-direction:column; gap:11px;">
+        <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ bankResults }}" as="q" hint-placeholder-count="6">
+          <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:18px 20px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px;">
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:9px; flex-wrap:wrap;">
+                  <span style="font-size:10px; font-weight:600; color:#94A3B8;">{{ q.chapter }}</span>
+                  <span style="{{ q.diffStyle }}">{{ q.difficulty }}</span>
+                  <sc-if value="{{ q.flagged }}" hint-placeholder-val="{{ true }}"><span style="font-size:9px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#EF4444; background:rgba(239,68,68,0.12); padding:3px 8px; border-radius:5px;">⚑ Flagged</span></sc-if>
+                </div>
+                <div style="font-size:14px; font-weight:600; line-height:1.45;">{{ q.stem }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:16px; flex:none;">
+                <sc-if value="{{ q.isPublished }}" hint-placeholder-val="{{ true }}">
+                <div style="text-align:right;"><div style="font-size:16px; font-weight:800; color:{{ q.accColor }};">{{ q.accuracy }}</div><div style="font-size:9.5px; color:#64748B;">class avg</div></div>
+                <div onClick="{{ q.onEdit }}" style="font-size:11.5px; font-weight:700; color:#8B5CF6; border:1px solid rgba(124,58,237,0.4); padding:8px 14px; border-radius:9px; cursor:pointer;">Edit</div>
+                </sc-if>
+                <sc-if value="{{ q.isDraft }}" hint-placeholder-val="{{ true }}">
+                <div onClick="{{ q.onEdit }}" style="font-size:11.5px; font-weight:600; color:#94A3B8; border:1px solid rgba(255,255,255,0.12); padding:8px 12px; border-radius:9px; cursor:pointer;">Edit</div>
+                <div onClick="{{ q.onReject }}" style="font-size:11.5px; font-weight:700; color:#EF4444; border:1px solid rgba(239,68,68,0.35); padding:8px 12px; border-radius:9px; cursor:pointer;">Reject</div>
+                <div onClick="{{ q.onApprove }}" style="font-size:11.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#10B981,#059669); padding:8px 14px; border-radius:9px; cursor:pointer;">Approve</div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+        </sc-if>
+        <sc-if value="{{ noResults }}" hint-placeholder-val="{{ true }}">
+        <div style="text-align:center; padding:50px 10px; color:#64748B; font-size:13px; background:#161B26; border:1px solid rgba(255,255,255,0.06); border-radius:14px;">{{ noResultsMsg }}</div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ STUDENT ROSTER ============ -->
+    <sc-if value="{{ isRoster }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div style="display:flex; gap:10px;">
+          <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:13px; padding:14px 18px;"><div style="font-size:10px; color:#94A3B8;">Enrolled</div><div style="font-size:20px; font-weight:800; margin-top:2px;">1,284</div></div>
+          <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:13px; padding:14px 18px;"><div style="font-size:10px; color:#94A3B8;">Avg accuracy</div><div style="font-size:20px; font-weight:800; margin-top:2px; color:#10B981;">74%</div></div>
+          <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:13px; padding:14px 18px;"><div style="font-size:10px; color:#94A3B8;">At risk</div><div style="font-size:20px; font-weight:800; margin-top:2px; color:#EF4444;">38</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; background:#161B26; border:1px solid rgba(255,255,255,0.09); border-radius:11px; padding:0 14px; flex:1; max-width:320px;">
+          <span style="font-size:13px; color:#64748B;">🔍</span>
+          <input value="{{ rosterSearch }}" onInput="{{ onRosterSearch }}" placeholder="Search students…" style="flex:1; background:transparent; border:none; padding:11px 0; color:#F8FAFC; font-size:13px;">
+        </div>
+      </div>
+
+      <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:8px 22px 14px;">
+        <div style="display:grid; grid-template-columns:1.7fr 0.8fr 1fr 0.8fr 0.9fr auto; gap:16px; padding:14px 0 12px; font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#64748B;">
+          <div>Student</div><div>Challenges</div><div>Accuracy</div><div>Streak</div><div>Last active</div><div></div>
+        </div>
+        <sc-if value="{{ hasRosterResults }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ rosterResults }}" as="r" hint-placeholder-count="6">
+          <div onClick="{{ r.onOpen }}" style="display:grid; grid-template-columns:1.7fr 0.8fr 1fr 0.8fr 0.9fr auto; gap:16px; align-items:center; padding:13px 0; border-top:1px solid rgba(255,255,255,0.06); cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:11px; min-width:0;">
+              <div style="width:34px; height:34px; border-radius:50%; background:{{ r.avBg }}; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex:none;">{{ r.initials }}</div>
+              <div style="min-width:0;"><div style="font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.name }}</div><div style="font-size:10px; color:#64748B; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.email }}</div></div>
+            </div>
+            <div style="font-size:12px; color:#94A3B8;">{{ r.challenges }}</div>
+            <div style="display:flex; align-items:center; gap:9px;"><span style="font-size:12.5px; font-weight:700; color:{{ r.accColor }}; min-width:34px;">{{ r.accuracy }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#64748B;">{{ r.raw }}</span></div>
+            <div style="font-size:12px; color:#F97316; font-weight:600;">{{ r.streak }} 🔥</div>
+            <div style="font-size:11px; color:#94A3B8;">{{ r.lastActive }}</div>
+            <div style="font-size:15px; color:#64748B; text-align:right;">›</div>
+          </div>
+        </sc-for>
+        </sc-if>
+        <sc-if value="{{ noRosterResults }}" hint-placeholder-val="{{ true }}">
+        <div style="text-align:center; padding:40px 10px; color:#64748B; font-size:13px;">No students match "{{ rosterSearch }}".</div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ MOCK EXAMS ============ -->
+    <sc-if value="{{ isExams }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+        <div style="display:flex; gap:4px; padding:4px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.07); border-radius:12px;">
+          <sc-for list="{{ examTabs }}" as="t" hint-placeholder-count="4">
+            <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
+          </sc-for>
+        </div>
+        <div onClick="{{ openExamModal }}" style="display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:11px 20px; border-radius:11px; box-shadow:0 0 20px rgba(124,58,237,0.4); cursor:pointer;"><span style="font-size:15px;">+</span> Create exam</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px;">
+        <sc-for list="{{ examResults }}" as="e" hint-placeholder-count="4">
+          <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:22px; display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+              <div style="min-width:0;">
+                <div style="font-size:16px; font-weight:800; letter-spacing:-0.01em;">{{ e.name }}</div>
+                <div style="font-size:11.5px; color:#94A3B8; margin-top:4px;">{{ e.module }}</div>
+              </div>
+              <span style="{{ e.statusStyle }}">{{ e.status }}</span>
+            </div>
+            <div style="display:flex; gap:22px; padding:14px 0; border-top:1px solid rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.06);">
+              <div><div style="font-size:18px; font-weight:800;">{{ e.qs }}</div><div style="font-size:9.5px; color:#94A3B8; margin-top:2px;">Questions</div></div>
+              <div><div style="font-size:18px; font-weight:800;">{{ e.duration }}</div><div style="font-size:9.5px; color:#94A3B8; margin-top:2px;">Duration</div></div>
+              <div><div style="font-size:18px; font-weight:800; color:{{ e.metricColor }};">{{ e.metric }}</div><div style="font-size:9.5px; color:#94A3B8; margin-top:2px;">{{ e.metricLabel }}</div></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div style="font-size:11.5px; color:#CBD5E1;"><span style="color:#64748B;">📅</span> {{ e.date }}</div>
+              <div style="display:flex; gap:8px;">
+                <sc-for list="{{ e.actions }}" as="ac" hint-placeholder-count="2">
+                  <div onClick="{{ ac.onClick }}" style="{{ ac.style }}">{{ ac.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ POST-LECTURE CHALLENGES ============ -->
+    <sc-if value="{{ isChallenges }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
+        <div style="display:flex; gap:4px; padding:4px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.07); border-radius:12px;">
+          <sc-for list="{{ challengeTabs }}" as="t" hint-placeholder-count="4">
+            <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
+          </sc-for>
+        </div>
+        <div onClick="{{ openChallengeModal }}" style="display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:11px 20px; border-radius:11px; box-shadow:0 0 20px rgba(124,58,237,0.4); cursor:pointer;"><span style="font-size:15px;">+</span> Create challenge</div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px;">
+        <sc-for list="{{ challengeResults }}" as="c" hint-placeholder-count="4">
+          <div style="background:#161B26; border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:22px; display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+              <div style="min-width:0;">
+                <div style="font-size:16px; font-weight:800; letter-spacing:-0.01em;">{{ c.name }}</div>
+                <div style="font-size:11.5px; color:#94A3B8; margin-top:4px;">{{ c.module }} · {{ c.chapter }}</div>
+              </div>
+              <span style="{{ c.statusStyle }}">{{ c.status }}</span>
+            </div>
+            <div style="display:flex; gap:22px; padding:14px 0; border-top:1px solid rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.06);">
+              <div><div style="font-size:18px; font-weight:800;">{{ c.qs }}</div><div style="font-size:9.5px; color:#94A3B8; margin-top:2px;">Questions</div></div>
+              <div><div style="font-size:18px; font-weight:800; color:{{ c.metricColor }};">{{ c.metric }}</div><div style="font-size:9.5px; color:#94A3B8; margin-top:2px;">{{ c.metricLabel }}</div></div>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <div style="font-size:11.5px; color:#CBD5E1;"><span style="color:#64748B;">🕑</span> {{ c.date }}</div>
+              <div style="display:flex; gap:8px;">
+                <sc-for list="{{ c.actions }}" as="ac" hint-placeholder-count="2">
+                  <div onClick="{{ ac.onClick }}" style="{{ ac.style }}">{{ ac.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+  </main>
+</div>
+
+<!-- ============ EDIT QUESTION MODAL ============ -->
+<sc-if value="{{ editOpen }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ closeEdit }}" style="position:fixed; inset:0; background:rgba(5,5,10,0.72); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; overflow:auto;">
+  <div onClick="{{ stop }}" style="width:640px; max-width:100%; background:#12121C; border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:26px; box-shadow:0 30px 80px rgba(0,0,0,0.6); animation:medzUp .2s ease;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div style="font-size:17px; font-weight:800;">Edit question</div>
+      <div onClick="{{ closeEdit }}" style="width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#94A3B8; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">×</div>
+    </div>
+    <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Question stem</div>
+    <textarea value="{{ eqStem }}" onInput="{{ onEqStem }}" style="width:100%; min-height:70px; resize:vertical; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:13px; color:#F8FAFC; font-size:13.5px; line-height:1.5;"></textarea>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px;">
+      <div style="font-size:11px; font-weight:600; color:#CBD5E1;">Answer options</div>
+      <div onClick="{{ eqAddOption }}" style="{{ eqAddOptStyle }}">+ Add option</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <sc-for list="{{ eqOptions }}" as="o" hint-placeholder-count="4">
+        <div style="display:flex; align-items:center; gap:11px;">
+          <div onClick="{{ o.onSetCorrect }}" style="{{ o.radioStyle }}">{{ o.check }}</div>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#64748B; width:14px; flex:none;">{{ o.label }}</span>
+          <input value="{{ o.value }}" onInput="{{ o.onInput }}" style="{{ o.inputStyle }}">
+          <sc-if value="{{ o.showRemove }}" hint-placeholder-val="{{ true }}"><div onClick="{{ o.onRemove }}" style="width:30px; height:30px; flex:none; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; color:#64748B; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">×</div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin:18px 0 8px;">Explanation</div>
+    <textarea value="{{ eqExplanation }}" onInput="{{ onEqExpl }}" style="width:100%; min-height:56px; resize:vertical; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:13px; color:#F8FAFC; font-size:13px; line-height:1.5;"></textarea>
+    <div style="display:grid; grid-template-columns:1fr 160px; gap:14px; margin-top:16px;">
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Reference</div>
+        <input value="{{ eqReference }}" onInput="{{ onEqRef }}" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:11px 13px; color:#F8FAFC; font-size:13px;">
+      </div>
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Difficulty</div>
+        <select value="{{ eqDifficulty }}" onChange="{{ onEqDiff }}" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:11px 13px; color:#F8FAFC; font-size:13px;">
+          <option value="Easy">Easy</option>
+          <option value="Medium">Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex; gap:12px; margin-top:24px;">
+      <div onClick="{{ closeEdit }}" style="font-size:13px; font-weight:600; color:#F8FAFC; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); padding:12px 22px; border-radius:12px; cursor:pointer;">Cancel</div>
+      <div onClick="{{ saveEdit }}" style="flex:1; text-align:center; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:12px; border-radius:12px; box-shadow:0 0 20px rgba(124,58,237,0.4); cursor:pointer;">Save changes</div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ STUDENT DRILL-DOWN MODAL ============ -->
+<sc-if value="{{ drillOpen }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ closeDrill }}" style="position:fixed; inset:0; background:rgba(5,5,10,0.72); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; overflow:auto;">
+  <div onClick="{{ stop }}" style="width:620px; max-width:100%; background:#12121C; border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:26px; box-shadow:0 30px 80px rgba(0,0,0,0.6); animation:medzUp .2s ease;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:48px; height:48px; border-radius:50%; background:{{ drillAvBg }}; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800;">{{ drillInitials }}</div>
+        <div><div style="font-size:18px; font-weight:800;">{{ drillName }}</div><div style="font-size:11.5px; color:#94A3B8; margin-top:2px;">{{ drillEmail }}</div></div>
+      </div>
+      <div onClick="{{ closeDrill }}" style="width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#94A3B8; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">×</div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px;">
+      <div style="background:#0F0F1A; border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:15px;"><div style="font-size:10px; color:#94A3B8;">Accuracy</div><div style="font-size:22px; font-weight:800; margin-top:4px; color:{{ drillAccColor }};">{{ drillAccuracy }}</div></div>
+      <div style="background:#0F0F1A; border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:15px;"><div style="font-size:10px; color:#94A3B8;">Challenges</div><div style="font-size:22px; font-weight:800; margin-top:4px;">{{ drillChallenges }}</div></div>
+      <div style="background:#0F0F1A; border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:15px;"><div style="font-size:10px; color:#94A3B8;">Streak</div><div style="font-size:22px; font-weight:800; margin-top:4px; color:#F97316;">{{ drillStreak }} 🔥</div></div>
+    </div>
+    <div style="font-size:13px; font-weight:700; margin-bottom:14px;">Accuracy by chapter</div>
+    <div style="display:flex; flex-direction:column; gap:13px; margin-bottom:22px;">
+      <sc-for list="{{ drillChapters }}" as="c" hint-placeholder-count="4">
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;"><span>{{ c.name }}</span><span style="color:{{ c.color }}; font-weight:700;">{{ c.acc }}</span></div>
+          <div style="height:6px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden;"><div style="width:{{ c.acc }}; height:100%; background:{{ c.color }}; border-radius:4px;"></div></div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size:13px; font-weight:700; margin-bottom:12px;">Recent challenges</div>
+    <div style="display:flex; flex-direction:column;">
+      <sc-for list="{{ drillRecent }}" as="c" hint-placeholder-count="3">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-top:1px solid rgba(255,255,255,0.06);">
+          <div style="font-size:12.5px;">{{ c.name }}</div>
+          <div style="display:flex; align-items:center; gap:14px;"><span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#94A3B8;">{{ c.score }}</span><span style="font-size:12px; font-weight:700; color:{{ c.color }}; min-width:44px; text-align:right;">{{ c.acc }}</span></div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ CREATE EXAM MODAL ============ -->
+<sc-if value="{{ examModalOpen }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ closeExamModal }}" style="position:fixed; inset:0; background:rgba(5,5,10,0.72); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; overflow:auto;">
+  <div onClick="{{ stop }}" style="width:560px; max-width:100%; background:#12121C; border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:26px; box-shadow:0 30px 80px rgba(0,0,0,0.6); animation:medzUp .2s ease;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+      <div style="font-size:17px; font-weight:800;">Create mock exam</div>
+      <div onClick="{{ closeExamModal }}" style="width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#94A3B8; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">×</div>
+    </div>
+    <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Exam name</div>
+    <input value="{{ neName }}" onInput="{{ onNeName }}" placeholder="e.g. Midterm — Epithelium &amp; Connective Tissue" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:12px 13px; color:#F8FAFC; font-size:13px; margin-bottom:16px;">
+    <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Module</div>
+    <select value="{{ neModule }}" onChange="{{ onNeModule }}" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:12px 13px; color:#F8FAFC; font-size:13px; margin-bottom:16px;">
+      <sc-for list="{{ neModuleOptions }}" as="m" hint-placeholder-count="4">
+        <option value="{{ m.value }}">{{ m.label }}</option>
+      </sc-for>
+    </select>
+    <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:9px;">Chapters to include</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;">
+      <sc-for list="{{ neChapterChips }}" as="c" hint-placeholder-count="4">
+        <div onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.name }}</div>
+      </sc-for>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Questions</div>
+        <div style="display:flex; align-items:center; gap:10px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:6px 10px;">
+          <div onClick="{{ neQsDown }}" style="width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer;">−</div>
+          <span style="flex:1; text-align:center; font-size:14px; font-weight:700;">{{ neQs }}</span>
+          <div onClick="{{ neQsUp }}" style="width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer;">+</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Duration</div>
+        <select value="{{ neDuration }}" onChange="{{ onNeDuration }}" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:12px 13px; color:#F8FAFC; font-size:13px;">
+          <option value="20 min">20 min</option>
+          <option value="30 min">30 min</option>
+          <option value="45 min">45 min</option>
+          <option value="60 min">60 min</option>
+          <option value="90 min">90 min</option>
+          <option value="120 min">120 min</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Scheduled date</div>
+    <input value="{{ neDate }}" onInput="{{ onNeDate }}" placeholder="e.g. Aug 12, 2026 (leave blank to save as draft)" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:12px 13px; color:#F8FAFC; font-size:13px; margin-bottom:22px;">
+    <div style="display:flex; gap:12px;">
+      <div onClick="{{ closeExamModal }}" style="font-size:13px; font-weight:600; color:#F8FAFC; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); padding:12px 22px; border-radius:12px; cursor:pointer;">Cancel</div>
+      <div onClick="{{ createExam }}" style="flex:1; text-align:center; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:12px; border-radius:12px; box-shadow:0 0 20px rgba(124,58,237,0.45); cursor:pointer;">{{ createExamLabel }}</div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+
+<!-- ============ CREATE POST-LECTURE CHALLENGE MODAL ============ -->
+<sc-if value="{{ challengeModalOpen }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ closeChallengeModal }}" style="position:fixed; inset:0; background:rgba(5,5,10,0.72); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; overflow:auto;">
+  <div onClick="{{ stop }}" style="width:560px; max-width:100%; background:#12121C; border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:26px; box-shadow:0 30px 80px rgba(0,0,0,0.6); animation:medzUp .2s ease;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+      <div style="font-size:17px; font-weight:800;">Create post-lecture challenge</div>
+      <div onClick="{{ closeChallengeModal }}" style="width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#94A3B8; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">×</div>
+    </div>
+    <p style="font-size:11.5px; color:#94A3B8; margin:0 0 18px;">A short quiz students take right after your lecture, drawn from the chapter's question bank.</p>
+    <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Challenge name</div>
+    <input value="{{ ncName }}" onInput="{{ onNcName }}" placeholder="e.g. Covering Epithelium — Post-Lecture" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:12px 13px; color:#F8FAFC; font-size:13px; margin-bottom:16px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Module</div>
+        <select value="{{ ncModule }}" onChange="{{ onNcModule }}" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:12px 13px; color:#F8FAFC; font-size:13px;">
+          <sc-for list="{{ ncModuleOptions }}" as="m" hint-placeholder-count="4"><option value="{{ m.value }}">{{ m.label }}</option></sc-for>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Chapter / lecture</div>
+        <select value="{{ ncChapter }}" onChange="{{ onNcChapter }}" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:12px 13px; color:#F8FAFC; font-size:13px;">
+          <sc-for list="{{ ncChapterOptions }}" as="c" hint-placeholder-count="4"><option value="{{ c.value }}">{{ c.label }}</option></sc-for>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:150px 1fr; gap:14px; margin-bottom:16px; align-items:start;">
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Questions</div>
+        <div style="display:flex; align-items:center; gap:10px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:6px 10px;">
+          <div onClick="{{ ncQsDown }}" style="width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer;">−</div>
+          <span style="flex:1; text-align:center; font-size:14px; font-weight:700;">{{ ncQs }}</span>
+          <div onClick="{{ ncQsUp }}" style="width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer;">+</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Release</div>
+        <div style="display:flex; gap:6px; padding:4px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px;">
+          <div onClick="{{ setReleaseNow }}" style="{{ releaseNowStyle }}">Release now</div>
+          <div onClick="{{ setReleaseSchedule }}" style="{{ releaseSchedStyle }}">Schedule</div>
+        </div>
+      </div>
+    </div>
+    <sc-if value="{{ showNcDate }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-bottom:22px;">
+      <div style="font-size:11px; font-weight:600; color:#CBD5E1; margin-bottom:8px;">Scheduled release</div>
+      <input value="{{ ncDate }}" onInput="{{ onNcDate }}" placeholder="e.g. Jul 18, 2026 · 6:00 PM" style="width:100%; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:12px 13px; color:#F8FAFC; font-size:13px;">
+    </div>
+    </sc-if>
+    <div style="display:flex; gap:12px;">
+      <div onClick="{{ closeChallengeModal }}" style="font-size:13px; font-weight:600; color:#F8FAFC; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); padding:12px 22px; border-radius:12px; cursor:pointer;">Cancel</div>
+      <div onClick="{{ createChallenge }}" style="flex:1; text-align:center; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:12px; border-radius:12px; box-shadow:0 0 20px rgba(124,58,237,0.45); cursor:pointer;">{{ createChallengeLabel }}</div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ QR CODE MODAL ============ -->
+<sc-if value="{{ qrOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeQr }}" style="position:fixed; inset:0; background:rgba(5,5,10,0.72); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; overflow:auto;">
+  <div onClick="{{ stop }}" style="width:400px; max-width:100%; background:#12121C; border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:26px; box-shadow:0 30px 80px rgba(0,0,0,0.6); animation:medzUp .2s ease; text-align:center;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div style="font-size:17px; font-weight:800; text-align:left;">Challenge QR code</div>
+      <div onClick="{{ closeQr }}" style="width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#94A3B8; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">×</div>
+    </div>
+    <div style="font-size:13px; font-weight:700; margin-top:10px;">{{ qrName }}</div>
+    <div style="font-size:11px; color:#94A3B8; margin-bottom:20px;">{{ qrMeta }}</div>
+    <div style="background:#F8FAFC; border-radius:16px; padding:16px; display:flex; align-items:center; justify-content:center;">
+      {{ qrImgEl }}
+    </div>
+    <p style="font-size:11px; color:#94A3B8; margin:16px 0 10px;">Students scan this to jump straight into the challenge.</p>
+    <div style="display:flex; align-items:center; gap:10px; background:#0F0F1A; border:1px solid rgba(255,255,255,0.12); border-radius:11px; padding:10px 13px; margin-bottom:14px;">
+      <div style="flex:1; min-width:0; text-align:left; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#CBD5E1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ qrLink }}</div>
+    </div>
+    <div style="display:flex; gap:12px;">
+      <div onClick="{{ copyQrLink }}" style="flex:1; text-align:center; font-size:13px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:12px; border-radius:12px; cursor:pointer;">{{ qrCopyLabel }}</div>
+      {{ qrDownloadEl }}
+    </div>
+  </div>
+</div>
+</sc-if></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024},&quot;startView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Overview&quot;,&quot;Upload Content&quot;,&quot;Question Bank&quot;,&quot;Student Roster&quot;,&quot;Mock Exams&quot;],&quot;default&quot;:&quot;Overview&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Behavior&quot;},&quot;enableAiAuthoring&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+class Component extends DCLogic {
+  state = {
+    view: 'overview',
+    // upload wizard
+    upStep: 1, upMode: null, upModule: '103', upChapter: 'Covering Epithelium',
+    addingChapter: false, newChapterName: '',
+    aiPhase: 'idle', aiFileName: '', aiStageIdx: 0,
+    notify: true, published: false, publishedCount: 0,
+    mq: { stem: '', options: ['', '', ''], correct: 0, explanation: '', reference: '', difficulty: 'Medium' },
+    drafts: [],
+    modules: [
+      { code: '101', name: 'General Histology & The Cell', chapters: ['The Cell & Organelles', 'Cell Membrane & Transport', 'Nucleus & Cell Cycle', 'Microscopy & Staining'] },
+      { code: '103', name: 'Epithelial & Connective Tissue', chapters: ['Covering Epithelium', 'Glandular Epithelium', 'Connective Tissue Proper', 'Cartilage', 'Bone & Ossification'] },
+      { code: '104', name: 'Blood & Muscle Tissue', chapters: ['Blood Cells & Plasma', 'Hematopoiesis', 'Skeletal Muscle', 'Cardiac & Smooth Muscle'] },
+      { code: '205', name: 'Nervous & Cardiovascular', chapters: ['Neurons & Neuroglia', 'Peripheral Nerves', 'Heart & Conduction', 'Blood Vessels'] }
+    ],
+    // question bank
+    qbTab: 'published', qbSearch: '', qbChapter: 'all', editingQ: null,
+    bank: [
+      { id: 'q1', chapter: 'Covering Epithelium', difficulty: 'Medium', accuracy: 82, flagged: false, stem: 'Which type of epithelium lines the alveoli of the lung to allow gas exchange?', options: [{ t: 'Simple squamous', c: true }, { t: 'Simple cuboidal', c: false }, { t: 'Stratified squamous', c: false }, { t: 'Pseudostratified columnar', c: false }], correct: 0, explanation: 'Simple squamous epithelium is a single thin layer ideal for rapid diffusion of gases.', reference: 'Zahra Notes, p. 88' },
+      { id: 'q2', chapter: 'Covering Epithelium', difficulty: 'Hard', accuracy: 54, flagged: true, stem: 'Transitional epithelium is BEST identified in a relaxed bladder by which feature?', options: [{ t: 'Dome-shaped surface (umbrella) cells', c: true }, { t: 'Keratinised surface layer', c: false }, { t: 'Prominent goblet cells', c: false }, { t: 'Ciliated apical border', c: false }], correct: 0, explanation: 'Umbrella cells are the hallmark of transitional epithelium in the relaxed state.', reference: 'Zahra Notes, p. 92' },
+      { id: 'q3', chapter: 'Glandular Epithelium', difficulty: 'Easy', accuracy: 91, flagged: false, stem: 'A gland that secretes its product directly into the bloodstream is classified as:', options: [{ t: 'Endocrine', c: true }, { t: 'Exocrine', c: false }, { t: 'Holocrine', c: false }, { t: 'Merocrine', c: false }], correct: 0, explanation: 'Endocrine glands are ductless and release hormones into the blood.', reference: 'Zahra Notes, p. 101' },
+      { id: 'q4', chapter: 'Connective Tissue Proper', difficulty: 'Medium', accuracy: 68, flagged: false, stem: 'Which cell is chiefly responsible for producing collagen fibres in connective tissue?', options: [{ t: 'Fibroblast', c: true }, { t: 'Mast cell', c: false }, { t: 'Macrophage', c: false }, { t: 'Plasma cell', c: false }], correct: 0, explanation: 'Fibroblasts synthesise the fibres and ground substance of connective tissue.', reference: 'Zahra Notes, p. 118' },
+      { id: 'q5', chapter: 'Cartilage', difficulty: 'Hard', accuracy: 49, flagged: true, stem: 'Elastic cartilage differs from hyaline cartilage primarily because it contains:', options: [{ t: 'Elastic fibres in the matrix', c: true }, { t: 'Type I collagen only', c: false }, { t: 'No perichondrium', c: false }, { t: 'Calcified lacunae', c: false }], correct: 0, explanation: 'Elastic cartilage has a network of elastic fibres, giving it flexibility (e.g. epiglottis, ear).', reference: 'Zahra Notes, p. 134' },
+      { id: 'q6', chapter: 'Bone & Ossification', difficulty: 'Medium', accuracy: 73, flagged: false, stem: 'The concentric lamellae surrounding a central canal in compact bone form a:', options: [{ t: 'Osteon (Haversian system)', c: true }, { t: 'Trabecula', c: false }, { t: 'Lacuna', c: false }, { t: 'Volkmann canal', c: false }], correct: 0, explanation: 'The osteon is the structural unit of compact bone, centred on the Haversian canal.', reference: 'Zahra Notes, p. 141' }
+    ],
+    bankDrafts: [
+      { id: 'd1', chapter: 'Connective Tissue Proper', difficulty: 'Medium', stem: 'Which fibre type provides the greatest tensile strength in dense regular connective tissue?', options: [{ t: 'Type I collagen', c: true }, { t: 'Elastic fibres', c: false }, { t: 'Reticular fibres', c: false }, { t: 'Type IV collagen', c: false }], correct: 0, explanation: 'Type I collagen forms thick parallel bundles giving tendons their strength.', reference: 'Extracted — Notes p. 120' },
+      { id: 'd2', chapter: 'Connective Tissue Proper', difficulty: 'Easy', stem: 'Adipose tissue is a specialised form of which broad tissue category?', options: [{ t: 'Connective tissue', c: true }, { t: 'Epithelial tissue', c: false }, { t: 'Muscle tissue', c: false }, { t: 'Nervous tissue', c: false }], correct: 0, explanation: 'Adipocytes are supported by a connective-tissue framework.', reference: 'Extracted — Notes p. 124' },
+      { id: 'd3', chapter: 'Cartilage', difficulty: 'Hard', stem: 'The growth of cartilage by division of chondrocytes within the matrix is termed:', options: [{ t: 'Interstitial growth', c: true }, { t: 'Appositional growth', c: false }, { t: 'Endochondral growth', c: false }, { t: 'Intramembranous growth', c: false }], correct: 0, explanation: 'Interstitial growth occurs from within; appositional growth adds to the surface.', reference: 'Extracted — Notes p. 132' }
+    ],
+    // roster
+    rosterSearch: '', drill: null,
+    roster: [
+      { name: 'Mariam Hassan', email: 'mariam.h@cu.edu.eg', initials: 'MH', avBg: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', challenges: 32, accuracy: 90, raw: '248/320', streak: 12, lastActive: 'Today', chapters: [['Covering Epithelium', 94], ['Glandular Epithelium', 88], ['Connective Tissue', 72], ['Cartilage', 61], ['Blood', 50]], recent: [['Epithelium', '9/10', 90], ['Cell Biology', '7/10', 70], ['Blood', '5/10', 50]] },
+      { name: 'Omar Khaled', email: 'omar.k@cu.edu.eg', initials: 'OK', avBg: 'linear-gradient(135deg,#0EA5E9,#6366F1)', challenges: 28, accuracy: 82, raw: '196/240', streak: 8, lastActive: 'Today', chapters: [['Covering Epithelium', 88], ['Glandular Epithelium', 80], ['Connective Tissue', 79], ['Cartilage', 74], ['Blood', 70]], recent: [['Cartilage', '8/10', 80], ['Epithelium', '9/10', 90], ['Glands', '7/10', 70]] },
+      { name: 'Nour Adel', email: 'nour.a@cu.edu.eg', initials: 'NA', avBg: 'linear-gradient(135deg,#EC4899,#8B5CF6)', challenges: 21, accuracy: 68, raw: '129/190', streak: 3, lastActive: 'Yesterday', chapters: [['Covering Epithelium', 74], ['Glandular Epithelium', 66], ['Connective Tissue', 60], ['Cartilage', 55], ['Blood', 48]], recent: [['Connective Tissue', '6/10', 60], ['Cartilage', '5/10', 50], ['Epithelium', '8/10', 80]] },
+      { name: 'Youssef Tarek', email: 'y.tarek@cu.edu.eg', initials: 'YT', avBg: 'linear-gradient(135deg,#F59E0B,#EF4444)', challenges: 15, accuracy: 54, raw: '78/145', streak: 0, lastActive: '3 days ago', chapters: [['Covering Epithelium', 60], ['Glandular Epithelium', 52], ['Connective Tissue', 48], ['Cartilage', 44], ['Blood', 40]], recent: [['Blood', '4/10', 40], ['Cartilage', '5/10', 50], ['Glands', '6/10', 60]] },
+      { name: 'Salma Ibrahim', email: 's.ibrahim@cu.edu.eg', initials: 'SI', avBg: 'linear-gradient(135deg,#10B981,#0EA5E9)', challenges: 30, accuracy: 86, raw: '224/260', streak: 15, lastActive: 'Today', chapters: [['Covering Epithelium', 92], ['Glandular Epithelium', 89], ['Connective Tissue', 84], ['Cartilage', 82], ['Blood', 80]], recent: [['Epithelium', '10/10', 100], ['Cartilage', '8/10', 80], ['Blood', '8/10', 80]] },
+      { name: 'Kareem Fouad', email: 'k.fouad@cu.edu.eg', initials: 'KF', avBg: 'linear-gradient(135deg,#8B5CF6,#EC4899)', challenges: 19, accuracy: 73, raw: '138/189', streak: 5, lastActive: 'Yesterday', chapters: [['Covering Epithelium', 80], ['Glandular Epithelium', 75], ['Connective Tissue', 70], ['Cartilage', 68], ['Blood', 64]], recent: [['Glands', '7/10', 70], ['Epithelium', '8/10', 80], ['Connective Tissue', '7/10', 70]] }
+    ],
+    // exams
+    examTab: 'all', examModalOpen: false,
+    newExam: { name: '', module: '103', chapters: [], qs: 20, duration: '30 min', date: '' },
+    exams: [
+      { id: 'e1', name: 'Midterm — Y1 Histology', module: 'Modules 101 & 103', qs: 60, duration: '90 min', date: 'Aug 12, 2026', status: 'Scheduled', enrolled: 412, avg: null },
+      { id: 'e2', name: 'Epithelium Weekly Quiz', module: 'Module 103 · Covering Epithelium', qs: 15, duration: '20 min', date: 'Jul 22, 2026', status: 'Scheduled', enrolled: 1284, avg: null },
+      { id: 'e3', name: 'Blood & Muscle Spot Test', module: 'Module 104', qs: 25, duration: '35 min', date: 'Not scheduled', status: 'Draft', enrolled: 0, avg: null },
+      { id: 'e4', name: 'Final OSPE Revision', module: 'All Modules', qs: 80, duration: '120 min', date: 'Jun 30, 2026', status: 'Completed', enrolled: 1190, avg: 71 }
+    ],
+    // post-lecture challenges
+    challengeTab: 'all', challengeModalOpen: false, qrOpen: false, qr: null, qrCopied: false,
+    newChallenge: { name: '', module: '103', chapter: '', qs: 10, release: 'now', date: '' },
+    challenges: [
+      { id: 'c1', name: 'Covering Epithelium — Post-Lecture', module: 'HIST 103', chapter: 'Covering Epithelium', qs: 10, status: 'Live', date: 'Released today, 11:00 AM', attempts: 842, avg: null },
+      { id: 'c2', name: 'Cartilage Recap Challenge', module: 'HIST 103', chapter: 'Cartilage', qs: 8, status: 'Scheduled', date: 'Jul 18, 2026 · 6:00 PM', attempts: 0, avg: null },
+      { id: 'c3', name: 'Glandular Epithelium Warm-up', module: 'HIST 103', chapter: 'Glandular Epithelium', qs: 12, status: 'Ended', date: 'Jul 2, 2026', attempts: 1190, avg: 76 }
+    ]
+  };
+
+  componentDidMount() {
+    const map = { 'Overview': 'overview', 'Upload Content': 'upload', 'Question Bank': 'bank', 'Student Roster': 'roster', 'Mock Exams': 'exams' };
+    const sv = map[this.props.startView];
+    if (sv && sv !== this.state.view) this.setState({ view: sv });
+  }
+
+  go(view) { this.setState({ view }); }
+
+  // ---------- helpers ----------
+  diffStyle(d) {
+    const m = { Easy: ['#10B981', 'rgba(16,185,129,0.12)'], Medium: ['#F97316', 'rgba(249,115,22,0.12)'], Hard: ['#EF4444', 'rgba(239,68,68,0.12)'] }[d] || ['#94A3B8', 'rgba(255,255,255,0.06)'];
+    return `font-size:9px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:${m[0]}; background:${m[1]}; padding:3px 8px; border-radius:5px;`;
+  }
+  accColor(v) { return v >= 80 ? '#10B981' : v >= 65 ? '#F97316' : '#EF4444'; }
+  curModule() { return this.state.modules.find(m => m.code === this.state.upModule); }
+
+  // ---------- option editing (shared shape) ----------
+  optionRows(obj, correctIdx, onChange, minKeep) {
+    const opts = obj;
+    return opts.map((v, i) => ({
+      value: v.t !== undefined ? v.t : v,
+      label: String.fromCharCode(65 + i),
+      placeholder: 'Option ' + String.fromCharCode(65 + i),
+      check: (correctIdx === i) ? '✓' : '',
+      radioStyle: `width:26px; height:26px; flex:none; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; cursor:pointer; color:${correctIdx === i ? '#fff' : 'transparent'}; background:${correctIdx === i ? 'linear-gradient(135deg,#10B981,#059669)' : 'transparent'}; border:2px solid ${correctIdx === i ? '#10B981' : 'rgba(255,255,255,0.18)'};`,
+      inputStyle: `flex:1; background:#0F0F1A; border:1px solid ${correctIdx === i ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.12)'}; border-radius:9px; padding:10px 12px; color:#F8FAFC; font-size:13px;`,
+      showRemove: opts.length > (minKeep || 2),
+      onInput: (e) => onChange('text', i, e.target.value),
+      onSetCorrect: () => onChange('correct', i),
+      onRemove: () => onChange('remove', i)
+    }));
+  }
+
+  renderVals() {
+    const S = this.state;
+    const view = S.view;
+    const stop = (e) => { if (e && e.stopPropagation) e.stopPropagation(); };
+
+    const navDef = [
+      { key: 'overview', label: 'Overview' },
+      { key: 'upload', label: 'Upload Content' },
+      { key: 'bank', label: 'Question Bank', badge: S.bankDrafts.length },
+      { key: 'roster', label: 'Student Roster' },
+      { key: 'exams', label: 'Mock Exams' },
+      { key: 'challenges', label: 'Post-Lecture' }
+    ];
+    const navItems = navDef.map(n => ({
+      label: n.label,
+      dot: view === n.key ? '#8B5CF6' : '#475569',
+      onClick: () => this.go(n.key),
+      badge: n.badge ? String(n.badge) : '',
+      badgeStyle: 'font-size:10px; font-weight:700; color:#0EA5E9; background:rgba(14,165,233,0.14); padding:2px 7px; border-radius:10px;',
+      style: `display:flex; align-items:center; gap:11px; padding:9px 10px; border-radius:9px; font-size:12.5px; font-weight:${view === n.key ? 600 : 500}; cursor:pointer; color:${view === n.key ? '#F8FAFC' : '#94A3B8'}; background:${view === n.key ? 'rgba(124,58,237,0.14)' : 'transparent'};`
+    }));
+
+    const titles = {
+      overview: ['Overview', 'A personalised snapshot of your module, your students, and what needs you next.'],
+      upload: ['Upload Content', 'Add questions to any chapter — write them yourself or let AI extract them from a document.'],
+      bank: ['Question Bank', 'Browse, search, edit, and approve every question in your module.'],
+      roster: ['Student Roster', 'See how each enrolled student is performing and drill into their chapters.'],
+      exams: ['Mock Exams', 'Create, schedule, and track timed exams for your students.'],
+      challenges: ['Post-Lecture Challenges', 'Create short challenges students take right after a lecture — release now or schedule for later.']
+    };
+    const hr = new Date().getHours();
+
+    // ===== upload wizard =====
+    const mod = this.curModule();
+    const moduleChoices = S.modules.map(m => ({
+      code: m.code, name: m.name, chapterCount: m.chapters.length,
+      onClick: () => this.setState({ upModule: m.code, upChapter: m.chapters[0], addingChapter: false }),
+      style: `padding:14px 16px; border-radius:12px; cursor:pointer; background:${S.upModule === m.code ? 'rgba(124,58,237,0.14)' : '#0F0F1A'}; border:1px solid ${S.upModule === m.code ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.06)'};`
+    }));
+    const chapterChoices = (mod ? mod.chapters : []).map(c => ({
+      name: c,
+      selected: S.upChapter === c,
+      isNew: false,
+      dot: S.upChapter === c ? '#8B5CF6' : '#475569',
+      weight: S.upChapter === c ? 700 : 500,
+      onClick: () => this.setState({ upChapter: c }),
+      style: `display:flex; align-items:center; gap:11px; padding:12px 14px; border-radius:11px; cursor:pointer; background:${S.upChapter === c ? 'rgba(124,58,237,0.12)' : '#0F0F1A'}; border:1px solid ${S.upChapter === c ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.06)'};`
+    }));
+
+    const steps = [
+      { n: 1, key: 1, label: 'Destination', hint: 'Module & chapter' },
+      { n: 2, key: 2, label: 'Method', hint: 'Manual or AI' },
+      { n: 3, key: 3, label: 'Add questions', hint: 'Write or extract' }
+    ].map(st => {
+      const active = S.upStep === st.key;
+      const done = S.upStep > st.key;
+      return {
+        num: done ? '✓' : String(st.n), label: st.label, hint: st.hint,
+        cursor: done ? 'pointer' : 'default',
+        onClick: done ? () => this.setState({ upStep: st.key }) : (() => {}),
+        dotBg: active || done ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'rgba(255,255,255,0.04)',
+        dotColor: active || done ? '#fff' : '#64748B',
+        dotBorder: active || done ? 'transparent' : 'rgba(255,255,255,0.12)',
+        textColor: active || done ? '#F8FAFC' : '#64748B',
+        lineColor: done ? '#8B5CF6' : 'rgba(255,255,255,0.1)'
+      };
+    });
+
+    // manual builder
+    const mq = S.mq;
+    const setMq = (patch) => this.setState({ mq: { ...this.state.mq, ...patch } });
+    const mqOptions = this.optionRows(mq.options, mq.correct, (op, i, val) => {
+      const cur = this.state.mq;
+      if (op === 'text') { const o = [...cur.options]; o[i] = val; setMq({ options: o }); }
+      else if (op === 'correct') setMq({ correct: i });
+      else if (op === 'remove') { if (cur.options.length <= 2) return; const o = cur.options.filter((_, j) => j !== i); let c = cur.correct; if (c >= o.length) c = o.length - 1; setMq({ options: o, correct: c }); }
+    }, 2);
+    const canAddQ = mq.stem.trim() && mq.options.filter(o => o.trim()).length >= 2;
+    const addQuestion = () => {
+      if (!canAddQ) return;
+      const opts = mq.options.map((t, i) => ({ t: t.trim() || ('Option ' + String.fromCharCode(65 + i)), c: i === mq.correct }));
+      this.setState({
+        drafts: [...this.state.drafts, { id: 'nd' + Date.now(), stem: mq.stem.trim(), options: opts, correct: mq.correct, explanation: mq.explanation, reference: mq.reference || (S.upChapter + ' — manual'), difficulty: mq.difficulty, source: 'manual' }],
+        mq: { stem: '', options: ['', '', ''], correct: 0, explanation: '', reference: '', difficulty: 'Medium' }
+      });
+    };
+
+    // AI extraction
+    const startAi = (fname) => {
+      const name = fname || 'Histology_Ch_Notes.pdf';
+      this.setState({ aiPhase: 'processing', aiFileName: name, aiStageIdx: 0 });
+      const seq = [900, 1000, 1000, 900];
+      let acc = 0;
+      seq.forEach((ms, i) => { acc += ms; setTimeout(() => { if (this.state.aiPhase === 'processing') this.setState({ aiStageIdx: i + 1 }); }, acc); });
+      setTimeout(() => {
+        if (this.state.aiPhase !== 'processing') return;
+        const ch = this.state.upChapter;
+        const extracted = [
+          { id: 'ai1', stem: 'Which junctional complex forms the tightest seal between adjacent epithelial cells?', options: [{ t: 'Zonula occludens (tight junction)', c: true }, { t: 'Zonula adherens', c: false }, { t: 'Macula adherens (desmosome)', c: false }, { t: 'Gap junction', c: false }], correct: 0, explanation: 'The zonula occludens seals the paracellular space, controlling permeability.', reference: 'Notes p. 96 · Fig 4.2', difficulty: 'Medium', source: 'ai' },
+          { id: 'ai2', stem: 'Microvilli increase surface area and are supported internally by a core of:', options: [{ t: 'Actin filaments', c: true }, { t: 'Microtubules', c: false }, { t: 'Intermediate filaments', c: false }, { t: 'Basal bodies', c: false }], correct: 0, explanation: 'The microvillus core is a bundle of actin filaments anchored in the terminal web.', reference: 'Notes p. 98 · Fig 4.5', difficulty: 'Easy', source: 'ai' },
+          { id: 'ai3', stem: 'A ciliated pseudostratified columnar epithelium with goblet cells is characteristic of the:', options: [{ t: 'Trachea', c: true }, { t: 'Oesophagus', c: false }, { t: 'Urinary bladder', c: false }, { t: 'Epidermis', c: false }], correct: 0, explanation: 'The respiratory epithelium of the trachea is classically pseudostratified, ciliated, with goblet cells.', reference: 'Notes p. 103 · Fig 4.9', difficulty: 'Hard', source: 'ai' },
+          { id: 'ai4', stem: 'The basement membrane is composed of the basal lamina plus a layer of:', options: [{ t: 'Reticular fibres', c: true }, { t: 'Elastic fibres', c: false }, { t: 'Adipocytes', c: false }, { t: 'Smooth muscle', c: false }], correct: 0, explanation: 'The reticular lamina of reticular (type III) fibres underlies the basal lamina.', reference: 'Notes p. 105 · Fig 4.12', difficulty: 'Medium', source: 'ai' }
+        ].map(q => ({ ...q, chapter: ch }));
+        this.setState({ aiPhase: 'done', drafts: extracted });
+      }, acc + 700);
+    };
+    const aiStepDefs = ['Reading document structure', 'Extracting question stems & options', 'Identifying correct answers', 'Matching reference pages'];
+    const aiSteps = aiStepDefs.map((label, i) => {
+      const done = S.aiStageIdx > i; const active = S.aiStageIdx === i;
+      return { label, weight: active ? 700 : 500, icon: done ? '✓' : (i + 1), textColor: done ? '#10B981' : active ? '#F8FAFC' : '#64748B', bg: done ? 'rgba(16,185,129,0.15)' : active ? 'rgba(124,58,237,0.18)' : 'rgba(255,255,255,0.04)', color: done ? '#10B981' : active ? '#8B5CF6' : '#64748B', border: done ? 'rgba(16,185,129,0.4)' : active ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.1)' };
+    });
+
+    const drafts = S.drafts.map((d, i) => ({
+      num: i + 1, stem: d.stem, stemShort: d.stem.length > 84 ? d.stem.slice(0, 84) + '…' : d.stem,
+      difficulty: d.difficulty, diffStyle: this.diffStyle(d.difficulty),
+      reference: d.reference, optCount: d.options.length,
+      options: d.options.map((o, j) => ({ label: String.fromCharCode(65 + j), text: o.t, correct: o.c, style: `font-size:12px; padding:8px 11px; border-radius:8px; background:${o.c ? 'rgba(16,185,129,0.1)' : '#0F0F1A'}; border:1px solid ${o.c ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.06)'}; color:${o.c ? '#D1FAE5' : '#CBD5E1'};` })),
+      onRemove: () => this.setState({ drafts: this.state.drafts.filter((_, j) => j !== i) }),
+      onEdit: () => this.openEditDraft(d.id)
+    }));
+
+    // publish
+    const doPublish = () => {
+      const n = S.drafts.length; if (!n) return;
+      const published = S.drafts.map(d => ({ id: 'p' + d.id, chapter: S.upChapter, difficulty: d.difficulty, accuracy: 0, flagged: false, stem: d.stem, options: d.options, correct: d.correct, explanation: d.explanation, reference: d.reference, fresh: true }));
+      this.setState({ bank: [...published, ...this.state.bank], published: true, publishedCount: n, drafts: [] });
+    };
+
+    // ===== question bank =====
+    const chapAll = Array.from(new Set(S.modules.flatMap(m => m.chapters)));
+    const usedChapters = Array.from(new Set([...S.bank, ...S.bankDrafts].map(q => q.chapter)));
+    const qbFilters = ['all', ...usedChapters].map(c => ({
+      label: c === 'all' ? 'All chapters' : c,
+      onClick: () => this.setState({ qbChapter: c }),
+      style: `font-size:11.5px; font-weight:${S.qbChapter === c ? 700 : 600}; cursor:pointer; padding:7px 13px; border-radius:9px; color:${S.qbChapter === c ? '#fff' : '#94A3B8'}; background:${S.qbChapter === c ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${S.qbChapter === c ? 'transparent' : 'rgba(255,255,255,0.09)'};`
+    }));
+    const srcList = S.qbTab === 'published' ? S.bank : S.bankDrafts;
+    const q2 = S.qbSearch.trim().toLowerCase();
+    const bankResults = srcList
+      .filter(q => S.qbChapter === 'all' || q.chapter === S.qbChapter)
+      .filter(q => !q2 || q.stem.toLowerCase().includes(q2))
+      .map(q => ({
+        chapter: q.chapter, difficulty: q.difficulty, diffStyle: this.diffStyle(q.difficulty),
+        flagged: !!q.flagged, stem: q.stem,
+        isPublished: S.qbTab === 'published', isDraft: S.qbTab === 'drafts',
+        accuracy: q.accuracy ? q.accuracy + '%' : '—', accColor: this.accColor(q.accuracy || 0),
+        onEdit: () => this.openEdit(q.id, S.qbTab),
+        onApprove: () => this.approveDraft(q.id),
+        onReject: () => this.rejectDraft(q.id)
+      }));
+
+    // ===== edit modal =====
+    const eq = S.editingQ;
+    let eqVals = {};
+    if (eq) {
+      const setEq = (patch) => this.setState({ editingQ: { ...this.state.editingQ, ...patch } });
+      const eqOptions = this.optionRows(eq.options, eq.correct, (op, i, val) => {
+        const cur = this.state.editingQ;
+        if (op === 'text') { const o = cur.options.map((x, j) => j === i ? { ...x, t: val } : x); setEq({ options: o }); }
+        else if (op === 'correct') { const o = cur.options.map((x, j) => ({ ...x, c: j === i })); setEq({ options: o, correct: i }); }
+        else if (op === 'remove') { if (cur.options.length <= 2) return; const o = cur.options.filter((_, j) => j !== i); let c = cur.correct; if (c >= o.length) c = o.length - 1; const o2 = o.map((x, j) => ({ ...x, c: j === c })); setEq({ options: o2, correct: c }); }
+      }, 2);
+      eqVals = {
+        eqStem: eq.stem, eqExplanation: eq.explanation, eqReference: eq.reference, eqDifficulty: eq.difficulty, eqOptions,
+        onEqStem: (e) => setEq({ stem: e.target.value }),
+        onEqExpl: (e) => setEq({ explanation: e.target.value }),
+        onEqRef: (e) => setEq({ reference: e.target.value }),
+        onEqDiff: (e) => setEq({ difficulty: e.target.value }),
+        eqAddOption: () => { const cur = this.state.editingQ; if (cur.options.length >= 5) return; setEq({ options: [...cur.options, { t: '', c: false }] }); },
+        eqAddOptStyle: `font-size:11px; font-weight:700; color:${eq.options.length >= 5 ? '#475569' : '#8B5CF6'}; cursor:${eq.options.length >= 5 ? 'default' : 'pointer'};`
+      };
+    }
+
+    // ===== roster =====
+    const rs = S.rosterSearch.trim().toLowerCase();
+    const rosterResults = S.roster
+      .filter(r => !rs || r.name.toLowerCase().includes(rs) || r.email.toLowerCase().includes(rs))
+      .map(r => ({ ...r, accuracy: r.accuracy + '%', accColor: this.accColor(r.accuracy), onOpen: () => this.setState({ drill: r }) }));
+    const dr = S.drill;
+    let drillVals = {};
+    if (dr) {
+      drillVals = {
+        drillName: dr.name, drillEmail: dr.email, drillInitials: dr.initials, drillAvBg: dr.avBg,
+        drillAccuracy: dr.accuracy + '%', drillAccColor: this.accColor(dr.accuracy),
+        drillChallenges: dr.challenges, drillStreak: dr.streak,
+        drillChapters: dr.chapters.map(([name, acc]) => ({ name, acc: acc + '%', color: this.accColor(acc) })),
+        drillRecent: dr.recent.map(([name, score, acc]) => ({ name, score, acc: acc + '%', color: this.accColor(acc) }))
+      };
+    }
+
+    // ===== exams =====
+    const examTabs = ['all', 'Scheduled', 'Draft', 'Completed'].map(t => ({
+      label: t === 'all' ? 'All' : t,
+      onClick: () => this.setState({ examTab: t }),
+      style: `padding:7px 15px; border-radius:9px; font-size:12px; font-weight:600; cursor:pointer; color:${S.examTab === t ? '#fff' : '#94A3B8'}; background:${S.examTab === t ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'transparent'};`
+    }));
+    const statusStyleFor = (s) => {
+      const m = { Scheduled: ['#8B5CF6', 'rgba(124,58,237,0.14)'], Draft: ['#94A3B8', 'rgba(255,255,255,0.06)'], Completed: ['#10B981', 'rgba(16,185,129,0.12)'] }[s];
+      return `font-size:9.5px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:${m[0]}; background:${m[1]}; padding:5px 11px; border-radius:6px; white-space:nowrap; flex:none;`;
+    };
+    const examResults = S.exams
+      .filter(e => S.examTab === 'all' || e.status === S.examTab)
+      .map(e => {
+        const isDone = e.status === 'Completed';
+        const actions = isDone
+          ? [{ label: 'View results', style: 'font-size:11.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:8px 14px; border-radius:9px; cursor:pointer;', onClick: () => {} }]
+          : e.status === 'Draft'
+            ? [{ label: 'Edit', style: 'font-size:11.5px; font-weight:600; color:#94A3B8; border:1px solid rgba(255,255,255,0.12); padding:8px 12px; border-radius:9px; cursor:pointer;', onClick: () => {} }, { label: 'Schedule', style: 'font-size:11.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:8px 14px; border-radius:9px; cursor:pointer;', onClick: () => this.scheduleExam(e.id) }]
+            : [{ label: 'Edit', style: 'font-size:11.5px; font-weight:600; color:#94A3B8; border:1px solid rgba(255,255,255,0.12); padding:8px 12px; border-radius:9px; cursor:pointer;', onClick: () => {} }, { label: 'Preview', style: 'font-size:11.5px; font-weight:700; color:#8B5CF6; border:1px solid rgba(124,58,237,0.4); padding:8px 14px; border-radius:9px; cursor:pointer;', onClick: () => {} }];
+        return {
+          name: e.name, module: e.module, qs: e.qs, duration: e.duration, date: e.date,
+          status: e.status, statusStyle: statusStyleFor(e.status),
+          metric: isDone ? e.avg + '%' : (e.enrolled ? e.enrolled.toLocaleString() : '—'),
+          metricLabel: isDone ? 'Class avg' : 'Enrolled',
+          metricColor: isDone ? this.accColor(e.avg) : '#F8FAFC',
+          actions
+        };
+      });
+
+    // create-exam modal
+    const ne = S.newExam;
+    const setNe = (patch) => this.setState({ newExam: { ...this.state.newExam, ...patch } });
+    const neMod = S.modules.find(m => m.code === ne.module) || S.modules[0];
+    const neChapterChips = neMod.chapters.map(c => ({
+      name: c,
+      onClick: () => { const has = ne.chapters.includes(c); setNe({ chapters: has ? ne.chapters.filter(x => x !== c) : [...ne.chapters, c] }); },
+      style: `font-size:11.5px; font-weight:600; cursor:pointer; padding:7px 12px; border-radius:9px; color:${ne.chapters.includes(c) ? '#fff' : '#94A3B8'}; background:${ne.chapters.includes(c) ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${ne.chapters.includes(c) ? 'transparent' : 'rgba(255,255,255,0.09)'};`
+    }));
+    const createExam = () => {
+      const name = ne.name.trim() || 'Untitled Exam';
+      const scheduled = ne.date.trim().length > 0;
+      const newRow = { id: 'e' + Date.now(), name, module: 'HIST ' + ne.module + (ne.chapters.length ? ' · ' + ne.chapters.length + ' chapters' : ''), qs: ne.qs, duration: ne.duration, date: scheduled ? ne.date.trim() : 'Not scheduled', status: scheduled ? 'Scheduled' : 'Draft', enrolled: scheduled ? 1284 : 0, avg: null };
+      this.setState({ exams: [newRow, ...this.state.exams], examModalOpen: false, examTab: scheduled ? 'Scheduled' : 'Draft', newExam: { name: '', module: '103', chapters: [], qs: 20, duration: '30 min', date: '' } });
+    };
+
+    // ===== post-lecture challenges =====
+    const challengeTabs = ['all', 'Live', 'Scheduled', 'Ended'].map(t => ({
+      label: t === 'all' ? 'All' : t,
+      onClick: () => this.setState({ challengeTab: t }),
+      style: `padding:7px 15px; border-radius:9px; font-size:12px; font-weight:600; cursor:pointer; color:${S.challengeTab === t ? '#fff' : '#94A3B8'}; background:${S.challengeTab === t ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'transparent'};`
+    }));
+    const chStatusStyle = (s) => {
+      const m = { Live: ['#10B981', 'rgba(16,185,129,0.12)'], Scheduled: ['#8B5CF6', 'rgba(124,58,237,0.14)'], Ended: ['#94A3B8', 'rgba(255,255,255,0.06)'] }[s];
+      return `font-size:9.5px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:${m[0]}; background:${m[1]}; padding:5px 11px; border-radius:6px; white-space:nowrap; flex:none;`;
+    };
+    const ghostBtn = 'font-size:11.5px; font-weight:600; color:#94A3B8; border:1px solid rgba(255,255,255,0.12); padding:8px 12px; border-radius:9px; cursor:pointer;';
+    const purpleBtn = 'font-size:11.5px; font-weight:700; color:#8B5CF6; border:1px solid rgba(124,58,237,0.4); padding:8px 12px; border-radius:9px; cursor:pointer;';
+    const solidBtn = 'font-size:11.5px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7C3AED,#8B5CF6); padding:8px 14px; border-radius:9px; cursor:pointer;';
+    const challengeResults = S.challenges
+      .filter(c => S.challengeTab === 'all' || c.status === S.challengeTab)
+      .map(c => {
+        const ended = c.status === 'Ended';
+        const qrBtn = { label: '⃞ QR code', style: purpleBtn, onClick: () => this.openQr(c) };
+        const actions = ended
+          ? [qrBtn, { label: 'View results', style: solidBtn, onClick: () => {} }]
+          : c.status === 'Scheduled'
+            ? [{ label: 'Edit', style: ghostBtn, onClick: () => {} }, { label: 'Release now', style: solidBtn, onClick: () => this.releaseChallenge(c.id) }]
+            : [qrBtn, { label: 'End', style: ghostBtn, onClick: () => this.endChallenge(c.id) }];
+        return {
+          name: c.name, module: c.module, chapter: c.chapter, qs: c.qs, date: c.date, status: c.status, statusStyle: chStatusStyle(c.status),
+          metric: ended ? c.avg + '%' : (c.attempts ? c.attempts.toLocaleString() : '—'),
+          metricLabel: ended ? 'Class avg' : 'Attempts',
+          metricColor: ended ? this.accColor(c.avg) : '#F8FAFC',
+          actions
+        };
+      });
+    const nc = S.newChallenge;
+    const setNc = (patch) => this.setState({ newChallenge: { ...this.state.newChallenge, ...patch } });
+    const ncMod = S.modules.find(m => m.code === nc.module) || S.modules[0];
+    const releaseNow = nc.release === 'now';
+    const segStyle = (on) => `flex:1; text-align:center; padding:9px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; color:${on ? '#fff' : '#94A3B8'}; background:${on ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'transparent'};`;
+    const createChallenge = () => {
+      const name = nc.name.trim() || 'Untitled Challenge';
+      const chapter = nc.chapter || ncMod.chapters[0];
+      const scheduled = nc.release === 'schedule' && nc.date.trim();
+      const status = scheduled ? 'Scheduled' : 'Live';
+      const row = { id: 'c' + Date.now(), name, module: 'HIST ' + nc.module, chapter, qs: nc.qs, status, date: scheduled ? nc.date.trim() : 'Released just now', attempts: 0, avg: null };
+      this.setState({ challenges: [row, ...this.state.challenges], challengeModalOpen: false, challengeTab: status, newChallenge: { name: '', module: '103', chapter: '', qs: 10, release: 'now', date: '' } });
+      if (!scheduled) this.openQr(row);
+    };
+
+    return {
+      stop,
+      navItems,
+      pageTitle: titles[view][0], pageSubtitle: titles[view][1],
+      goUpload: () => this.setState({ view: 'upload', upStep: 1 }),
+      goBank: () => this.go('bank'),
+      isOverview: view === 'overview', isUpload: view === 'upload', isBank: view === 'bank', isRoster: view === 'roster', isExams: view === 'exams',
+
+      // overview
+      today: new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+      greeting: hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening',
+      stats: [
+        { label: 'My Students', value: '1,284', color: '#F8FAFC', sub: 'Enrolled in Histology' },
+        { label: 'Published Questions', value: String(S.bank.length + 444), color: '#F8FAFC', sub: 'Across all chapters' },
+        { label: 'Avg. Class Accuracy', value: '74%', color: '#10B981', sub: 'All completed sessions' },
+        { label: 'Sessions This Week', value: '3,942', color: '#8B5CF6', sub: 'Challenges completed' }
+      ],
+      attentionCount: S.bankDrafts.length + 2,
+      attention: [
+        { icon: '✨', bg: 'rgba(14,165,233,0.15)', color: '#0EA5E9', border: 'rgba(14,165,233,0.4)', title: S.bankDrafts.length + ' AI-drafted questions awaiting review', sub: 'Extracted from Connective Tissue notes', cta: 'Review', onClick: () => this.setState({ view: 'bank', qbTab: 'drafts', qbChapter: 'all' }) },
+        { icon: '⚑', bg: 'rgba(239,68,68,0.15)', color: '#EF4444', border: 'rgba(239,68,68,0.4)', title: '2 questions flagged as confusing', sub: 'Students report ambiguity in Cartilage & Epithelium', cta: 'View', onClick: () => this.setState({ view: 'bank', qbTab: 'published', qbChapter: 'all' }) },
+        { icon: '📅', bg: 'rgba(124,58,237,0.15)', color: '#8B5CF6', border: 'rgba(124,58,237,0.4)', title: 'Midterm exam is scheduled for Aug 12', sub: '412 students enrolled — review the question set', cta: 'Open', onClick: () => this.setState({ view: 'exams', examTab: 'Scheduled' }) }
+      ],
+      activity: [
+        { icon: '✓', bg: 'rgba(16,185,129,0.15)', color: '#10B981', text: 'Salma Ibrahim scored 100% on Epithelium', time: '18 min ago' },
+        { icon: '📤', bg: 'rgba(124,58,237,0.15)', color: '#8B5CF6', text: 'You published 12 questions to Bone & Ossification', time: '2 hours ago' },
+        { icon: '⚑', bg: 'rgba(239,68,68,0.15)', color: '#EF4444', text: 'A Cartilage question was flagged by 3 students', time: '4 hours ago' },
+        { icon: '👤', bg: 'rgba(14,165,233,0.15)', color: '#0EA5E9', text: '46 new students enrolled this week', time: 'Yesterday' },
+        { icon: '✨', bg: 'rgba(14,165,233,0.15)', color: '#0EA5E9', text: 'AI extracted 3 drafts from your notes', time: 'Yesterday' }
+      ],
+      chapterPerf: [
+        { name: 'Covering Epithelium', acc: '84%', color: '#10B981' },
+        { name: 'Glandular Epithelium', acc: '79%', color: '#10B981' },
+        { name: 'Connective Tissue', acc: '68%', color: '#F97316' },
+        { name: 'Cartilage', acc: '54%', color: '#EF4444' },
+        { name: 'Bone & Ossification', acc: '73%', color: '#F97316' },
+        { name: 'Blood', acc: '50%', color: '#EF4444' }
+      ],
+
+      // wizard
+      steps,
+      isStep1: S.upStep === 1, isStep2: S.upStep === 2,
+      isStep3Manual: S.upStep === 3 && S.upMode === 'manual',
+      isStep3Ai: S.upStep === 3 && S.upMode === 'ai',
+      isStep4: S.upStep === 4,
+      upModule: S.upModule, upChapter: S.upChapter,
+      moduleChoices, chapterChoices,
+      addingChapter: S.addingChapter,
+      addChapterLabel: S.addingChapter ? '× Cancel' : '+ Add chapter',
+      toggleAddChapter: () => this.setState({ addingChapter: !this.state.addingChapter, newChapterName: '' }),
+      newChapterName: S.newChapterName,
+      onNewChapterInput: (e) => this.setState({ newChapterName: e.target.value }),
+      confirmAddChapter: () => {
+        const nm = this.state.newChapterName.trim(); if (!nm) return;
+        const modules = this.state.modules.map(m => m.code === this.state.upModule ? { ...m, chapters: [...m.chapters, nm] } : m);
+        this.setState({ modules, upChapter: nm, addingChapter: false, newChapterName: '' });
+      },
+      toStep1: () => this.setState({ upStep: 1 }),
+      toStep2: () => this.setState({ upStep: 2 }),
+      pickManual: () => this.setState({ upStep: 3, upMode: 'manual' }),
+      pickAi: () => { if (this.props.enableAiAuthoring === false) return; this.setState({ upStep: 3, upMode: 'ai', aiPhase: 'idle' }); },
+      aiEnabled: this.props.enableAiAuthoring !== false,
+      aiCardStyle: `position:relative; overflow:hidden; background:linear-gradient(160deg,#1a1330,#161B26); border:1px solid rgba(139,92,246,0.5); border-radius:18px; padding:28px; cursor:pointer; box-shadow:0 0 0 1px rgba(124,58,237,0.2), 0 0 30px rgba(124,58,237,0.12); ${this.props.enableAiAuthoring === false ? 'opacity:0.4; pointer-events:none;' : ''}`,
+
+      // manual
+      mqStem: mq.stem, mqExplanation: mq.explanation, mqReference: mq.reference, mqDifficulty: mq.difficulty, mqOptions,
+      onStemInput: (e) => setMq({ stem: e.target.value }),
+      onExplInput: (e) => setMq({ explanation: e.target.value }),
+      onRefInput: (e) => setMq({ reference: e.target.value }),
+      onDiffChange: (e) => setMq({ difficulty: e.target.value }),
+      addOption: () => { const cur = this.state.mq; if (cur.options.length >= 5) return; setMq({ options: [...cur.options, ''] }); },
+      addOptStyle: `font-size:11px; font-weight:700; color:${mq.options.length >= 5 ? '#475569' : '#8B5CF6'}; cursor:${mq.options.length >= 5 ? 'default' : 'pointer'};`,
+      addQuestion,
+      addQStyle: `margin-top:22px; text-align:center; font-size:13px; font-weight:700; padding:13px; border-radius:12px; cursor:${canAddQ ? 'pointer' : 'not-allowed'}; color:${canAddQ ? '#fff' : '#64748B'}; background:${canAddQ ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'rgba(255,255,255,0.04)'}; box-shadow:${canAddQ ? '0 0 20px rgba(124,58,237,0.35)' : 'none'};`,
+      drafts, draftCount: S.drafts.length, hasDrafts: S.drafts.length > 0, noDrafts: S.drafts.length === 0,
+      reviewBtnStyle: `margin-top:18px; text-align:center; font-size:12.5px; font-weight:700; padding:12px; border-radius:11px; cursor:${S.drafts.length ? 'pointer' : 'not-allowed'}; color:${S.drafts.length ? '#C4B5FD' : '#475569'}; border:1px solid ${S.drafts.length ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.08)'};`,
+
+      // ai
+      aiIdle: S.aiPhase === 'idle', aiProcessing: S.aiPhase === 'processing', aiDone: S.aiPhase === 'done',
+      aiFileName: S.aiFileName, aiSteps,
+      startAi: () => startAi('Histology_Notes.pdf'),
+      resetAi: () => this.setState({ aiPhase: 'idle', drafts: [], aiStageIdx: 0 }),
+      sampleFiles: [
+        { icon: '📕', name: 'Connective_Tissue_Notes.pdf', meta: 'PDF · 3.2 MB · 24 pages', onClick: () => startAi('Connective_Tissue_Notes.pdf') },
+        { icon: '📘', name: 'Epithelium_QBank.docx', meta: 'DOCX · 1.1 MB · 40 questions', onClick: () => startAi('Epithelium_QBank.docx') }
+      ],
+
+      // publish
+      toStep4: () => { if (!this.state.drafts.length) return; this.setState({ upStep: 4, published: false }); },
+      notPublished: !S.published, isPublished: S.published, publishedCount: S.publishedCount,
+      methodLabel: S.upMode === 'ai' ? 'AI authoring' : 'Written manually',
+      notify: S.notify, toggleNotify: () => this.setState({ notify: !this.state.notify }),
+      notifyBox: `width:22px; height:22px; flex:none; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff; background:${S.notify ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'transparent'}; border:2px solid ${S.notify ? 'transparent' : 'rgba(255,255,255,0.2)'};`,
+      notifyCheck: S.notify ? '✓' : '',
+      backFromPublish: () => this.setState({ upStep: 3 }),
+      doPublish,
+      uploadMore: () => this.setState({ upStep: 1, upMode: null, aiPhase: 'idle', published: false, drafts: [] }),
+
+      // bank
+      qbTab: S.qbTab, qbSearch: S.qbSearch, qbFilters, bankResults,
+      hasResults: bankResults.length > 0, noResults: bankResults.length === 0,
+      noResultsMsg: S.qbTab === 'drafts' ? 'No AI drafts pending — all caught up.' : 'No questions match your search.',
+      publishedCountLabel: '· ' + S.bank.length, draftCountLabel: '· ' + S.bankDrafts.length,
+      setTabPublished: () => this.setState({ qbTab: 'published' }),
+      setTabDrafts: () => this.setState({ qbTab: 'drafts' }),
+      onQbSearch: (e) => this.setState({ qbSearch: e.target.value }),
+      tabPublishedStyle: `padding:8px 16px; border-radius:9px; font-size:12px; font-weight:600; cursor:pointer; color:${S.qbTab === 'published' ? '#fff' : '#94A3B8'}; background:${S.qbTab === 'published' ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'transparent'};`,
+      tabDraftsStyle: `padding:8px 16px; border-radius:9px; font-size:12px; font-weight:600; cursor:pointer; color:${S.qbTab === 'drafts' ? '#fff' : '#94A3B8'}; background:${S.qbTab === 'drafts' ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'transparent'};`,
+
+      // edit modal
+      editOpen: !!S.editingQ, closeEdit: () => this.setState({ editingQ: null }),
+      saveEdit: () => this.saveEdit(),
+      ...eqVals,
+
+      // roster
+      rosterSearch: S.rosterSearch, onRosterSearch: (e) => this.setState({ rosterSearch: e.target.value }),
+      rosterResults, hasRosterResults: rosterResults.length > 0, noRosterResults: rosterResults.length === 0,
+      drillOpen: !!S.drill, closeDrill: () => this.setState({ drill: null }),
+      ...drillVals,
+
+      // exams
+      examTabs, examResults,
+      openExamModal: () => this.setState({ examModalOpen: true }),
+      closeExamModal: () => this.setState({ examModalOpen: false }),
+      examModalOpen: S.examModalOpen,
+      neName: ne.name, neModule: ne.module, neQs: ne.qs, neDuration: ne.duration, neDate: ne.date,
+      neChapterChips,
+      neModuleOptions: S.modules.map(m => ({ value: m.code, label: 'HIST ' + m.code + ' — ' + m.name })),
+      onNeName: (e) => setNe({ name: e.target.value }),
+      onNeModule: (e) => setNe({ module: e.target.value, chapters: [] }),
+      onNeDuration: (e) => setNe({ duration: e.target.value }),
+      onNeDate: (e) => setNe({ date: e.target.value }),
+      neQsUp: () => setNe({ qs: Math.min(120, ne.qs + 5) }),
+      neQsDown: () => setNe({ qs: Math.max(5, ne.qs - 5) }),
+      createExam,
+      createExamLabel: ne.date.trim() ? 'Schedule exam' : 'Save as draft',
+
+      // post-lecture challenges
+      isChallenges: view === 'challenges',
+      goChallenges: () => this.go('challenges'),
+      challengeTabs, challengeResults,
+      openChallengeModal: () => this.setState({ challengeModalOpen: true, newChallenge: { name: '', module: '103', chapter: '', qs: 10, release: 'now', date: '' } }),
+      closeChallengeModal: () => this.setState({ challengeModalOpen: false }),
+      challengeModalOpen: S.challengeModalOpen,
+      ncName: nc.name, ncModule: nc.module, ncChapter: nc.chapter || ncMod.chapters[0], ncQs: nc.qs, ncDate: nc.date,
+      ncModuleOptions: S.modules.map(m => ({ value: m.code, label: 'HIST ' + m.code + ' — ' + m.name })),
+      ncChapterOptions: ncMod.chapters.map(c => ({ value: c, label: c })),
+      onNcName: (e) => setNc({ name: e.target.value }),
+      onNcModule: (e) => setNc({ module: e.target.value, chapter: '' }),
+      onNcChapter: (e) => setNc({ chapter: e.target.value }),
+      ncQsUp: () => setNc({ qs: Math.min(30, nc.qs + 1) }),
+      ncQsDown: () => setNc({ qs: Math.max(3, nc.qs - 1) }),
+      setReleaseNow: () => setNc({ release: 'now' }),
+      setReleaseSchedule: () => setNc({ release: 'schedule' }),
+      releaseNowStyle: segStyle(releaseNow), releaseSchedStyle: segStyle(!releaseNow),
+      onNcDate: (e) => setNc({ date: e.target.value }),
+      showNcDate: !releaseNow,
+      createChallenge,
+      createChallengeLabel: (nc.release === 'schedule' && nc.date.trim()) ? 'Schedule challenge' : 'Release now',
+      qrOpen: S.qrOpen,
+      qrName: S.qr && S.qr.name, qrMeta: S.qr && (S.qr.module + ' · ' + S.qr.chapter + ' · ' + S.qr.qs + ' questions'),
+      qrLink: S.qr && S.qr.link,
+      closeQr: () => this.setState({ qrOpen: false }),
+      qrCopyLabel: S.qrCopied ? '✓ Link copied' : 'Copy link',
+      copyQrLink: () => { try { navigator.clipboard && navigator.clipboard.writeText(S.qr.link); } catch (e) {} this.setState({ qrCopied: true }); },
+      qrImgEl: S.qr ? React.createElement('img', { src: 'https://api.qrserver.com/v1/create-qr-code/?size=440x440&margin=12&bgcolor=15-18-26&color=248-250-252&data=' + encodeURIComponent(S.qr.link), alt: 'Challenge QR code', style: { width: '100%', maxWidth: '280px', aspectRatio: '1', display: 'block', borderRadius: '6px' } }) : null,
+      qrDownloadEl: S.qr ? React.createElement('a', { href: 'https://api.qrserver.com/v1/create-qr-code/?size=440x440&margin=12&bgcolor=15-18-26&color=248-250-252&data=' + encodeURIComponent(S.qr.link), download: 'challenge-qr.png', style: { textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#F8FAFC', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', padding: '12px 18px', borderRadius: '12px', cursor: 'pointer' } }, 'Download') : null
+    };
+  }
+
+  openEdit(id, tab) {
+    const list = tab === 'published' ? this.state.bank : this.state.bankDrafts;
+    const q = list.find(x => x.id === id); if (!q) return;
+    this.setState({ editingQ: { ...q, options: q.options.map(o => ({ ...o })), _tab: tab } });
+  }
+  openEditDraft(id) {
+    const q = this.state.drafts.find(x => x.id === id); if (!q) return;
+    this.setState({ editingQ: { ...q, options: q.options.map(o => ({ ...o })), _tab: 'wizard' } });
+  }
+  saveEdit() {
+    const eq = this.state.editingQ; if (!eq) return;
+    const clean = { ...eq }; delete clean._tab;
+    if (eq._tab === 'published') this.setState({ bank: this.state.bank.map(q => q.id === eq.id ? clean : q), editingQ: null });
+    else if (eq._tab === 'drafts') this.setState({ bankDrafts: this.state.bankDrafts.map(q => q.id === eq.id ? clean : q), editingQ: null });
+    else this.setState({ drafts: this.state.drafts.map(q => q.id === eq.id ? clean : q), editingQ: null });
+  }
+  approveDraft(id) {
+    const q = this.state.bankDrafts.find(x => x.id === id); if (!q) return;
+    const published = { ...q, id: 'p' + id, accuracy: 0, flagged: false, fresh: true };
+    this.setState({ bank: [published, ...this.state.bank], bankDrafts: this.state.bankDrafts.filter(x => x.id !== id) });
+  }
+  rejectDraft(id) { this.setState({ bankDrafts: this.state.bankDrafts.filter(x => x.id !== id) }); }
+  scheduleExam(id) { this.setState({ exams: this.state.exams.map(e => e.id === id ? { ...e, status: 'Scheduled', date: 'Aug 20, 2026', enrolled: 1284 } : e), examTab: 'Scheduled' }); }
+  openQr(c) { this.setState({ qrOpen: true, qrCopied: false, qr: { name: c.name, module: c.module, chapter: c.chapter, qs: c.qs, link: 'https://medz.app/c/' + c.id } }); }
+  releaseChallenge(id) { this.setState({ challenges: this.state.challenges.map(c => c.id === id ? { ...c, status: 'Live', date: 'Released just now', attempts: 0 } : c), challengeTab: 'Live' }); }
+  endChallenge(id) { this.setState({ challenges: this.state.challenges.map(c => c.id === id ? { ...c, status: 'Ended', date: 'Ended just now', avg: c.avg || 72 } : c), challengeTab: 'Ended' }); }
+}
+</script>
+</body>
+</html>
