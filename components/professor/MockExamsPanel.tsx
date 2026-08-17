@@ -81,19 +81,31 @@ export function MockExamsPanel({ modules }: { modules: ModuleWithChapters[] }) {
   const [count, setCount] = useState(50);
   const [duration, setDuration] = useState(90);
   const [passMark, setPassMark] = useState(60);
-  const [startAt, setStartAt] = useState(toLocalInput(new Date(Date.now() + 86400000)));
-  const [endAt, setEndAt] = useState(
+  const [startAt, setStartAt] = useState(() =>
+    toLocalInput(new Date(Date.now() + 86400000))
+  );
+  const [endAt, setEndAt] = useState(() =>
     toLocalInput(new Date(Date.now() + 86400000 + 7 * 86400000))
   );
   const [toast, setToast] = useState<string | null>(null);
   const [tab, setTab] = useState<'scheduled' | 'past'>('scheduled');
 
+  // localStorage isn't available during SSR, so `items` must start empty
+  // and hydrate here post-mount — seeding it via a lazy useState
+  // initializer instead would read real client data on the very first
+  // client render and mismatch the server-rendered (empty) HTML.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(loadAll());
   }, []);
 
+  // selectedModules is also directly mutated by toggleModule, so it can't
+  // be replaced with a value derived at render time: toggling off a
+  // module that only exists as a computed fallback (never actually
+  // stored in state) would no-op instead of deselecting it.
   useEffect(() => {
     if (selectedModules.size === 0 && activeModules[0]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedModules(new Set([activeModules[0].code]));
     }
   }, [activeModules, selectedModules.size]);
@@ -148,6 +160,13 @@ export function MockExamsPanel({ modules }: { modules: ModuleWithChapters[] }) {
     saveAll(updated);
   };
 
+  // Intentionally uncached: this must reflect real elapsed time so an
+  // exam flips from Scheduled to Past as soon as its window closes.
+  // Memoizing it would freeze the classification until some unrelated
+  // dep changed. (Today it stays reasonably fresh — see the ~30s stats
+  // poll in the professor dashboard page, which re-renders this panel
+  // as a side effect.)
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   const scheduledExams = items.filter((e) => new Date(e.endAt).getTime() >= now);
   const pastExams = items.filter((e) => new Date(e.endAt).getTime() < now);
@@ -191,17 +210,36 @@ export function MockExamsPanel({ modules }: { modules: ModuleWithChapters[] }) {
           )}
           {activeModules.map((m) => {
             const on = selectedModules.has(m.code);
+            // At least one module must stay selected (see canCreate) — if
+            // this is the last one on, block the toggle instead of letting
+            // the user click it and watch Effect B silently re-select it.
+            //
+            // aria-disabled (not the disabled attribute) so the button
+            // stays keyboard-focusable and its explanation stays reachable
+            // by screen readers — a plain `disabled` button is pulled out
+            // of the tab order, and `title` alone isn't reliably announced.
+            // aria-describedby matches this file's existing aria-label
+            // convention on the delete button below.
+            const isLastSelected = on && selectedModules.size === 1;
             return (
               <button
                 key={m.code}
                 type="button"
-                onClick={() => toggleModule(m.code)}
+                onClick={() => {
+                  if (!isLastSelected) toggleModule(m.code);
+                }}
+                aria-disabled={isLastSelected}
+                aria-describedby={isLastSelected ? 'mock-exam-last-module-hint' : undefined}
+                title={
+                  isLastSelected ? 'At least one module must stay selected' : undefined
+                }
                 style={{
                   fontSize: 11.5,
                   fontWeight: 700,
                   padding: '6px 12px',
                   borderRadius: 8,
-                  cursor: 'pointer',
+                  cursor: isLastSelected ? 'not-allowed' : 'pointer',
+                  opacity: isLastSelected ? 0.6 : 1,
                   color: on ? '#F8FAFC' : '#94A3B8',
                   background: on ? 'rgba(124,58,237,0.16)' : 'transparent',
                   border: `1px solid ${on ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.1)'}`,
@@ -212,6 +250,9 @@ export function MockExamsPanel({ modules }: { modules: ModuleWithChapters[] }) {
               </button>
             );
           })}
+          <span id="mock-exam-last-module-hint" className="sr-only">
+            At least one module must stay selected.
+          </span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 16 }}>

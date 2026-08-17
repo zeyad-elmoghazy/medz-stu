@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "seed:questions": "tsx --env-file=.env.local scripts/seed-questions.ts",
     "test": "jest",
     "test:ocr": "jest __tests__/ocr/mcq-parser",

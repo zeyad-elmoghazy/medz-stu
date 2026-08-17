@@ -105,8 +105,17 @@ function HistologyResultsInner() {
     : breakdown.filter((b) => b.attempted && !b.correct).map((b) => b.id);
   const practiceIds = recentMistakeIds.length > 0 ? recentMistakeIds : mistakeQuestionIds;
 
+  // This page is server-rendered once before hydration. Computing the
+  // Date.now() fallback during that shared initial render (eager or
+  // lazy useState) would capture a different wall-clock moment on the
+  // server than on the client, and since this feeds displayed elapsed
+  // time, that's a real hydration mismatch — not just a stale value.
+  // Starting at null (matching on both sides) and only resolving it
+  // post-mount, client-only, avoids that. The guard makes this
+  // compute-once-and-freeze; nothing else ever sets endStamp.
   const [endStamp, setEndStamp] = useState<number | null>(null);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!endStamp) setEndStamp(sessionEndedAt ?? Date.now());
   }, [sessionEndedAt, endStamp]);
 

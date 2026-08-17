@@ -78,7 +78,6 @@ async function main(): Promise<void> {
       );
     }
 
-    // eslint-disable-next-line no-console
     console.log(
       `seed-questions: ${subjectId} — ${rows.length} in bundle, ${count ?? '?'} written (existing rows skipped).`
     );
@@ -86,7 +85,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error(err);
   process.exit(1);
 });

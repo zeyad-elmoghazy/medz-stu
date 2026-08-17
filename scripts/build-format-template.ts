@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 // Builds public/test-data/professor-format-template.pdf — the
 // canonical MCQ layout professors must follow. Every rule in this
 // document maps one-to-one to a regex in lib/ocr/mcq-parser.ts;

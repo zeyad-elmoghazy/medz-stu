@@ -57,8 +57,10 @@ export function UploadWizard({ modules, onPublished, onChapterCreated }: Props) 
   const [newChapterName, setNewChapterName] = useState('');
   const [creatingChapter, setCreatingChapter] = useState(false);
 
+  // Same pattern as MockExamsPanel.tsx's module-selection effect.
   useEffect(() => {
     if (!upModuleCode && activeModules[0]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUpModuleCode(activeModules[0].code);
       setUpChapterId(activeModules[0].chapters[0]?.id ?? '');
     }
@@ -1308,7 +1310,7 @@ export function UploadWizard({ modules, onPublished, onChapterCreated }: Props) 
                 <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 20 }}>
                   <b style={{ color: '#F8FAFC' }}>{aiExtracted}</b> question
                   {aiExtracted === 1 ? '' : 's'} extracted from{' '}
-                  <b style={{ color: '#F8FAFC' }}>{questionsFile?.name}</b>. They're queued
+                  <b style={{ color: '#F8FAFC' }}>{questionsFile?.name}</b>. They&apos;re queued
                   as <b style={{ color: '#C4B5FD' }}>under review</b> — open the Question
                   Bank to approve them before students see them.
                 </div>

@@ -21,7 +21,6 @@ export class ApiError extends Error {
 export function handleApiError(error: unknown): NextResponse {
   if (error instanceof ApiError) {
     if (error.internal !== undefined) {
-      // eslint-disable-next-line no-console
       console.error('[api-error]', error.message, error.internal);
     }
     return NextResponse.json(
@@ -30,7 +29,6 @@ export function handleApiError(error: unknown): NextResponse {
     );
   }
 
-  // eslint-disable-next-line no-console
   console.error('[api-error] unexpected:', error);
   return NextResponse.json(
     { error: 'Internal server error' },

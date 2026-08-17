@@ -235,7 +235,7 @@ export function StudentRosterPanel() {
             {search ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                 <div>
-                  No students match "<span style={{ color: '#F8FAFC' }}>{search}</span>"
+                  No students match &quot;<span style={{ color: '#F8FAFC' }}>{search}</span>&quot;
                 </div>
                 <button
                   type="button"

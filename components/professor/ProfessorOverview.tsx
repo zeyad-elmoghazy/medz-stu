@@ -363,7 +363,7 @@ export function ProfessorOverview({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {activityItems.length === 0 && (
               <div style={{ fontSize: 12, color: '#64748B' }}>
-                No activity yet. Once students start taking sessions, they'll appear here.
+                No activity yet. Once students start taking sessions, they&apos;ll appear here.
               </div>
             )}
             {activityItems.slice(0, 5).map((a, i) => {

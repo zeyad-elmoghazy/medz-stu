@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 // Build public/test-data/demo-questions.pdf — an 11-page MCQ
 // fixture matching Dr. Ahmed Zahra's format, used by the OCR
 // integration test in __tests__/ocr/pipeline.integration.test.ts.

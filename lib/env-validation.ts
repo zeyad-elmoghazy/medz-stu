@@ -92,6 +92,5 @@ if (
   serverEnv.NODE_ENV === 'production' &&
   (!serverEnv.UPSTASH_REDIS_URL || !serverEnv.UPSTASH_REDIS_TOKEN)
 ) {
-  // eslint-disable-next-line no-console
   console.warn('[env] Production without Upstash — rate limiter is a no-op.');
 }

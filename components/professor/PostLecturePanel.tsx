@@ -75,12 +75,17 @@ export function PostLecturePanel({ modules }: { modules: ModuleWithChapters[] })
   const [releaseAt, setReleaseAt] = useState('');
   const [toast, setToast] = useState<string | null>(null);
 
+  // localStorage isn't available during SSR — same pattern as
+  // MockExamsPanel.tsx's mount effect.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(loadAll());
   }, []);
 
+  // Same pattern as MockExamsPanel.tsx's module-toggle effect.
   useEffect(() => {
     if (!moduleCode && activeModules[0]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setModuleCode(activeModules[0].code);
       setChapterId(activeModules[0].chapters[0]?.id ?? '');
     }

@@ -118,6 +118,12 @@ export default function ProfessorDashboardPage() {
       await Promise.all([refreshStats(), refreshModules()]);
     })();
 
+    // This interval's re-render also keeps MockExamsPanel's Scheduled/Past
+    // classification reasonably fresh (see the Date.now() comment there) —
+    // that panel has no timer of its own and relies on this cadence to
+    // reclassify exams while the "exams" tab stays open. Grep for
+    // MockExamsPanel before changing or removing this interval; doing so
+    // would silently freeze that reclassification instead of erroring.
     const interval = window.setInterval(() => {
       if (!cancelled) refreshStats();
     }, 30000);

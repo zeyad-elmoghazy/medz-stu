@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, Loader2, Mail, Lock } from 'lucide-react';
@@ -30,14 +30,16 @@ function LoginPageInner() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const initialError = searchParams.get('error');
-    if (initialError === 'missing_profile') {
-      setError('Your profile could not be loaded. Please sign up again or contact support.');
-    }
-  }, [searchParams]);
+  // /login is statically prerendered and this component renders
+  // client-only (see the Suspense boundary in LoginPage below), so
+  // there's no server-rendered content to hydrate against — reading
+  // searchParams in a lazy initializer is safe here, unlike the
+  // localStorage-backed cases elsewhere in this pass.
+  const [error, setError] = useState<string | null>(() =>
+    searchParams.get('error') === 'missing_profile'
+      ? 'Your profile could not be loaded. Please sign up again or contact support.'
+      : null
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,8 +51,14 @@ function LoginPageInner() {
       const role: UserRole =
         existing && existing.email === email ? existing.role : inferRoleFromEmail(email);
       writeDemoProfile({
-        id: existing?.id ?? `demo-${Date.now()}`,
-        full_name: existing?.full_name ?? email.split('@')[0] ?? 'Demo User',
+        id:
+          existing && existing.email === email
+            ? existing.id
+            : `demo-${Date.now()}`,
+        full_name:
+          existing && existing.email === email
+            ? existing.full_name
+            : email.split('@')[0] ?? 'Demo User',
         email,
         role,
       });

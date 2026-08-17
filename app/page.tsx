@@ -117,8 +117,13 @@ export default function MedZHome() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [activeSection, setActiveSection] = useState<NavSection | ''>('');
 
+  // localStorage isn't available during SSR, so the saved theme can
+  // only be read post-mount — a lazy useState initializer would read
+  // it on the client's first render and mismatch the server-rendered
+  // (always-'dark') HTML.
   useEffect(() => {
     const saved = (typeof window !== 'undefined' && (window.localStorage.getItem('mz-theme') as Theme)) || 'dark';
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(saved);
   }, []);
 

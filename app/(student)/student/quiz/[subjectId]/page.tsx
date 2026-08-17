@@ -28,10 +28,8 @@ import {
   Loader2,
   LogOut,
   Maximize2,
-  NotebookPen,
   PenLine,
   RotateCcw,
-  Save,
   ShieldAlert,
   Sparkles,
   StickyNote,
@@ -135,9 +133,12 @@ export default function QuizEnginePage() {
     // If the store already has answers, the user is resuming a
     // saved session — show the toast and keep the state as-is.
     // Otherwise this is a fresh visit: wipe any stale saved
-    // session and start the timer.
+    // session and start the timer. useQuizStore is backed by
+    // localStorage (see lib/store.ts's persist middleware), so this
+    // read is SSR-unsafe and can only happen post-mount.
     const existingAnswers = useQuizStore.getState().answers;
     if (Object.keys(existingAnswers).length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsResuming(true);
     } else {
       clearSession();
@@ -161,9 +162,15 @@ export default function QuizEnginePage() {
     }
   }, [currentQuestionIndex, totalQuestions, jumpToQuestion]);
 
+  // selectedChoice is also directly set by PhaseOne while the user is
+  // mid-selection (before submit), so it can't be replaced by a value
+  // derived from `answers` alone — this only needs to resync it when
+  // navigating to a different question or after a real answer commit,
+  // which is exactly what the dependency array below scopes it to.
   useEffect(() => {
     const persisted = answers[currentQuestion.id];
     if (persisted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedChoice(persisted);
       setSubmitted(true);
       submittedRef.current = true;
@@ -202,8 +209,13 @@ export default function QuizEnginePage() {
     }
   }, []);
 
+  // Synchronizes the browser's Fullscreen API with question/submit
+  // state — a genuine external-system side effect, not a state
+  // update. Flagged only because enterFullscreen's one fallback path
+  // (Fullscreen API unsupported) calls setFullscreenSupported.
   useEffect(() => {
     if (!submitted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       enterFullscreen();
     }
   }, [submitted, currentQuestion.id, enterFullscreen]);
@@ -629,6 +641,11 @@ export default function QuizEnginePage() {
               className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
             />
             <RichTextEditor
+              // Remounts on question change instead of resetting via an
+              // effect — see NotesEditor.tsx. Also means a pending debounced
+              // save flushes through its unmount cleanup rather than being
+              // silently discarded.
+              key={currentQuestion.id}
               topic={currentQuestion.topic}
               initialValue={currentNote}
               onChange={(value) => setNote(currentQuestion.id, value)}
@@ -1466,132 +1483,6 @@ function ReferenceCard({
         — MedZ Notes, Faculty of Medicine
       </p>
     </div>
-  );
-}
-
-function NotesPanel({
-  question,
-  note,
-  onChange,
-  onClose,
-}: {
-  question: HistologyQuestion;
-  note: string;
-  onChange: (value: string) => void;
-  onClose: () => void;
-}) {
-  const [draft, setDraft] = useState(note);
-  const [savedTick, setSavedTick] = useState(false);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setDraft(note);
-  }, [note]);
-
-  function handleChange(value: string) {
-    setDraft(value);
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      onChange(value);
-      setSavedTick(true);
-      setTimeout(() => setSavedTick(false), 1400);
-    }, 350);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    };
-  }, []);
-
-  return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={onClose}
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-      />
-      <motion.aside
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'spring', stiffness: 280, damping: 32 }}
-        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col"
-        style={{
-          backgroundColor: '#0F0F1A',
-          borderLeft: '1px solid #1E1E2E',
-          boxShadow: '-30px 0 60px rgba(0,0,0,0.5)',
-        }}
-      >
-        <header
-          className="flex items-center justify-between p-5"
-          style={{ borderBottom: '1px solid #1E1E2E' }}
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-violet-500/15 text-violet-200">
-              <NotebookPen className="h-4 w-4" />
-            </span>
-            <div className="flex flex-col leading-tight">
-              <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
-                Your notes
-              </span>
-              <span className="text-sm font-semibold text-white">
-                {question.topic}
-              </span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-lg text-text-muted transition hover:text-white"
-            style={{ border: '1px solid #1E1E2E', backgroundColor: '#0A0A12' }}
-            aria-label="Close notes"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </header>
-
-        <div className="px-5 pt-4">
-          <p className="text-xs text-text-muted">
-            Notes auto-save and stay attached to this question.
-          </p>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-3 p-5">
-          <textarea
-            value={draft}
-            onChange={(e) => handleChange(e.target.value)}
-            placeholder="Mnemonics, slide cues, links to lecture clips…"
-            className="flex-1 w-full resize-none rounded-xl p-4 text-sm leading-relaxed text-white placeholder:text-text-muted/60 focus:outline-none scrollbar-thin"
-            style={{
-              backgroundColor: '#0A0A12',
-              border: '1px solid #1E1E2E',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#7C3AED';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#1E1E2E';
-            }}
-          />
-
-          <div className="flex items-center justify-between text-xs text-text-muted">
-            <span className="flex items-center gap-1.5">
-              <Save className="h-3.5 w-3.5" />
-              {savedTick ? (
-                <span className="text-emerald-300">Saved</span>
-              ) : (
-                <span>Auto-save on</span>
-              )}
-            </span>
-            <span>{draft.length} chars</span>
-          </div>
-        </div>
-      </motion.aside>
-    </>
   );
 }
 

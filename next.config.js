@@ -53,10 +53,8 @@ const securityHeaders = [
 let withBundleAnalyzer = (config) => config;
 if (process.env.ANALYZE === 'true') {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     withBundleAnalyzer = require('@next/bundle-analyzer')({ enabled: true });
   } catch {
-    // eslint-disable-next-line no-console
     console.warn(
       '[next.config] ANALYZE=true but @next/bundle-analyzer is not installed. ' +
         'Run: npm install -D @next/bundle-analyzer'
@@ -65,12 +63,18 @@ if (process.env.ANALYZE === 'true') {
 }
 
 const nextConfig = {
+  // Pin the Turbopack workspace root to this project. Without this,
+  // Next infers the root from the nearest lockfile upward and can
+  // land on a parent directory (e.g. a stray lockfile on ~/Desktop),
+  // which makes the dev server watch every sibling project's
+  // node_modules and peg the CPU.
+  turbopack: {
+    root: __dirname,
+  },
+
   // Compress all responses (gzip on the Next.js server; Vercel's
   // edge layer also brotli-compresses on top of this in prod).
   compress: true,
-
-  // (see experimental.serverComponentsExternalPackages below —
-  // Next 14 spelling of the same thing)
 
   // Modularize barrel imports so `import { Foo } from 'lucide-react'`
   // pulls just Foo, not every icon in the library. Same for framer /
@@ -84,21 +88,17 @@ const nextConfig = {
       '@radix-ui/react-progress',
       '@radix-ui/react-slot',
     ],
-    // Server-only Node deps that must NOT enter the webpack graph:
-    // - pdfjs-dist ships worker files with `import.meta` that
-    //   Terser can't process.
-    // - pdf-parse loads it dynamically at runtime.
-    // - tesseract.js spawns a Node worker via require.resolve; if
-    //   webpack rewrites its paths the worker can't find its own
-    //   worker-script/node/index.js at runtime.
-    // - sharp is a native binary — never bundle.
-    serverComponentsExternalPackages: [
-      'pdf-parse',
-      'pdfjs-dist',
-      'tesseract.js',
-      'sharp',
-    ],
   },
+
+  // Server-only Node deps that must NOT enter the webpack graph:
+  // - pdfjs-dist ships worker files with `import.meta` that
+  //   Terser can't process.
+  // - pdf-parse loads it dynamically at runtime.
+  // - tesseract.js spawns a Node worker via require.resolve; if
+  //   webpack rewrites its paths the worker can't find its own
+  //   worker-script/node/index.js at runtime.
+  // - sharp is a native binary — never bundle.
+  serverExternalPackages: ['pdf-parse', 'pdfjs-dist', 'tesseract.js', 'sharp'],
 
   // Drop console.* calls (except errors/warnings) from prod builds.
   // Saves bytes and eliminates main-thread work from log statements.
@@ -140,9 +140,6 @@ const nextConfig = {
   // Enable React strict mode for better
   // error catching in development
   reactStrictMode: true,
-
-  // Enable SWC minification (faster than Terser)
-  swcMinify: true,
 
   // Headers for caching static assets + security
   async headers() {

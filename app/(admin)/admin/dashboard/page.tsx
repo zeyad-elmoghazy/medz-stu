@@ -943,6 +943,9 @@ function ActivityFeedPanel() {
 // -----------------------------------------------------------
 function ProfessorActivityPanel({ overview }: { overview: AdminOverview }) {
   const rel = (iso: string) => {
+    // Intentionally uncached — must reflect real elapsed time; memoizing
+    // would freeze "X min ago" stale until an unrelated re-render.
+    // eslint-disable-next-line react-hooks/purity
     const diffMs = Date.now() - new Date(iso).getTime();
     const min = Math.floor(diffMs / 60000);
     if (min < 1) return 'just now';

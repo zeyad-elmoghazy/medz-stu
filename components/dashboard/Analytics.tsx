@@ -41,7 +41,7 @@ export default function AnalyticsDashboard({
             Accuracy over time
           </h2>
           <p className="mt-0.5 text-xs text-text-muted">
-            Eight historical sessions plus today's attempt.
+            Eight historical sessions plus today&apos;s attempt.
           </p>
         </div>
         <span className="rounded-full bg-violet-500/15 px-2.5 py-1 text-xs text-violet-200">

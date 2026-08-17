@@ -59,8 +59,13 @@ export default function ProfileSettingsPage() {
       }
     })();
 
+    // localStorage isn't available during SSR, so saved prefs can only
+    // be read post-mount. supabase is a module-level singleton (see
+    // createBrowserClient in lib/supabase.ts), so this effect only
+    // fires once despite the dependency.
     try {
       const raw = localStorage.getItem(PREF_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(raw) });
     } catch {
       /* keep defaults */

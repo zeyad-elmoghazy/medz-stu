@@ -54,7 +54,6 @@ if ((!supabaseUrl || !supabaseAnonKey) && !demoFlag) {
   if (process.env.NODE_ENV === 'production') {
     throw new Error(message);
   }
-  // eslint-disable-next-line no-console
   console.warn(message);
 }
 

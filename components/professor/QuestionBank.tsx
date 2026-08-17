@@ -66,7 +66,10 @@ export function QuestionBank({ modules, onChanged }: Props) {
     }
   }, [status, moduleCode, chapterId]);
 
+  // Network fetch on filter change — the standard "sync with a
+  // remote resource" effect use case, not a state-derivation pattern.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 

@@ -63,9 +63,17 @@ export function useChapterProgress(
 ): number {
   const [value, setValue] = useState<number>(fallback);
 
+  // localStorage isn't available during SSR, so the real value can
+  // only be read post-mount (a lazy useState initializer would read
+  // it on the client's first render and mismatch the server-rendered
+  // `fallback`). The event/storage listeners below are a genuine
+  // external-system subscription: they're what makes progress update
+  // live if the chapter is completed in another tab, without a
+  // remount.
   useEffect(() => {
     const all = readAll();
     const stored = all[keyOf(subjectId, moduleCode, chapterId)];
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValue(typeof stored === 'number' ? stored : fallback);
 
     const sync = () => {

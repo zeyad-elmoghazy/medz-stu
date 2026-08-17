@@ -26,19 +26,39 @@ export default function NotesEditor({
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useEffect(() => setDraft(initialValue), [initialValue]);
+  // Tracks the latest not-yet-saved value so the unmount cleanup below
+  // can flush it instead of silently discarding it. onChangeRef mirrors
+  // the prop every render so the cleanup (registered once, on mount)
+  // always calls the current callback rather than a stale closure —
+  // the quiz page passes a fresh inline function on every render.
+  const pendingValueRef = useRef<string | null>(null);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
 
   useEffect(() => {
     return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        // Flush instead of discard: closing the panel (or, once this
+        // component is keyed by question, navigating away) within the
+        // debounce window would otherwise cancel the pending save and
+        // lose whatever was just typed.
+        if (pendingValueRef.current !== null) {
+          onChangeRef.current(pendingValueRef.current);
+        }
+      }
     };
   }, []);
 
   function handleChange(value: string) {
     setDraft(value);
+    pendingValueRef.current = value;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       onChange(value);
+      pendingValueRef.current = null;
       setSavedTick(true);
       setTimeout(() => setSavedTick(false), 1400);
     }, 350);

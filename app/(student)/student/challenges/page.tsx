@@ -14,7 +14,9 @@ type Challenge = {
   createdAt: string;
 };
 
-const STORAGE_KEY = 'medz.postLectureChallenges';
+// Must match PostLecturePanel.tsx's STORAGE_KEY — the professor
+// panel is the authoring source of truth for this data.
+const STORAGE_KEY = 'medz.professor.challenges.v1';
 
 export default function PostLectureChallengesPage() {
   const [challenges, setChallenges] = useState<Challenge[] | null>(null);
@@ -23,10 +25,15 @@ export default function PostLectureChallengesPage() {
   // localStorage under the same key. Real backend wiring lives on
   // the professor side; students see whatever the professor has
   // published in this browser.
+  //
+  // localStorage isn't available during SSR, so this can only be
+  // read post-mount — a lazy useState initializer would read it on
+  // the client's first render and mismatch the server-rendered HTML.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setChallenges([]);
         return;
       }
