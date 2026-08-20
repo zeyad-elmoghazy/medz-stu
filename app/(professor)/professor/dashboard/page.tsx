@@ -19,8 +19,8 @@ import { HISTOLOGY_ACADEMIC_YEARS } from '@/data/histology-catalog';
 
 // Static catalog → demo fallback when /api/professor/modules
 // returns 401 (no DB / no session). ID stability doesn't matter
-// here — Post-Lecture and Mock-Exams panels write to localStorage
-// keyed by their own uuids.
+// here — the Post-Lecture panel writes to localStorage keyed by
+// its own uuids.
 const DEMO_MODULES: ModuleWithChapters[] = HISTOLOGY_ACADEMIC_YEARS.flatMap((y) =>
   y.modules.map((m) => ({
     code: m.code,
@@ -45,9 +45,8 @@ import { UploadWizard } from '@/components/professor/UploadWizard';
 import { QuestionBank } from '@/components/professor/QuestionBank';
 import { StudentRosterPanel } from '@/components/professor/StudentRosterPanel';
 import { PostLecturePanel } from '@/components/professor/PostLecturePanel';
-import { MockExamsPanel } from '@/components/professor/MockExamsPanel';
 
-type View = 'overview' | 'upload' | 'bank' | 'roster' | 'exams' | 'challenges';
+type View = 'overview' | 'upload' | 'bank' | 'roster' | 'challenges';
 
 type NavDef = { key: View; label: string; badge?: number };
 
@@ -118,12 +117,8 @@ export default function ProfessorDashboardPage() {
       await Promise.all([refreshStats(), refreshModules()]);
     })();
 
-    // This interval's re-render also keeps MockExamsPanel's Scheduled/Past
-    // classification reasonably fresh (see the Date.now() comment there) —
-    // that panel has no timer of its own and relies on this cadence to
-    // reclassify exams while the "exams" tab stays open. Grep for
-    // MockExamsPanel before changing or removing this interval; doing so
-    // would silently freeze that reclassification instead of erroring.
+    // Keeps the Overview tab's stats reasonably fresh while the
+    // dashboard stays open.
     const interval = window.setInterval(() => {
       if (!cancelled) refreshStats();
     }, 30000);
@@ -154,7 +149,6 @@ export default function ProfessorDashboardPage() {
     { key: 'upload', label: 'Upload Content' },
     { key: 'bank', label: 'Question Bank', badge: bankBadge > 0 ? bankBadge : undefined },
     { key: 'roster', label: 'Student Roster' },
-    { key: 'exams', label: 'Mock Exams' },
     { key: 'challenges', label: 'Post-Lecture' },
   ];
 
@@ -174,10 +168,6 @@ export default function ProfessorDashboardPage() {
     roster: [
       'Student Roster',
       'See how each enrolled student is performing and drill into their chapters.',
-    ],
-    exams: [
-      'Mock Exams',
-      'Create, schedule, and track timed exams for your students.',
     ],
     challenges: [
       'Post-Lecture Challenges',
@@ -534,7 +524,6 @@ export default function ProfessorDashboardPage() {
           />
         )}
         {view === 'roster' && <StudentRosterPanel />}
-        {view === 'exams' && <MockExamsPanel modules={modules} />}
         {view === 'challenges' && <PostLecturePanel modules={modules} />}
       </main>
     </div>

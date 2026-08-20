@@ -1,38 +1,3 @@
-/*
-================================================================================
-  MedZ — Supabase schema
-  Run this in the Supabase SQL editor before using auth flows.
-================================================================================
-
-CREATE TABLE profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  full_name TEXT,
-  email TEXT,
-  role TEXT CHECK (role IN ('student', 'professor', 'admin')),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- RLS: a user may read & update their own profile row.
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Profiles are viewable by owner"
-  ON profiles FOR SELECT
-  USING (auth.uid() = id);
-
-CREATE POLICY "Profiles are insertable by owner"
-  ON profiles FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Profiles are updatable by owner"
-  ON profiles FOR UPDATE
-  USING (auth.uid() = id);
-
--- Admin role is NOT selectable in the signup form — promote manually:
---   UPDATE profiles SET role = 'admin' WHERE email = 'you@university.edu';
-
-================================================================================
-*/
-
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   createBrowserClient as createBrowserSSR,
