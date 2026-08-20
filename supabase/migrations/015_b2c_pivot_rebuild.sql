@@ -257,7 +257,18 @@ CREATE POLICY "questions_read_published" ON questions
 -- Demote any existing 'professor' rows before tightening the CHECK
 -- constraint. No production users yet (pre-launch demo data only) —
 -- safe to force this rather than requiring a manual reassignment.
+--
+-- 013's role-immutability trigger only permits a role change when the
+-- caller resolves to service_role. The connection this migration runs
+-- under has current_user=postgres but its `role` GUC reads literally
+-- 'none' (neither request.jwt.claim.role nor the session role is
+-- service_role) — without this, the trigger blocks this exact UPDATE
+-- the instant any real row has role='professor', rolling back the
+-- entire migration. Reset immediately after so every object created
+-- later in this file stays owned by postgres, as before.
+SET LOCAL ROLE service_role;
 UPDATE profiles SET role = 'admin' WHERE role = 'professor';
+RESET ROLE;
 
 ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 ALTER TABLE profiles ADD CONSTRAINT profiles_role_check
