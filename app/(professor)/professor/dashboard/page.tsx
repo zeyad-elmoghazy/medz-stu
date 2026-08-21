@@ -18,9 +18,7 @@ import {
 import { HISTOLOGY_ACADEMIC_YEARS } from '@/data/histology-catalog';
 
 // Static catalog → demo fallback when /api/professor/modules
-// returns 401 (no DB / no session). ID stability doesn't matter
-// here — the Post-Lecture panel writes to localStorage keyed by
-// its own uuids.
+// returns 401 (no DB / no session).
 const DEMO_MODULES: ModuleWithChapters[] = HISTOLOGY_ACADEMIC_YEARS.flatMap((y) =>
   y.modules.map((m) => ({
     code: m.code,
@@ -44,9 +42,8 @@ import { ProfessorOverview } from '@/components/professor/ProfessorOverview';
 import { UploadWizard } from '@/components/professor/UploadWizard';
 import { QuestionBank } from '@/components/professor/QuestionBank';
 import { StudentRosterPanel } from '@/components/professor/StudentRosterPanel';
-import { PostLecturePanel } from '@/components/professor/PostLecturePanel';
 
-type View = 'overview' | 'upload' | 'bank' | 'roster' | 'challenges';
+type View = 'overview' | 'upload' | 'bank' | 'roster';
 
 type NavDef = { key: View; label: string; badge?: number };
 
@@ -149,7 +146,6 @@ export default function ProfessorDashboardPage() {
     { key: 'upload', label: 'Upload Content' },
     { key: 'bank', label: 'Question Bank', badge: bankBadge > 0 ? bankBadge : undefined },
     { key: 'roster', label: 'Student Roster' },
-    { key: 'challenges', label: 'Post-Lecture' },
   ];
 
   const titles: Record<View, [string, string]> = {
@@ -168,10 +164,6 @@ export default function ProfessorDashboardPage() {
     roster: [
       'Student Roster',
       'See how each enrolled student is performing and drill into their chapters.',
-    ],
-    challenges: [
-      'Post-Lecture Challenges',
-      'Create short challenges students take right after a lecture — release now or schedule for later.',
     ],
   };
 
@@ -438,26 +430,6 @@ export default function ProfessorDashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 'none' }}>
             <button
               type="button"
-              onClick={() => setView('challenges')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                fontSize: 13,
-                fontWeight: 700,
-                color: '#C4B5FD',
-                background: 'rgba(124,58,237,0.1)',
-                border: '1px solid rgba(139,92,246,0.45)',
-                padding: '12px 18px',
-                borderRadius: 12,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-            >
-              <span style={{ fontSize: 15 }}>🎓</span> Post-Lecture
-            </button>
-            <button
-              type="button"
               onClick={() => setView('upload')}
               style={{
                 display: 'inline-flex',
@@ -524,7 +496,6 @@ export default function ProfessorDashboardPage() {
           />
         )}
         {view === 'roster' && <StudentRosterPanel />}
-        {view === 'challenges' && <PostLecturePanel modules={modules} />}
       </main>
     </div>
   );

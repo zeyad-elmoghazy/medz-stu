@@ -603,7 +603,6 @@ const NAV_LINKS: { label: string; href?: string; active?: boolean; toast?: strin
   { label: 'Home',           href: '/student/dashboard' },
   { label: 'Subjects',       active: true },
   { label: 'Custom Exam',    href: '/student/exam' },
-  { label: 'Post-Lecture',   href: '/student/challenges' },
   { label: 'Flashcards',     toast: 'Coming soon.' },
   { label: 'AI Tutor',       toast: 'Coming soon.' },
   { label: 'Leaderboard' },

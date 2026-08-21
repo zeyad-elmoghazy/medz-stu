@@ -217,7 +217,6 @@ const NAV_LINKS: { label: string; href?: string; active?: boolean; toast?: strin
   { label: 'Home',           active: true },
   { label: 'Subjects',       href: '/student/subjects' },
   { label: 'Custom Exam',    href: '/student/exam' },
-  { label: 'Post-Lecture',   href: '/student/challenges' },
   { label: 'Flashcards',     toast: 'Coming soon.' },
   { label: 'AI Tutor',       toast: 'Coming soon.' },
   { label: 'Leaderboard' },
