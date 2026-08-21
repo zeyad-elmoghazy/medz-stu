@@ -1,0 +1,29 @@
+-- =============================================================
+-- MedZ · 018_notes_pages_private.sql
+-- =============================================================
+-- Flips the `notes-pages` Storage bucket from public to private.
+-- Direct object URLs (…/storage/v1/object/public/notes-pages/…)
+-- currently work for anyone with the URL, no auth — 011's own
+-- comment says this was deliberate ("Public so student pages can
+-- render <img> directly"). Moving to signed URLs so access can be
+-- scoped/expired instead of permanently open to anyone who guesses
+-- or leaks a {uuid}/page-{n}.png path.
+--
+-- Policy check (verified against live state before writing this,
+-- not assumed): 012_security_hardening.sql already dropped the only
+-- public-read policy this bucket ever had
+-- (`notes_pages_public_read`). The one policy still attached,
+-- `notes_pages_no_client_write` (INSERT, with_check bucket_id <>
+-- 'notes-pages'), still correctly blocks client-side inserts
+-- regardless of the bucket's public/private flag and stays as-is —
+-- there is nothing stale left to remove.
+--
+-- Reads go through a service-role signed-URL helper going forward
+-- (getSignedNotesPageUrl in lib/ocr/notes-upload.ts), which bypasses
+-- RLS entirely via the service role key, so no new SELECT policy is
+-- added here — that would only be needed if a non-service-role
+-- client ever needed to read this bucket directly, which is not the
+-- design.
+-- =============================================================
+
+UPDATE storage.buckets SET public = false WHERE id = 'notes-pages';

@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase';
 
 const execFileP = promisify(execFile);
 
@@ -79,4 +80,40 @@ export function notesPageImageUrl(
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!base) return '';
   return `${base}/storage/v1/object/public/notes-pages/${storagePrefix}/page-${page}.png`;
+}
+
+// notes-pages is now a private bucket (018_notes_pages_private.sql) —
+// this is the replacement for notesPageImageUrl above. Same
+// service-role client pattern as serviceRoleClient() in
+// app/api/professor/students/route.ts: the service role key bypasses
+// RLS entirely, so no client-facing SELECT policy is needed on this
+// bucket. 15 min TTL — long enough to view the Reference tab, short
+// enough that a leaked/logged URL doesn't stay valid indefinitely.
+function serviceRoleClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) {
+    throw new Error(
+      'NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.'
+    );
+  }
+  return createClient<Database>(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+export async function getSignedNotesPageUrl(
+  storagePrefix: string,
+  page: number
+): Promise<string | null> {
+  const supabase = serviceRoleClient();
+  const { data, error } = await supabase.storage
+    .from('notes-pages')
+    .createSignedUrl(`${storagePrefix}/page-${page}.png`, 900);
+
+  if (error || !data) {
+    console.error('[notes-upload] createSignedUrl failed:', error?.message);
+    return null;
+  }
+  return data.signedUrl;
 }
