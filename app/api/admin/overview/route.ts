@@ -66,12 +66,6 @@ export async function GET() {
   };
 
   // --- counts (head:true so no rows come back) ---
-  const professorCountRes = await (client
-    .from('profiles')
-    .select('id', { count: 'exact', head: true }) as unknown as QueryChain)
-    .eq('role', 'professor')
-    .limit(0);
-
   const studentCountRes = await (client
     .from('profiles')
     .select('id', { count: 'exact', head: true }) as unknown as QueryChain)
@@ -88,25 +82,20 @@ export async function GET() {
     }>;
   }).eq('status', 'published');
 
-  // --- professors + their per-status counts (raw fetch + group) ---
-  const professorsRes = (await (client
-    .from('profiles')
-    .select('id, full_name, email, created_at') as unknown as QueryChain)
-    .eq('role', 'professor')
-    .limit(200)) as {
-    data: {
-      id: string;
-      full_name: string | null;
-      email: string | null;
-      created_at: string;
-    }[] | null;
-    error: { message: string } | null;
-  };
-
-  const professors = professorsRes.data ?? [];
-  const professorIds = professors.map((p) => p.id);
-
-  // Per-professor question stats. One scan grouped in-app.
+  // --- content authors + their per-status counts (raw fetch + group) ---
+  //
+  // 015_b2c_pivot_rebuild.sql collapsed the 'professor' role into
+  // 'admin' and left every professor_id FK column in place, nullable
+  // and unused for RLS but still populated by every live write path
+  // (questions.professor_id at app/api/professor/questions/route.ts,
+  // upload_jobs.professor_id at app/api/professor/upload-jobs/route.ts
+  // and .../upload/route.ts). Filtering profiles by role='professor'
+  // (the old approach) now always returns zero rows — every admin
+  // account looks identical from that angle, whether or not they've
+  // ever authored anything. There is no separate "is an author" flag
+  // on profiles post-migration, so "who's an author" is derived from
+  // who actually appears as a professor_id on real content instead —
+  // the same signal the per-author stats below already keyed on.
   type QuestionSlim = {
     id: number;
     professor_id: string | null;
@@ -118,11 +107,53 @@ export async function GET() {
 
   const questionRowsRes = (await ((client.from('questions').select(
     'id, professor_id, subject_id, status, flag_count, created_at'
-  ) as unknown as QueryChain).in('professor_id', professorIds.length ? professorIds : ['00000000-0000-0000-0000-000000000000']).limit(5000))) as {
+  ) as unknown as QueryChain).limit(5000))) as {
     data: QuestionSlim[] | null;
     error: { message: string } | null;
   };
-  const questionRows = questionRowsRes.data ?? [];
+  const questionRows = (questionRowsRes.data ?? []).filter((q) => q.professor_id);
+
+  const uploadJobAuthorsRes = (await (client
+    .from('upload_jobs')
+    .select('professor_id') as unknown as QueryChain)
+    .limit(2000)) as {
+    data: { professor_id: string }[] | null;
+    error: { message: string } | null;
+  };
+
+  const moduleAuthorsRes = (await (client
+    .from('modules')
+    .select('professor_id') as unknown as QueryChain)
+    .limit(500)) as {
+    data: { professor_id: string | null }[] | null;
+    error: { message: string } | null;
+  };
+
+  const authorIds = Array.from(
+    new Set(
+      [
+        ...questionRows.map((q) => q.professor_id),
+        ...(uploadJobAuthorsRes.data ?? []).map((u) => u.professor_id),
+        ...(moduleAuthorsRes.data ?? []).map((m) => m.professor_id),
+      ].filter((id): id is string => Boolean(id))
+    )
+  );
+
+  const professorsRes = (await (client
+    .from('profiles')
+    .select('id, full_name, email, created_at') as unknown as QueryChain)
+    .in('id', authorIds.length ? authorIds : ['00000000-0000-0000-0000-000000000000'])
+    .limit(200)) as {
+    data: {
+      id: string;
+      full_name: string | null;
+      email: string | null;
+      created_at: string;
+    }[] | null;
+    error: { message: string } | null;
+  };
+
+  const professors = professorsRes.data ?? [];
 
   const perProf = new Map<
     string,
@@ -304,7 +335,7 @@ export async function GET() {
   return NextResponse.json(
     {
       counts: {
-        professors: professorCountRes.count ?? 0,
+        professors: professors.length,
         students: studentCountRes.count ?? 0,
         published_questions: questionsCountRes.count ?? 0,
         total_questions: questionRows.length,
