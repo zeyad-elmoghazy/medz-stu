@@ -111,22 +111,28 @@ async function fetchQuestionsFromDB(subjectId: string): Promise<HistologyQuestio
 
   if (error) throw new Error(error.message);
 
-  const { notesPageImageUrl } = await import('@/lib/ocr/notes-upload');
+  // Separate service-role client, scoped only to signing notes-page
+  // image URLs — never used for the questions query above, which
+  // stays on the anon/cookie-scoped client so RLS keeps enforcing
+  // questions_read_published for this request.
+  const { getSignedNotesPageUrl } = await import('@/lib/ocr/notes-upload');
 
-  return (data ?? []).map(
-    (r): HistologyQuestion => ({
-      id: r.subject_bundle_id,
-      question: r.question,
-      choices: r.choices,
-      correctAnswer: r.correct_answer,
-      explanation: r.explanation,
-      choiceRationales: r.choice_rationales ?? undefined,
-      reference: r.reference,
-      topic: r.topic,
-      referenceImageUrl:
-        r.notes_storage_prefix && r.reference_page
-          ? notesPageImageUrl(r.notes_storage_prefix, r.reference_page)
-          : null,
-    })
+  return Promise.all(
+    (data ?? []).map(
+      async (r): Promise<HistologyQuestion> => ({
+        id: r.subject_bundle_id,
+        question: r.question,
+        choices: r.choices,
+        correctAnswer: r.correct_answer,
+        explanation: r.explanation,
+        choiceRationales: r.choice_rationales ?? undefined,
+        reference: r.reference,
+        topic: r.topic,
+        referenceImageUrl:
+          r.notes_storage_prefix && r.reference_page
+            ? await getSignedNotesPageUrl(r.notes_storage_prefix, r.reference_page)
+            : null,
+      })
+    )
   );
 }
