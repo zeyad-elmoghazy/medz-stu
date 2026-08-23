@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProfessorStats } from '@/lib/professor-api';
+import type { ProfessorStats } from '@/lib/content-api';
 
 type Props = {
   stats: ProfessorStats | null;

@@ -6,7 +6,7 @@ import {
   patchQuestion,
   type ModuleWithChapters,
   type ProfessorQuestion,
-} from '@/lib/professor-api';
+} from '@/lib/content-api';
 
 type Props = {
   modules: ModuleWithChapters[];

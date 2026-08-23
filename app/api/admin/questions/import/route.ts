@@ -4,7 +4,6 @@ import { requireAdmin } from '@/lib/require-admin';
 import { untypedFrom } from '@/lib/supabase-server';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { adminLimiter } from '@/lib/rate-limit';
-import type { Database } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -187,7 +186,7 @@ export async function POST(request: NextRequest) {
 
   const { data: upserted, error: upsertError } = await untypedFrom(supabase)
     .from('questions')
-    .upsert(rows as Database['public']['Tables']['questions']['Insert'][], {
+    .upsert(rows, {
       onConflict: 'external_id',
     })
     .select('id, external_id');

@@ -2,9 +2,18 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createMiddlewareSupabase, isDemoMode, type UserRole } from '@/lib/supabase';
 import { apiLimiter } from '@/lib/rate-limit';
 
+// The '/professor' page-role gate is removed: profiles.role no
+// longer permits 'professor' (015_b2c_pivot_rebuild.sql), so that
+// entry could never match a real user — every /professor/* request
+// unconditionally redirected to /login. The broad '/admin' prefix
+// below already covers /admin/content/* (prefix match, no separate
+// entry needed) — it protects both the pre-existing /admin/dashboard
+// page and the new content tree once it exists. Step 7 additionally
+// adds its own role==='admin' layout-level check for /admin/content/*
+// specifically, matching this codebase's existing "gate isn't the
+// only gate" convention (RLS is the backstop everywhere else).
 const PROTECTED_PREFIXES: { prefix: string; role: UserRole }[] = [
   { prefix: '/student', role: 'student' },
-  { prefix: '/professor', role: 'professor' },
   { prefix: '/admin', role: 'admin' },
 ];
 

@@ -5,7 +5,7 @@ import {
   type ModuleWithChapters,
   createChapter,
   createQuestion,
-} from '@/lib/professor-api';
+} from '@/lib/content-api';
 
 type Props = {
   modules: ModuleWithChapters[];

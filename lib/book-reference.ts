@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
 
 // Same service-role client pattern as getSignedNotesPageUrl() in
@@ -47,21 +48,21 @@ export async function getSignedBookPageUrl(
 
   const supabase = serviceRoleClient();
 
-  const { data: chapter } = await supabase
+  const { data: chapter } = await untypedFrom(supabase)
     .from('chapters')
     .select('module_code')
     .eq('id', chapterId)
     .single();
   if (!chapter?.module_code) return null;
 
-  const { data: mod } = await supabase
+  const { data: mod } = await untypedFrom(supabase)
     .from('modules')
     .select('book_id')
     .eq('code', chapter.module_code)
     .single();
   if (!mod?.book_id) return null;
 
-  const { data: page } = await supabase
+  const { data: page } = await untypedFrom(supabase)
     .from('reference_pages')
     .select('image_url')
     .eq('book_id', mod.book_id)

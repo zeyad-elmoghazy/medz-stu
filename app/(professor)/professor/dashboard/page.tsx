@@ -14,7 +14,7 @@ import {
   fetchModules,
   type ProfessorStats,
   type ModuleWithChapters,
-} from '@/lib/professor-api';
+} from '@/lib/content-api';
 import { HISTOLOGY_ACADEMIC_YEARS } from '@/data/histology-catalog';
 
 // Static catalog → demo fallback when /api/professor/modules

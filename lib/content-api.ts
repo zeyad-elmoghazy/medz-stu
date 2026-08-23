@@ -1,5 +1,5 @@
 /**
- * Shared professor-side types + fetchers.
+ * Shared content-authoring types + fetchers.
  * All numbers here come from the DB — no hardcoded fallbacks.
  */
 
@@ -209,41 +209,6 @@ export async function createChapter(body: {
 }): Promise<{ chapter: { id: string; name: string; slug: string } }> {
   const res = await fetch('/api/professor/chapters', {
     method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return json(res);
-}
-
-export async function createUploadJob(body: {
-  moduleCode: string;
-  chapterId: string;
-  method: 'ai' | 'manual' | 'import';
-  notesFileName?: string;
-  questionsFileName?: string;
-}): Promise<{ job: { id: string; status: string } }> {
-  const res = await fetch('/api/professor/upload-jobs', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return json(res);
-}
-
-export async function patchUploadJob(
-  id: string,
-  body: Partial<{
-    status: 'queued' | 'processing' | 'completed' | 'failed';
-    questionsExtracted: number;
-    questionsPublished: number;
-    questionsUnderReview: number;
-    errorMessage: string;
-  }>
-): Promise<{ job: { id: string; status: string } }> {
-  const res = await fetch(`/api/professor/upload-jobs/${id}`, {
-    method: 'PATCH',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
