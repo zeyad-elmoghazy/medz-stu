@@ -9,7 +9,7 @@ export type UserRole = 'student' | 'professor' | 'admin';
 const ROLE_DASHBOARD: Record<UserRole, string> = {
   student: '/student/dashboard',
   professor: '/professor/dashboard',
-  admin: '/admin/dashboard',
+  admin: '/admin/content',
 };
 
 export function dashboardPathForRole(role: UserRole | null | undefined) {
