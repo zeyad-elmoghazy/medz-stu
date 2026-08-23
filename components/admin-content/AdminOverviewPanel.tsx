@@ -73,6 +73,15 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
   const maxDau = Math.max(1, ...dauTrend.map((d) => d.activeStudents));
 
   const activity = overview?.recentActivity ?? [];
+  const authors = overview?.authorActivity ?? [];
+
+  const STATUS_COLOR: Record<'draft' | 'under_review' | 'published' | 'archived' | 'flagged', string> = {
+    draft: '#94A3B8',
+    under_review: '#0EA5E9',
+    published: '#10B981',
+    archived: '#EF4444',
+    flagged: '#F97316',
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -225,6 +234,84 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
             })}
           </div>
         </div>
+      </div>
+
+      {/* Per-author activity */}
+      <div style={{ ...CARD, padding: 22 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Author activity</div>
+        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 18 }}>
+          {authors.length > 0
+            ? `${authors.length} author${authors.length === 1 ? '' : 's'} with content on the platform`
+            : 'Who has authored questions, uploads, or modules'}
+        </div>
+        {authors.length === 0 ? (
+          <div style={{ fontSize: 12, color: '#64748B' }}>
+            No author activity yet. Every question, upload, or module assignment will show up here.
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr>
+                  {['Author', 'Published', 'Under Review', 'Draft', 'Archived', 'Flagged', 'Last activity'].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        style={{
+                          textAlign: h === 'Author' ? 'left' : 'right',
+                          fontSize: 11,
+                          fontWeight: 500,
+                          color: '#94A3B8',
+                          padding: '0 0 10px',
+                          borderBottom: '1px solid rgba(255,255,255,0.07)',
+                        }}
+                      >
+                        {h}
+                      </th>
+                    )
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {authors.map((a) => (
+                  <tr key={a.id}>
+                    <td style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ fontWeight: 600 }}>{a.full_name ?? a.email ?? a.id}</div>
+                      {a.full_name && a.email && (
+                        <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>{a.email}</div>
+                      )}
+                    </td>
+                    {(['published', 'under_review', 'draft', 'archived', 'flagged'] as const).map((k) => (
+                      <td
+                        key={k}
+                        style={{
+                          padding: '10px 0',
+                          textAlign: 'right',
+                          borderBottom: '1px solid rgba(255,255,255,0.05)',
+                          fontWeight: 700,
+                          color: a.stats[k] > 0 ? STATUS_COLOR[k] : '#475569',
+                        }}
+                      >
+                        {a.stats[k]}
+                      </td>
+                    ))}
+                    <td
+                      style={{
+                        padding: '10px 0',
+                        textAlign: 'right',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        color: '#64748B',
+                        fontSize: 11,
+                      }}
+                    >
+                      {a.stats.last_activity ? relativeTime(a.stats.last_activity) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
