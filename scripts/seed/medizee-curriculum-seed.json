@@ -1,0 +1,1012 @@
+{
+  "modules": [
+    {
+      "code": "101",
+      "year": 1,
+      "subjects": {
+        "Anatomy": [
+          {
+            "name": "Basis"
+          },
+          {
+            "name": "Upper Limb"
+          },
+          {
+            "name": "Embryology"
+          }
+        ],
+        "Histology": [
+          {
+            "name": "Cytology"
+          },
+          {
+            "name": "Connective tissue"
+          },
+          {
+            "name": "Epithelium"
+          },
+          {
+            "name": "Blood"
+          }
+        ]
+      }
+    },
+    {
+      "code": "102",
+      "year": 1,
+      "subjects": {
+        "Physiology": [
+          {
+            "name": "Blood"
+          },
+          {
+            "name": "ANS"
+          }
+        ],
+        "Biochemistry": [
+          {
+            "name": "Carbohydrates"
+          },
+          {
+            "name": "Lipids"
+          },
+          {
+            "name": "Protein and amino acid"
+          },
+          {
+            "name": "Extracellular Matrix (ECM)"
+          },
+          {
+            "name": "Enzymes"
+          },
+          {
+            "name": "Heme Chemistry"
+          },
+          {
+            "name": "DNA and molecular biology"
+          }
+        ]
+      }
+    },
+    {
+      "code": "103",
+      "year": 1,
+      "subjects": {
+        "Anatomy": [
+          {
+            "name": "Anterior & medial compartments of thigh, gluteal region",
+            "topic": "Lower Limb"
+          },
+          {
+            "name": "Posterior compartment of thigh, popliteal fossa, posterior & anterior compartments of leg",
+            "topic": "Lower Limb"
+          },
+          {
+            "name": "Lateral compartment of leg, foot & Joints",
+            "topic": "Lower Limb"
+          },
+          {
+            "name": "Arteries of lower limb",
+            "topic": "Lower Limb"
+          },
+          {
+            "name": "Development of limbs",
+            "topic": "Lower Limb"
+          }
+        ],
+        "Histology": [
+          {
+            "name": "Cartilage"
+          },
+          {
+            "name": "Bone"
+          },
+          {
+            "name": "Muscle"
+          },
+          {
+            "name": "Skin"
+          }
+        ],
+        "Biochemistry": [
+          {
+            "name": "Bioenergetics"
+          },
+          {
+            "name": "Carbohydrate Metabolism"
+          },
+          {
+            "name": "Lipid Metabolism"
+          },
+          {
+            "name": "Insulin and diabetes mellitus"
+          },
+          {
+            "name": "Protein Metabolism"
+          },
+          {
+            "name": "Amino Acid Metabolism"
+          },
+          {
+            "name": "Metabolism of Heme"
+          },
+          {
+            "name": "Purines & Pyrimidines"
+          },
+          {
+            "name": "Vitamins"
+          },
+          {
+            "name": "Metabolic Integration"
+          }
+        ],
+        "Physiology": [
+          {
+            "name": "Introduction"
+          },
+          {
+            "name": "Nerve"
+          },
+          {
+            "name": "Muscle"
+          }
+        ]
+      }
+    },
+    {
+      "code": "104",
+      "year": 1,
+      "subjects": {
+        "Anatomy": [
+          {
+            "name": "Thoracic cage",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Thoracic wall (muscles, nerves & vessels)",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Lungs",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Pleura",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Heart",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Pericardium",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Heart development",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Blood vessels of thorax",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Large nerves of thorax",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Large tubes of thorax",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Mediastinum",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Diaphragm",
+            "topic": "Thorax"
+          },
+          {
+            "name": "Development of blood vessels & respiratory system",
+            "topic": "Thorax"
+          }
+        ],
+        "Histology": [
+          {
+            "name": "Lymphatics"
+          },
+          {
+            "name": "Vascular"
+          },
+          {
+            "name": "Respiratory"
+          },
+          {
+            "name": "Cytogenetics"
+          }
+        ],
+        "Physiology": [
+          {
+            "name": "Cardio"
+          },
+          {
+            "name": "Vascular"
+          },
+          {
+            "name": "Respiratory"
+          }
+        ]
+      }
+    },
+    {
+      "code": "108",
+      "year": 1,
+      "subjects": {
+        "Pharmacology": [
+          {
+            "name": "Introduction"
+          },
+          {
+            "name": "Routes of administration"
+          }
+        ],
+        "Pathology": [
+          {
+            "name": "Cellular injury"
+          },
+          {
+            "name": "Intracellular accumulation and extracellular depositions"
+          }
+        ]
+      }
+    },
+    {
+      "code": "205",
+      "year": 2,
+      "subjects": {
+        "Anatomy": [
+          {
+            "name": "Spinal Cord",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Brain Stem",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Cerebellum",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Fourth Ventricle",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Sulci & Gyri",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Base of brain",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Cerebral hemisphere white matter",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Basal Ganglia",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Lateral Ventricle",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Diencephalon",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "3rd Ventricle",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Meninges",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Cerebrospinal fluid (CSF)",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Arterial and venous supply of the brain",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Development of CNS",
+            "topic": "Neuroanatomy"
+          },
+          {
+            "name": "Scalp",
+            "topic": "Head"
+          },
+          {
+            "name": "Face",
+            "topic": "Head"
+          },
+          {
+            "name": "Parotid Gland",
+            "topic": "Head"
+          },
+          {
+            "name": "Muscles of mastication",
+            "topic": "Head"
+          },
+          {
+            "name": "Temporomandibular joint",
+            "topic": "Head"
+          },
+          {
+            "name": "Trigeminal nerve (5th cranial nerve)",
+            "topic": "Head"
+          },
+          {
+            "name": "Maxillary artery and pterygoid venous plexus",
+            "topic": "Head"
+          },
+          {
+            "name": "Cranial cavity",
+            "topic": "Head"
+          },
+          {
+            "name": "Orbit",
+            "topic": "Head"
+          },
+          {
+            "name": "Cervical fascia",
+            "topic": "Neck"
+          },
+          {
+            "name": "Posterior triangle & External jugular vein",
+            "topic": "Neck"
+          },
+          {
+            "name": "Sternomastoid muscle",
+            "topic": "Neck"
+          },
+          {
+            "name": "Cervical plexus & Lateral vertebral muscles",
+            "topic": "Neck"
+          },
+          {
+            "name": "Subclavian artery and vein",
+            "topic": "Neck"
+          },
+          {
+            "name": "Submandibular region",
+            "topic": "Neck"
+          },
+          {
+            "name": "Muscle triangle and thyroid gland",
+            "topic": "Neck"
+          },
+          {
+            "name": "Carotid triangle",
+            "topic": "Neck"
+          },
+          {
+            "name": "Cranial nerves",
+            "topic": "Neck"
+          },
+          {
+            "name": "Oral cavity",
+            "topic": "Neck"
+          },
+          {
+            "name": "Pharynx",
+            "topic": "Neck"
+          },
+          {
+            "name": "Nose",
+            "topic": "Neck"
+          },
+          {
+            "name": "Larynx",
+            "topic": "Neck"
+          },
+          {
+            "name": "Ear",
+            "topic": "Neck"
+          },
+          {
+            "name": "Joints of atlas and axis",
+            "topic": "Neck"
+          },
+          {
+            "name": "Lymph drainage of head & neck",
+            "topic": "Neck"
+          },
+          {
+            "name": "Head and neck development",
+            "topic": "Neck"
+          }
+        ],
+        "Physiology": [
+          {
+            "name": "Sensory nervous system"
+          },
+          {
+            "name": "Motor nervous system"
+          },
+          {
+            "name": "Special Senses"
+          }
+        ],
+        "Histology": [
+          {
+            "name": "Nervous Tissue"
+          },
+          {
+            "name": "Central Nervous System"
+          },
+          {
+            "name": "Eye"
+          },
+          {
+            "name": "Ear"
+          }
+        ]
+      }
+    },
+    {
+      "code": "206",
+      "year": 2,
+      "subjects": {
+        "Anatomy": [
+          {
+            "name": "Anterior abdominal wall",
+            "topic": "GIT"
+          },
+          {
+            "name": "Testis and spermatic cord",
+            "topic": "GIT"
+          },
+          {
+            "name": "Abdominal cavity and peritoneum",
+            "topic": "GIT"
+          },
+          {
+            "name": "Stomach",
+            "topic": "GIT"
+          },
+          {
+            "name": "Small intestine",
+            "topic": "GIT"
+          },
+          {
+            "name": "Large intestine",
+            "topic": "GIT"
+          },
+          {
+            "name": "Vessels of gut",
+            "topic": "GIT"
+          },
+          {
+            "name": "Pancreas",
+            "topic": "GIT"
+          },
+          {
+            "name": "Spleen",
+            "topic": "GIT"
+          },
+          {
+            "name": "Liver and biliary system",
+            "topic": "GIT"
+          },
+          {
+            "name": "Kidney, ureter and suprarenal glands",
+            "topic": "GIT"
+          },
+          {
+            "name": "Posterior abdominal wall",
+            "topic": "GIT"
+          },
+          {
+            "name": "Gut development",
+            "topic": "GIT"
+          }
+        ],
+        "Physiology": [
+          {
+            "name": "Gastrointestinal Tract (GIT)"
+          },
+          {
+            "name": "Metabolism"
+          },
+          {
+            "name": "Kidney"
+          }
+        ],
+        "Histology": [
+          {
+            "name": "Digestive Tract"
+          },
+          {
+            "name": "Digestive Glands"
+          },
+          {
+            "name": "Urinary System"
+          }
+        ],
+        "Biochemistry": [
+          {
+            "name": "Biochemistry of digestion and absorption of macronutrients",
+            "note": "unlabeled in source, no chapter number given"
+          }
+        ]
+      }
+    },
+    {
+      "code": "207",
+      "year": 2,
+      "subjects": {
+        "Anatomy": [
+          {
+            "name": "Pelvic muscles",
+            "topic": "Pelvis"
+          },
+          {
+            "name": "Pelvic peritoneum, nerves and blood vessels",
+            "topic": "Pelvis"
+          },
+          {
+            "name": "Ureter, urinary bladder & urethra",
+            "topic": "Pelvis"
+          },
+          {
+            "name": "Male genital system",
+            "topic": "Pelvis"
+          },
+          {
+            "name": "Female genital system organs, rectum & perineum",
+            "topic": "Pelvis"
+          },
+          {
+            "name": "Development of urinary bladder, urethra, hindgut, ovary & genital tract",
+            "topic": "Pelvis"
+          },
+          {
+            "name": "Pituitary Gland",
+            "topic": "Pelvis"
+          }
+        ],
+        "Histology": [
+          {
+            "name": "Endocrine"
+          },
+          {
+            "name": "Male Genital System"
+          },
+          {
+            "name": "Female Genital System"
+          }
+        ],
+        "Physiology": [
+          {
+            "name": "Endocrine"
+          },
+          {
+            "name": "Male reproductive system"
+          },
+          {
+            "name": "Female reproductive system"
+          }
+        ]
+      }
+    },
+    {
+      "code": "208",
+      "year": 2,
+      "subjects": {
+        "Pathology": [
+          {
+            "name": "Inflammation"
+          },
+          {
+            "name": "Repair"
+          },
+          {
+            "name": "Growth Changes and Neoplasia"
+          },
+          {
+            "name": "Blood Flow Changes"
+          },
+          {
+            "name": "Infections"
+          },
+          {
+            "name": "Nutritional and environmental techniques"
+          }
+        ],
+        "Pharmacology": [
+          {
+            "name": "Autonomic Nervous System [ANS]"
+          },
+          {
+            "name": "Skeletal muscle relaxants"
+          },
+          {
+            "name": "Ocular Pharmacology"
+          },
+          {
+            "name": "Autacoids"
+          },
+          {
+            "name": "Diuretics"
+          },
+          {
+            "name": "Angina"
+          },
+          {
+            "name": "Hypertension"
+          },
+          {
+            "name": "Heart Failure"
+          },
+          {
+            "name": "Arrhythmia"
+          },
+          {
+            "name": "Blood"
+          }
+        ]
+      }
+    },
+    {
+      "code": "210",
+      "year": 2,
+      "subjects": {
+        "Pathology": [
+          {
+            "name": "Cardiovascular System",
+            "note": "no explicit 'Chapter' label in source, single line item"
+          }
+        ],
+        "Pharmacology": [
+          {
+            "name": "GIT"
+          },
+          {
+            "name": "Respiratory"
+          }
+        ]
+      }
+    },
+    {
+      "code": "309",
+      "year": 3,
+      "subjects": {
+        "Microbiology & Immunology": [
+          {
+            "name": "Introduction to Microorganisms",
+            "topic": "General"
+          },
+          {
+            "name": "Bacterial Structure",
+            "topic": "General"
+          },
+          {
+            "name": "Bacterial Growth",
+            "topic": "General"
+          },
+          {
+            "name": "Bacterial Viruses (Bacteriophage)",
+            "topic": "General"
+          },
+          {
+            "name": "Bacterial Genetics",
+            "topic": "General"
+          },
+          {
+            "name": "Antimicrobial Agents",
+            "topic": "General"
+          },
+          {
+            "name": "Bacterial Pathogenesis",
+            "topic": "General"
+          },
+          {
+            "name": "General Virology",
+            "topic": "General"
+          },
+          {
+            "name": "General Mycology",
+            "topic": "General"
+          },
+          {
+            "name": "Overview of the Immune System",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Innate Immunity",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Antigens",
+            "topic": "Immunology"
+          },
+          {
+            "name": "T cell-mediated Immunity",
+            "topic": "Immunology"
+          },
+          {
+            "name": "The Humoral Immune Response",
+            "topic": "Immunology"
+          },
+          {
+            "name": "The Complement System",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Classification of Acquired Immunity",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Immunity to Microbes",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Tumour Immunology",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Hypersensitivity Reactions",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Transplantation Immunology",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Tolerance and Autoimmunity",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Immunodeficiency Diseases",
+            "topic": "Immunology"
+          },
+          {
+            "name": "Bacterial Taxonomy",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Staphylococcus",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Streptococcus",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Enterococcus",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Neisseria",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Gram-Positive Non-Spore-Forming Bacilli",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Gram-Positive Spore-Forming Bacilli",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Enterobacteriaceae",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Vibrio",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Campylobacter",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Helicobacter",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Non-Fermentative Gram-Negative Bacilli",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Haemophilus",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Bordetella",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Brucella",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Legionella",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Gram-Negative Anaerobic Bacilli",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Mycobacterium",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Spirochaetes",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Mycoplasma",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Chlamydia and Chlamydophila",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Rickettsia",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Coxiella",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Actinomycetes",
+            "topic": "Bacteriology"
+          },
+          {
+            "name": "Hepatitis Viruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Retroviruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Orthomyxoviruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Paramyxoviruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Coronaviruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Rhabdoviruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Arboviruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Picornaviruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Other RNA Viruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Herpesviruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Other DNA Viruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Tumor Viruses",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Prions",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Systemic Mycology",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Health Care Associated Infections",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Disinfection and Sterilization",
+            "topic": "Virology and Mycology"
+          },
+          {
+            "name": "Topics of Clinical Relevance",
+            "topic": "Virology and Mycology"
+          }
+        ],
+        "Parasitology": [
+          {
+            "name": "Trematoda"
+          },
+          {
+            "name": "Cestoda"
+          },
+          {
+            "name": "Nematoda"
+          },
+          {
+            "name": "Protozoa"
+          },
+          {
+            "name": "Entomology & Immunoparasitology"
+          }
+        ]
+      }
+    },
+    {
+      "code": "310",
+      "year": 3,
+      "subjects": {
+        "Pathology": [
+          {
+            "name": "Respiratory"
+          },
+          {
+            "name": "GIT & Liver"
+          },
+          {
+            "name": "Reproduction"
+          },
+          {
+            "name": "Skin & soft tissue tumors"
+          },
+          {
+            "name": "Bone & joints"
+          },
+          {
+            "name": "Hematopoietic & lymphoid"
+          },
+          {
+            "name": "Endocrine"
+          },
+          {
+            "name": "Nervous system"
+          }
+        ],
+        "Pharmacology": [
+          {
+            "name": "Endocrine"
+          },
+          {
+            "name": "CNS"
+          },
+          {
+            "name": "Chemotherapy"
+          }
+        ]
+      }
+    }
+  ],
+  "excluded_this_pass": {
+    "modules": [
+      "314",
+      "NTR-319"
+    ],
+    "reason": "Explicitly deferred by product owner 2026-08-23. Both have subjects listed with zero chapters in the source document (Radiology, Clinical Pathology, INV Microbiology under 314; Public Health & Family Medicine under NTR-319)."
+  }
+}

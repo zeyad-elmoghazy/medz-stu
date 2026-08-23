@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "seed:questions": "tsx --env-file=.env.local scripts/seed-questions.ts",
+    "seed:curriculum": "tsx --env-file=.env.local scripts/seed/seed-curriculum.ts",
+    "cleanup:legacy-placeholder-chapters": "tsx --env-file=.env.local scripts/seed/cleanup-legacy-placeholder-chapters.ts",
     "test": "jest",
     "test:ocr": "jest __tests__/ocr/mcq-parser",
     "test:ocr:integration": "jest __tests__/ocr/pipeline.integration",
