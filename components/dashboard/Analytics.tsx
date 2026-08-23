@@ -34,7 +34,7 @@ export default function AnalyticsDashboard({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-violet-300">
+          <p className="text-[10px] uppercase tracking-[0.22em] text-[#33BFBF]">
             Accuracy
           </p>
           <h2 className="mt-0.5 text-base font-semibold tracking-tight text-white">
@@ -44,7 +44,7 @@ export default function AnalyticsDashboard({
             Eight historical sessions plus today&apos;s attempt.
           </p>
         </div>
-        <span className="rounded-full bg-violet-500/15 px-2.5 py-1 text-xs text-violet-200">
+        <span className="rounded-full bg-[#33BFBF]/15 px-2.5 py-1 text-xs text-[#33BFBF]">
           Today: {currentAccuracy}%
         </span>
       </div>

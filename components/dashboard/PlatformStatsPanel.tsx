@@ -28,7 +28,7 @@ export default function PlatformStatsPanel({ data }: { data: DauPoint[] }) {
     >
       <div className="flex items-baseline justify-between">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.22em] text-violet-300">
+          <p className="text-[10px] uppercase tracking-[0.22em] text-[#33BFBF]">
             Platform stats
           </p>
           <h2 className="mt-0.5 text-base font-semibold tracking-tight text-white">

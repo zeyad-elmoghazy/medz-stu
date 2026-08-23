@@ -519,7 +519,7 @@ export default function QuizEnginePage() {
             className="pointer-events-none fixed left-1/2 top-20 z-30 -translate-x-1/2"
           >
             <span
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-purple-300"
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-[#33BFBF]"
               style={{
                 backgroundColor: 'rgba(0,166,166,0.2)',
                 border: '1px solid rgba(0,166,166,0.3)',
@@ -835,7 +835,7 @@ function IconButton({
       className={cn(
         'grid h-10 w-10 place-items-center rounded-lg transition',
         active
-          ? 'text-violet-200'
+          ? 'text-[#33BFBF]'
           : 'text-text-muted hover:text-white'
       )}
       style={{
@@ -864,7 +864,7 @@ function PhaseOne({
     <div className="space-y-8">
       <div className="flex items-center gap-2">
         <span
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-200"
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#33BFBF]"
           style={{
             backgroundColor: 'rgba(0,166,166, 0.18)',
             border: '1px solid rgba(51,191,191, 0.4)',
@@ -912,7 +912,7 @@ function PhaseOne({
               <span
                 className={cn(
                   'mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sm font-semibold transition',
-                  isSelected ? 'bg-violet-500 text-white' : 'bg-white/5 text-text-muted'
+                  isSelected ? 'bg-[#00A6A6] text-white' : 'bg-white/5 text-text-muted'
                 )}
               >
                 {letterFor(idx)}
@@ -1164,7 +1164,7 @@ function ToolbarButton({
       onClick={onClick}
       className={cn(
         'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition',
-        active ? 'text-violet-200' : 'text-text-muted hover:text-white'
+        active ? 'text-[#33BFBF]' : 'text-text-muted hover:text-white'
       )}
       style={{
         border: '1px solid #132B45',
@@ -1304,7 +1304,7 @@ function StructuredExplanation({ question }: { question: HistologyQuestion }) {
           <ul className="mt-2.5 space-y-2.5">
             {details.map((s, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-text-primary">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400" />
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#33BFBF]" />
                 <span>{s}</span>
               </li>
             ))}
@@ -1364,12 +1364,12 @@ function StructuredExplanation({ question }: { question: HistologyQuestion }) {
             border: '1px solid rgba(51,191,191, 0.25)',
           }}
         >
-          <p className="text-[11px] uppercase tracking-[0.18em] text-violet-300">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]">
             Topic · {question.topic}
           </p>
           {correctChoice && (
             <p className="mt-2 text-sm leading-relaxed text-white">
-              <span className="font-semibold text-violet-200">Correct answer:</span>{' '}
+              <span className="font-semibold text-[#33BFBF]">Correct answer:</span>{' '}
               {correctChoice.text}
             </p>
           )}
@@ -1387,8 +1387,8 @@ function SectionHeader({
   children: React.ReactNode;
 }) {
   return (
-    <header className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-300">
-      <span className="grid h-6 w-6 place-items-center rounded-md bg-violet-500/15 text-violet-200">
+    <header className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#33BFBF]">
+      <span className="grid h-6 w-6 place-items-center rounded-md bg-[#33BFBF]/15 text-[#33BFBF]">
         {icon}
       </span>
       {children}
@@ -1555,7 +1555,7 @@ function ExitConfirmationModal({
           <ExitProgressRow
             label="Resuming will continue from"
             value={`Question ${currentIndex + 1}`}
-            valueClass="text-purple-400 font-semibold"
+            valueClass="text-[#33BFBF] font-semibold"
             last
           />
         </div>

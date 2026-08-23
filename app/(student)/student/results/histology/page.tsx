@@ -147,7 +147,7 @@ function HistologyResultsInner() {
         {/* Report header — no celebratory iconography. */}
         <FadeUp>
           <div className="flex flex-col gap-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-violet-300">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#33BFBF]">
               Session report · {histologySubject.name}
             </p>
             <div className="flex flex-wrap items-end justify-between gap-4">
@@ -314,7 +314,7 @@ function HistologyResultsInner() {
                       Q{i + 1}
                     </span>
                     <div className="flex-1">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-violet-300/80">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]/80">
                         {b.topic}
                       </p>
                       <p className="mt-0.5 text-sm leading-snug text-text-primary">

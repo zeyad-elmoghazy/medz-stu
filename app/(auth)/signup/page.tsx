@@ -120,7 +120,7 @@ export default function SignupPage() {
   return (
     <main className="relative flex min-h-screen w-full items-center justify-center px-4 py-16">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-1/3 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/15 blur-[120px]" />
+        <div className="absolute left-1/2 top-1/3 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#33BFBF]/15 blur-[120px]" />
         <div className="absolute bottom-10 left-10 h-72 w-72 rounded-full bg-emerald-500/10 blur-[100px]" />
       </div>
 
@@ -156,7 +156,7 @@ export default function SignupPage() {
           </p>
           {isDemoMode() && (
             <p
-              className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-violet-200"
+              className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]"
               style={{
                 backgroundColor: 'rgba(0,166,166,0.15)',
                 border: '1px solid rgba(51,191,191,0.35)',
@@ -213,7 +213,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(0,166,166,0.45)] transition hover:bg-violet-500 hover:shadow-[0_0_36px_rgba(0,166,166,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#132B45] disabled:cursor-not-allowed disabled:opacity-60"
+            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00A6A6] px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(0,166,166,0.45)] transition hover:bg-[#33BFBF] hover:shadow-[0_0_36px_rgba(0,166,166,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#33BFBF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#132B45] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -230,7 +230,7 @@ export default function SignupPage() {
           Already have an account?{' '}
           <Link
             href="/login"
-            className="font-medium text-violet-300 underline-offset-2 transition hover:text-violet-200 hover:underline"
+            className="font-medium text-[#33BFBF] underline-offset-2 transition hover:text-[#F7F9FA] hover:underline"
           >
             Log In
           </Link>
@@ -282,7 +282,7 @@ function FormField({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="block h-11 w-full rounded-lg border border-[#132B45] bg-[#0B1F33] pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+          className="block h-11 w-full rounded-lg border border-[#132B45] bg-[#0B1F33] pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-[#33BFBF] focus:outline-none focus:ring-2 focus:ring-[#33BFBF]/40"
         />
       </div>
     </div>

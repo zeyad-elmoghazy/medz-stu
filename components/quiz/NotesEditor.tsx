@@ -115,7 +115,7 @@ export default function NotesEditor({
         style={{ borderBottom: '1px solid #132B45' }}
       >
         <div className="flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-violet-500/15 text-violet-200">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#33BFBF]/15 text-[#33BFBF]">
             <NotebookPen className="h-4 w-4" />
           </span>
           <div className="flex flex-col leading-tight">

@@ -70,7 +70,7 @@ export default function AITutorPanel({
         style={{ borderBottom: '1px solid #132B45' }}
       >
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-500/15 text-violet-200">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#33BFBF]/15 text-[#33BFBF]">
             <Bot className="h-4 w-4" />
           </span>
           <div className="flex flex-col leading-tight">
@@ -133,7 +133,7 @@ export default function AITutorPanel({
           </AnimatePresence>
           {thinking && (
             <li className="flex items-center gap-2 text-xs text-text-muted">
-              <Sparkles className="h-3.5 w-3.5 animate-pulse text-violet-300" />
+              <Sparkles className="h-3.5 w-3.5 animate-pulse text-[#33BFBF]" />
               Thinking…
             </li>
           )}
