@@ -9,6 +9,18 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/admin/overview
  *
+ * UNWIRED as of the /api/admin/content/* port — nothing should call
+ * this route once step 7 replaces /admin/dashboard with the new
+ * admin frontend. Kept live (not deleted) rather than dropped by
+ * default: its per-author activity breakdown (professorActivity)
+ * and its professor_id-presence-derived author count are real
+ * capability not present in /api/admin/content/overview (the new
+ * canonical route, which just counts role='admin' — a number that's
+ * largely uninformative post-pivot since any admin can author).
+ * This file stays here pending a deliberate decision to either port
+ * that logic into the new route or formally retire this one — not
+ * as an accidental leftover.
+ *
  * The admin dashboard's single-shot fetch. Returns:
  *   - platform counts (professors, students, subjects)
  *   - per-professor authoring activity (published, under review,

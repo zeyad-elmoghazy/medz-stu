@@ -36,17 +36,12 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
  *   chapterId         — uuid
  *   questions         — file (PDF of questions, required)
  *   notes             — file (PDF of lecture notes for reference lookup, optional)
- *   referenceBookId   — uuid (optional)
  *
- * FLAGGED, not resolved this port: referenceBookId still writes to
- * questions.reference_book_id below, same as the b2c-pivot-rebuild
- * source. That column is now dead under the module-owns-the-book
- * redesign (see 019_module_book_and_import_idempotency.sql and the
- * import route) — this route wasn't named for the same rewrite
- * admin/questions/route.ts got, so it's ported as-is rather than
- * silently changed. The field is optional and nothing requires a
- * caller to populate it, so this is inert unless someone still
- * passes it.
+ * No referenceBookId field (dropped from the b2c-pivot-rebuild
+ * source, same fix as admin/questions/[id]/route.ts's PATCH schema):
+ * the module owns its book now (modules.book_id), not the question
+ * or the upload — leaving a per-upload book override in would let
+ * this route reintroduce exactly the thing that redesign retired.
  *
  * Extracted rows land with status='under_review' in the Review
  * Queue, not published directly.
@@ -62,7 +57,6 @@ export async function POST(request: Request) {
 
   const moduleCode = String(form.get('moduleCode') ?? '');
   const chapterId = String(form.get('chapterId') ?? '');
-  const referenceBookId = form.get('referenceBookId') ? String(form.get('referenceBookId')) : null;
   const questionsFile = form.get('questions');
   const notesFile = form.get('notes');
 
@@ -231,7 +225,6 @@ export async function POST(request: Request) {
         correct_answer: correct,
         explanation: extras?.explanation ?? '',
         reference: q.reference ?? extras?.reference ?? '',
-        reference_book_id: referenceBookId,
         reference_page: refPage,
         topic: '',
         chapter_id: chapterId,
