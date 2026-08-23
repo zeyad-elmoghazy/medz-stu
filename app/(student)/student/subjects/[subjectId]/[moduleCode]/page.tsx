@@ -294,8 +294,8 @@ function ChapterRow({
   const done = !locked && prog === 100;
   const started = !locked && prog > 0 && prog < 100;
 
-  const barColor = locked ? '#1E293B' : done ? '#10B981' : started ? '#8B5CF6' : '#334155';
-  const pctColor = locked ? '#475569' : done ? '#10B981' : started ? '#C4B5FD' : '#64748B';
+  const barColor = locked ? '#1E293B' : done ? '#10B981' : started ? '#33BFBF' : '#334155';
+  const pctColor = locked ? '#475569' : done ? '#10B981' : started ? '#33BFBF' : '#64748B';
   const statusText = locked ? 'Locked' : done ? 'Completed' : started ? 'In Progress' : 'Not started';
   const statusStyle: CSSProperties = locked
     ? { color: '#94A3B8', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }

@@ -129,7 +129,7 @@ function HistologyResultsInner() {
   }
 
   const accentColor =
-    accuracy >= 80 ? '#10B981' : accuracy >= 60 ? '#9F67FF' : '#EF4444';
+    accuracy >= 80 ? '#10B981' : accuracy >= 60 ? '#33BFBF' : '#EF4444';
 
   return (
     <main className="min-h-screen w-full" style={{ backgroundColor: '#0B1F33' }}>
