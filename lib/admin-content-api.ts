@@ -16,6 +16,8 @@ export type AdminModule = {
 
 export type ModuleSubject = { id: string; slug: string; name: string };
 
+export type ReferenceBook = { id: string; title: string };
+
 export type AdminChapter = {
   id: string;
   module_code: string;
@@ -99,6 +101,24 @@ export async function fetchOverview(): Promise<AdminOverview> {
 
 export async function fetchAdminModules(): Promise<{ modules: AdminModule[] }> {
   const res = await fetch('/api/admin/content/modules', { credentials: 'include', cache: 'no-store' });
+  return json(res);
+}
+
+export async function fetchReferenceBooks(): Promise<{ books: ReferenceBook[] }> {
+  const res = await fetch('/api/admin/content/books', { credentials: 'include', cache: 'no-store' });
+  return json(res);
+}
+
+export async function patchAdminModule(
+  code: string,
+  body: { book_id: string | null }
+): Promise<{ module: AdminModule }> {
+  const res = await fetch(`/api/admin/content/modules/${code}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   return json(res);
 }
 

@@ -9,8 +9,9 @@ import { fetchOverview, type AdminOverview } from '@/lib/admin-content-api';
 import { AdminOverviewPanel } from '@/components/admin-content/AdminOverviewPanel';
 import { AdminUploadWizard } from '@/components/admin-content/AdminUploadWizard';
 import { AdminQuestionReview } from '@/components/admin-content/AdminQuestionReview';
+import { AdminModulesPanel } from '@/components/admin-content/AdminModulesPanel';
 
-type View = 'overview' | 'upload' | 'review';
+type View = 'overview' | 'upload' | 'review' | 'modules';
 
 type NavDef = { key: View; label: string; badge?: number };
 
@@ -83,12 +84,14 @@ export default function AdminContentPage() {
     { key: 'overview', label: 'Overview' },
     { key: 'upload', label: 'Upload Content' },
     { key: 'review', label: 'Review Queue', badge: reviewBadge > 0 ? reviewBadge : undefined },
+    { key: 'modules', label: 'Modules' },
   ];
 
   const titles: Record<View, [string, string]> = {
     overview: ['Overview', 'Platform KPIs, daily activity, and the unified content log.'],
     upload: ['Upload Content', 'Add questions to any chapter — write them, extract from a PDF, or import a JSON batch.'],
     review: ['Review Queue', 'Browse, review, and publish every question in the bank.'],
+    modules: ['Modules', 'Assign each module its reference book. Books are added directly via SQL — this is selection only.'],
   };
 
   const initials =
@@ -332,6 +335,7 @@ export default function AdminContentPage() {
         )}
         {view === 'upload' && <AdminUploadWizard onContentChanged={refreshOverview} />}
         {view === 'review' && <AdminQuestionReview onChanged={refreshOverview} />}
+        {view === 'modules' && <AdminModulesPanel />}
       </main>
     </div>
   );
