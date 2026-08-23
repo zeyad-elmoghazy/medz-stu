@@ -7,12 +7,12 @@ import Image from 'next/image';
 type Theme = 'dark' | 'light';
 
 const DOTS: Array<CSSProperties & { key: number }> = [
-  { key: 0, left: '13%', top: '30%', width: 7, height: 7, background: '#9F67FF', boxShadow: '0 0 14px #9F67FF', ['--o' as any]: 0.5, ['--d' as any]: '15s', ['--dx' as any]: '18px', ['--dy' as any]: '-22px' },
-  { key: 1, left: '24%', top: '66%', width: 5, height: 5, background: 'var(--text)', boxShadow: '0 0 10px #fff', ['--o' as any]: 0.3, ['--d' as any]: '19s', ['--dx' as any]: '-14px', ['--dy' as any]: '-16px' },
+  { key: 0, left: '13%', top: '30%', width: 7, height: 7, background: '#33BFBF', boxShadow: '0 0 14px #33BFBF', ['--o' as any]: 0.5, ['--d' as any]: '15s', ['--dx' as any]: '18px', ['--dy' as any]: '-22px' },
+  { key: 1, left: '24%', top: '66%', width: 5, height: 5, background: 'var(--text)', boxShadow: '0 0 10px #F7F9FA', ['--o' as any]: 0.3, ['--d' as any]: '19s', ['--dx' as any]: '-14px', ['--dy' as any]: '-16px' },
   { key: 2, left: '80%', top: '26%', width: 6, height: 6, background: '#10B981', boxShadow: '0 0 12px #10B981', ['--o' as any]: 0.4, ['--d' as any]: '17s', ['--dx' as any]: '12px', ['--dy' as any]: '20px' },
-  { key: 3, left: '87%', top: '64%', width: 8, height: 8, background: '#9F67FF', boxShadow: '0 0 16px #9F67FF', ['--o' as any]: 0.5, ['--d' as any]: '21s', ['--dx' as any]: '-18px', ['--dy' as any]: '-14px' },
-  { key: 4, left: '63%', top: '80%', width: 5, height: 5, background: '#9F67FF', boxShadow: '0 0 10px #9F67FF', ['--o' as any]: 0.4, ['--d' as any]: '14s', ['--dx' as any]: '16px', ['--dy' as any]: '-20px' },
-  { key: 5, left: '39%', top: '18%', width: 4, height: 4, background: 'var(--text)', boxShadow: '0 0 8px #fff', ['--o' as any]: 0.3, ['--d' as any]: '23s', ['--dx' as any]: '-12px', ['--dy' as any]: '18px' },
+  { key: 3, left: '87%', top: '64%', width: 8, height: 8, background: '#33BFBF', boxShadow: '0 0 16px #33BFBF', ['--o' as any]: 0.5, ['--d' as any]: '21s', ['--dx' as any]: '-18px', ['--dy' as any]: '-14px' },
+  { key: 4, left: '63%', top: '80%', width: 5, height: 5, background: '#33BFBF', boxShadow: '0 0 10px #33BFBF', ['--o' as any]: 0.4, ['--d' as any]: '14s', ['--dx' as any]: '16px', ['--dy' as any]: '-20px' },
+  { key: 5, left: '39%', top: '18%', width: 4, height: 4, background: 'var(--text)', boxShadow: '0 0 8px #F7F9FA', ['--o' as any]: 0.3, ['--d' as any]: '23s', ['--dx' as any]: '-12px', ['--dy' as any]: '18px' },
 ];
 
 const FEATURES = [
@@ -28,7 +28,7 @@ const FEATURES = [
   },
   {
     title: 'Generate your own exams',
-    body: 'Pick subjects, chapters, and length. MedZ builds a fresh mock exam, timed and graded, from the full MCQ bank.',
+    body: 'Pick subjects, chapters, and length. MediZee builds a fresh mock exam, timed and graded, from the full MCQ bank.',
     icon: (<><rect x="4" y="3" width="16" height="18" rx="2" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12" y2="16" /></>),
   },
   {
@@ -73,32 +73,32 @@ const LOCKED = [
 ];
 
 const PAGE_CSS = `
-[data-mz-root]{--bg:#08070F;--bg2:#0a0912;--surface:#0F0F1A;--text:#F8FAFC;--text2:#E2E8F0;--text3:#CBD5E1;--muted:#94A3B8;--faint:#64748B;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);--fill:rgba(255,255,255,.04);--nav-bg:rgba(8,7,15,.72);--accent-card:linear-gradient(165deg,#1a1330,#0f0a1f);--price-card:linear-gradient(165deg,#1a1330,#0f0a1f);--card-locked:#0d0c15;--accent-text:#A78BFA}
-[data-mz-root][data-mz-theme="light"]{--bg:#F6F5FB;--bg2:#ECEAF6;--surface:#FFFFFF;--text:#1B1826;--text2:#332E44;--text3:#524C68;--muted:#6E687F;--faint:#938DA6;--line:rgba(24,20,46,.10);--line2:rgba(24,20,46,.16);--fill:rgba(24,20,46,.035);--nav-bg:rgba(246,245,251,.82);--accent-card:linear-gradient(165deg,#F1EBFF,#FBF9FF);--price-card:linear-gradient(165deg,#EFE8FF,#FCFAFF);--card-locked:#FBFAFE;--accent-text:#7C3AED}
+[data-mz-root]{--bg:#0B1F33;--bg2:#0B1F33;--surface:#132B45;--text:#F7F9FA;--text2:#D9F3F0;--text3:#8B98A6;--muted:#8B98A6;--faint:#8B98A6;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);--fill:rgba(255,255,255,.04);--nav-bg:rgba(8,7,15,.72);--accent-card:linear-gradient(165deg,#132B45,#0B1F33);--price-card:linear-gradient(165deg,#132B45,#0B1F33);--card-locked:#0B1F33;--accent-text:#33BFBF}
+[data-mz-root][data-mz-theme="light"]{--bg:#D9F3F0;--bg2:#D9F3F0;--surface:#F7F9FA;--text:#132B45;--text2:#332E44;--text3:#8B98A6;--muted:#8B98A6;--faint:#8B98A6;--line:rgba(24,20,46,.10);--line2:rgba(24,20,46,.16);--fill:rgba(24,20,46,.035);--nav-bg:rgba(246,245,251,.82);--accent-card:linear-gradient(165deg,#D9F3F0,#F7F9FA);--price-card:linear-gradient(165deg,#D9F3F0,#F7F9FA);--card-locked:#D9F3F0;--accent-text:#00A6A6}
 [data-mz-root]{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;transition:background .3s ease,color .3s ease}
 [data-mz-root] a{color:inherit;text-decoration:none}
 .mz-link{position:relative;color:var(--muted);font-size:14px;font-weight:500;transition:color .2s;padding:4px 0}
-.mz-link::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:linear-gradient(90deg,#8B5CF6,#A855F7);transform:scaleX(0);transform-origin:center;transition:transform .28s ease;box-shadow:0 0 12px rgba(139,92,246,.7);opacity:0}
+.mz-link::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:linear-gradient(90deg,#00A6A6,#33BFBF);transform:scaleX(0);transform-origin:center;transition:transform .28s ease;box-shadow:0 0 12px rgba(0,166,166,.7);opacity:0}
 .mz-link:hover{color:var(--text)}
 .mz-link:hover::after{transform:scaleX(.6);opacity:.6}
-.mz-link.is-active{color:var(--text);text-shadow:0 0 18px rgba(139,92,246,.55)}
+.mz-link.is-active{color:var(--text);text-shadow:0 0 18px rgba(0,166,166,.55)}
 .mz-link.is-active::after{transform:scaleX(1);opacity:1}
 .mz-cta{transition:transform .18s ease,box-shadow .18s ease,background .18s ease;cursor:pointer;border:none}
-.mz-cta:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(124,58,237,.65)}
+.mz-cta:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(0,166,166,.65)}
 .mz-ghost{transition:border-color .18s,color .18s,background .18s;cursor:pointer}
-.mz-ghost:hover{border-color:rgba(139,92,246,.7);color:var(--text);background:rgba(124,58,237,.14)}
+.mz-ghost:hover{border-color:rgba(0,166,166,.7);color:var(--text);background:rgba(0,166,166,.14)}
 .mz-feat{transition:transform .2s ease,border-color .2s ease,background .2s ease}
-.mz-feat:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.45);background:rgba(124,58,237,.06)}
+.mz-feat:hover{transform:translateY(-4px);border-color:rgba(0,166,166,.45);background:rgba(0,166,166,.06)}
 .mz-subj{transition:transform .2s ease}
 .mz-subj:hover{transform:translateY(-4px)}
 @keyframes mzDrift{0%{transform:translate3d(0,0,0);opacity:0}25%{opacity:var(--o,.4)}50%{transform:translate3d(var(--dx,16px),var(--dy,-18px),0);opacity:calc(var(--o,.4)*1.5)}75%{opacity:var(--o,.4)}100%{transform:translate3d(0,0,0);opacity:0}}
 .mz-dot{position:absolute;border-radius:9999px;animation:mzDrift var(--d,16s) ease-in-out infinite;pointer-events:none;will-change:transform,opacity}
-.mz-hero-word{color:#8B5CF6;text-shadow:0 0 32px rgba(124,58,237,.55)}
-.mz-featured-glow{box-shadow:0 0 36px rgba(124,58,237,.5)}
+.mz-hero-word{color:#00A6A6;text-shadow:0 0 32px rgba(0,166,166,.55)}
+.mz-featured-glow{box-shadow:0 0 36px rgba(0,166,166,.5)}
 .mz-nav{will-change:background;transform:translateZ(0)}
-.mz-subjects-scroller{scrollbar-width:thin;scrollbar-color:rgba(139,92,246,.4) transparent;mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
+.mz-subjects-scroller{scrollbar-width:thin;scrollbar-color:rgba(0,166,166,.4) transparent;mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
 .mz-subjects-scroller::-webkit-scrollbar{height:8px}
-.mz-subjects-scroller::-webkit-scrollbar-thumb{background:rgba(139,92,246,.4);border-radius:8px}
+.mz-subjects-scroller::-webkit-scrollbar-thumb{background:rgba(0,166,166,.4);border-radius:8px}
 .mz-subjects-scroller::-webkit-scrollbar-track{background:transparent}
 @media (prefers-reduced-motion:reduce){.mz-dot{animation:none!important}}
 @media (max-width:960px){
@@ -113,7 +113,7 @@ const PAGE_CSS = `
 const NAV_SECTIONS = ['features', 'how', 'subjects', 'pricing'] as const;
 type NavSection = typeof NAV_SECTIONS[number];
 
-export default function MedZHome() {
+export default function MediZeeHome() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [activeSection, setActiveSection] = useState<NavSection | ''>('');
 
@@ -166,10 +166,10 @@ export default function MedZHome() {
       {/* NAV */}
       <nav className="mz-nav" style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 44px', background: 'var(--nav-bg)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid var(--line)' }}>
         <Link href="#top" style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#8B5CF6,#A855F7)', boxShadow: '0 0 18px rgba(139,92,246,.5)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
-            <Image src="/medz-logo.webp" alt="MedZ" width={32} height={32} style={{ objectFit: 'cover' }} />
+          <span style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', boxShadow: '0 0 18px rgba(0,166,166,.5)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+            <Image src="/medizee-logo.webp" alt="MediZee" width={32} height={32} style={{ objectFit: 'cover' }} />
           </span>
-          <span style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--text)' }}>MedZ</span>
+          <span style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--text)' }}>MediZee</span>
         </Link>
         <div className="mz-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
           {NAV_SECTIONS.map(id => (
@@ -187,26 +187,26 @@ export default function MedZHome() {
             )}
           </button>
           <Link href="/login" className="mz-ghost" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text3)', padding: '9px 16px', borderRadius: 10, border: '1px solid var(--line2)', background: 'transparent' }}>Log in</Link>
-          <Link href="/signup" className="mz-cta" style={{ fontSize: 13.5, fontWeight: 700, color: '#fff', padding: '10px 18px', borderRadius: 10, background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', boxShadow: '0 0 22px rgba(124,58,237,.45)' }}>Sign up</Link>
+          <Link href="/signup" className="mz-cta" style={{ fontSize: 13.5, fontWeight: 700, color: '#F7F9FA', padding: '10px 18px', borderRadius: 10, background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', boxShadow: '0 0 22px rgba(0,166,166,.45)' }}>Sign up</Link>
         </div>
       </nav>
 
       {/* HERO */}
-      <section id="top" style={{ position: 'relative', background: 'radial-gradient(920px 540px at 50% -8%,rgba(124,58,237,.34),transparent 62%),radial-gradient(620px 460px at 88% 118%,rgba(16,185,129,.13),transparent 60%),var(--bg)', overflow: 'hidden', padding: '78px 40px 88px' }}>
+      <section id="top" style={{ position: 'relative', background: 'radial-gradient(920px 540px at 50% -8%,rgba(0,166,166,.34),transparent 62%),radial-gradient(620px 460px at 88% 118%,rgba(16,185,129,.13),transparent 60%),var(--bg)', overflow: 'hidden', padding: '78px 40px 88px' }}>
         <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg,rgba(255,255,255,.045) 0 1px,transparent 1px 58px),repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 58px)', WebkitMaskImage: 'radial-gradient(ellipse at center,#000 52%,transparent 100%)', maskImage: 'radial-gradient(ellipse at center,#000 52%,transparent 100%)', pointerEvents: 'none' }} />
         {DOTS.map(({ key, ...s }) => <span key={key} className="mz-dot" style={s} />)}
 
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: 900, margin: '0 auto' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--accent-text)', border: '1px solid rgba(139,92,246,.4)', background: 'rgba(124,58,237,.1)', padding: '7px 14px', borderRadius: 999 }}>✦ Built by students, for students</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--accent-text)', border: '1px solid rgba(0,166,166,.4)', background: 'rgba(0,166,166,.1)', padding: '7px 14px', borderRadius: 999 }}>✦ Built by students, for students</span>
           <h1 className="mz-hero-h1" style={{ margin: '28px 0 0', fontSize: 80, lineHeight: 0.98, fontWeight: 900, letterSpacing: '-.04em', color: 'var(--text)' }}>
             Not another <span className="mz-hero-word">PDF</span><br />in a Telegram group.
           </h1>
           <p style={{ margin: '26px 0 0', maxWidth: 600, fontSize: 17, lineHeight: 1.65, color: 'var(--muted)' }}>
-            MedZ is a full MCQ bank with instant split-view feedback, generated mock exams, flashcards, and an AI tutor — one place to drill, review, and see exactly where you&apos;re weak.
+            MediZee is a full MCQ bank with instant split-view feedback, generated mock exams, flashcards, and an AI tutor — one place to drill, review, and see exactly where you&apos;re weak.
           </p>
           <div style={{ display: 'flex', gap: 15, alignItems: 'center', marginTop: 38, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', padding: '17px 34px', borderRadius: 14, boxShadow: '0 0 34px rgba(124,58,237,.55)' }}>Start learning free <span style={{ fontSize: 18 }}>→</span></Link>
-            <a href="#how" className="mz-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 16, fontWeight: 700, color: 'var(--accent-text)', background: 'rgba(124,58,237,.1)', border: '1px solid rgba(139,92,246,.45)', padding: '17px 30px', borderRadius: 14 }}>See how it works</a>
+            <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 700, color: '#F7F9FA', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', padding: '17px 34px', borderRadius: 14, boxShadow: '0 0 34px rgba(0,166,166,.55)' }}>Start learning free <span style={{ fontSize: 18 }}>→</span></Link>
+            <a href="#how" className="mz-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 16, fontWeight: 700, color: 'var(--accent-text)', background: 'rgba(0,166,166,.1)', border: '1px solid rgba(0,166,166,.45)', padding: '17px 30px', borderRadius: 14 }}>See how it works</a>
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginTop: 46 }}>
             {['MCQ bank', 'Generated exams', 'Flashcards soon', 'AI tutor soon'].map(c => (
@@ -219,14 +219,14 @@ export default function MedZHome() {
       {/* FEATURES */}
       <section id="features" style={{ position: 'relative', padding: '88px 44px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 52px' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8B5CF6' }}>Everything in one challenge</div>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#00A6A6' }}>Everything in one challenge</div>
           <h2 className="mz-h2" style={{ margin: '14px 0 0', fontSize: 44, lineHeight: 1.08, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--text)' }}>Built for how medical students actually revise</h2>
           <p style={{ margin: '16px 0 0', fontSize: 16, lineHeight: 1.6, color: 'var(--muted)' }}>Not a passive question dump, an active recall engine that adapts to you.</p>
         </div>
         <div className="mz-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
           {FEATURES.map(f => (
             <div key={f.title} className="mz-feat" style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 18, padding: 26 }}>
-              <div style={{ width: 46, height: 46, borderRadius: 13, background: 'rgba(124,58,237,.14)', border: '1px solid rgba(139,92,246,.32)', display: 'grid', placeItems: 'center', color: '#A78BFA' }}>
+              <div style={{ width: 46, height: 46, borderRadius: 13, background: 'rgba(0,166,166,.14)', border: '1px solid rgba(0,166,166,.32)', display: 'grid', placeItems: 'center', color: '#33BFBF' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{f.icon}</svg>
               </div>
               <h3 style={{ margin: '18px 0 0', fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{f.title}</h3>
@@ -237,16 +237,16 @@ export default function MedZHome() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" style={{ position: 'relative', padding: '76px 44px', background: 'radial-gradient(700px 400px at 50% 0%,rgba(124,58,237,.12),transparent 65%),var(--bg2)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+      <section id="how" style={{ position: 'relative', padding: '76px 44px', background: 'radial-gradient(700px 400px at 50% 0%,rgba(0,166,166,.12),transparent 65%),var(--bg2)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
         <div style={{ maxWidth: 1160, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 54px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8B5CF6' }}>How it works</div>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#00A6A6' }}>How it works</div>
             <h2 className="mz-h2" style={{ margin: '14px 0 0', fontSize: 44, lineHeight: 1.08, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--text)' }}>Three steps, straight after the lecture</h2>
           </div>
           <div className="mz-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 22 }}>
             {STEPS.map((s, i) => (
               <div key={s.title} style={{ position: 'relative', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 18, padding: '30px 26px' }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', display: 'grid', placeItems: 'center', boxShadow: '0 0 20px rgba(124,58,237,.5)' }}>{i + 1}</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#F7F9FA', width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', display: 'grid', placeItems: 'center', boxShadow: '0 0 20px rgba(0,166,166,.5)' }}>{i + 1}</div>
                 <h3 style={{ margin: '20px 0 0', fontSize: 19, fontWeight: 700, color: 'var(--text)' }}>{s.title}</h3>
                 <p style={{ margin: '10px 0 0', fontSize: 13.5, lineHeight: 1.6, color: 'var(--muted)' }}>{s.body}</p>
               </div>
@@ -259,25 +259,25 @@ export default function MedZHome() {
       {/* SUBJECTS */}
       <section id="subjects" style={{ position: 'relative', padding: '88px 0' }}>
         <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 40px', padding: '0 44px' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8B5CF6' }}>The catalog</div>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#00A6A6' }}>The catalog</div>
           <h2 className="mz-h2" style={{ margin: '14px 0 0', fontSize: 44, lineHeight: 1.08, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--text)' }}>Start with Histology</h2>
           <p style={{ margin: '16px 0 0', fontSize: 16, lineHeight: 1.6, color: 'var(--muted)' }}>Six subjects on our roadmap. Scroll →</p>
         </div>
         <div className="mz-subjects-scroller" style={{ display: 'flex', gap: 18, overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x mandatory', padding: '4px 44px 24px', WebkitOverflowScrolling: 'touch' }}>
           <Link href="/signup" className="mz-subj mz-featured-glow" style={{ flex: 'none', width: 480, scrollSnapAlign: 'start', position: 'relative', borderRadius: 20, padding: 18, background: 'var(--accent-card)', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
-            <div style={{ position: 'relative', height: 220, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(139,92,246,.3)' }}>
+            <div style={{ position: 'relative', height: 220, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(0,166,166,.3)' }}>
               <Image src="/subjects/histology.webp" alt="Histology" fill sizes="480px" style={{ objectFit: 'cover' }} />
-              <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: '#DDD6FE', background: 'rgba(13,11,26,.8)', border: '1px solid rgba(139,92,246,.5)', padding: '5px 10px', borderRadius: 8, zIndex: 1 }}>✦ Live now</span>
+              <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: '#33BFBF', background: 'rgba(13,11,26,.8)', border: '1px solid rgba(0,166,166,.5)', padding: '5px 10px', borderRadius: 8, zIndex: 1 }}>✦ Live now</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
-              <span style={{ width: 44, height: 44, borderRadius: 11, border: '1px solid rgba(139,92,246,.5)', flex: 'none', display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', color: '#fff', fontSize: 15, fontWeight: 800, letterSpacing: '-.02em', boxShadow: '0 0 16px rgba(124,58,237,.45)' }}>MZ</span>
+              <span style={{ width: 44, height: 44, borderRadius: 11, border: '1px solid rgba(0,166,166,.5)', flex: 'none', display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', color: '#F7F9FA', fontSize: 15, fontWeight: 800, letterSpacing: '-.02em', boxShadow: '0 0 16px rgba(0,166,166,.45)' }}>MZ</span>
               <div>
                 <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)', lineHeight: 1 }}>Histology</div>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>450+ MCQs · Curated by MedZ</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>450+ MCQs · Curated by MediZee</div>
               </div>
             </div>
-            <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--text3)', flex: 1 }}>High-yield questions, detailed explanations, and visual references — the first live subject in the MedZ bank.</p>
-            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 18, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', padding: 13, borderRadius: 12, boxShadow: '0 0 24px rgba(124,58,237,.45)' }}>Start learning →</div>
+            <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--text3)', flex: 1 }}>High-yield questions, detailed explanations, and visual references — the first live subject in the MediZee bank.</p>
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 18, fontSize: 14, fontWeight: 700, color: '#F7F9FA', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', padding: 13, borderRadius: 12, boxShadow: '0 0 24px rgba(0,166,166,.45)' }}>Start learning →</div>
           </Link>
           {LOCKED.map(l => (
             <div key={l.name} className="mz-subj" style={{ flex: 'none', width: 300, scrollSnapAlign: 'start', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--card-locked)', display: 'flex', flexDirection: 'column' }}>
@@ -294,16 +294,16 @@ export default function MedZHome() {
           <div aria-hidden style={{ flex: 'none', width: 8 }} />
         </div>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24, padding: '0 44px' }}>
-          <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', padding: '15px 30px', borderRadius: 13, boxShadow: '0 0 28px rgba(124,58,237,.5)' }}>Explore all subjects <span style={{ fontSize: 17 }}>→</span></Link>
+          <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 15, fontWeight: 700, color: '#F7F9FA', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', padding: '15px 30px', borderRadius: 13, boxShadow: '0 0 28px rgba(0,166,166,.5)' }}>Explore all subjects <span style={{ fontSize: 17 }}>→</span></Link>
         </div>
       </section>
 
       {/* PRICING */}
       <section id="pricing" style={{ position: 'relative', padding: '80px 44px', background: 'var(--bg2)', borderTop: '1px solid var(--line)' }}>
         <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8B5CF6' }}>Pricing</div>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#00A6A6' }}>Pricing</div>
           <h2 className="mz-h2" style={{ margin: '14px 0 0', fontSize: 44, lineHeight: 1.08, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--text)' }}>Free For Now.</h2>
-          <div style={{ marginTop: 34, background: 'var(--price-card)', border: '1px solid rgba(139,92,246,.3)', borderRadius: 22, padding: '38px 34px', boxShadow: '0 0 50px -20px rgba(124,58,237,.6)' }}>
+          <div style={{ marginTop: 34, background: 'var(--price-card)', border: '1px solid rgba(0,166,166,.3)', borderRadius: 22, padding: '38px 34px', boxShadow: '0 0 50px -20px rgba(0,166,166,.6)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-text)' }}>Student</div>
             <div style={{ marginTop: 14, display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 8 }}>
               <span style={{ fontSize: 62, fontWeight: 900, letterSpacing: '-.03em', color: 'var(--text)' }}>0 EGP</span>
@@ -314,21 +314,21 @@ export default function MedZHome() {
                 <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 11, fontSize: 14, color: 'var(--text3)' }}><span style={{ color: '#10B981' }}>✓</span>{b}</div>
               ))}
             </div>
-            <Link href="/signup" className="mz-cta" style={{ display: 'block', textAlign: 'center', width: '100%', marginTop: 28, fontSize: 15, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', padding: 15, borderRadius: 13, boxShadow: '0 0 28px rgba(124,58,237,.5)' }}>Create your free account</Link>
+            <Link href="/signup" className="mz-cta" style={{ display: 'block', textAlign: 'center', width: '100%', marginTop: 28, fontSize: 15, fontWeight: 700, color: '#F7F9FA', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', padding: 15, borderRadius: 13, boxShadow: '0 0 28px rgba(0,166,166,.5)' }}>Create your free account</Link>
           </div>
           <p style={{ margin: '20px 0 0', fontSize: 12.5, color: 'var(--faint)' }}>Per-module pricing arrives in a later phase.</p>
         </div>
       </section>
 
       {/* FINAL CTA */}
-      <section style={{ position: 'relative', padding: '96px 44px', textAlign: 'center', background: 'radial-gradient(700px 380px at 50% 120%,rgba(124,58,237,.3),transparent 65%),var(--bg)', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', padding: '96px 44px', textAlign: 'center', background: 'radial-gradient(700px 380px at 50% 120%,rgba(0,166,166,.3),transparent 65%),var(--bg)', overflow: 'hidden' }}>
         <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 58px),repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 1px,transparent 1px 58px)', WebkitMaskImage: 'radial-gradient(ellipse at 50% 100%,#000 40%,transparent 100%)', maskImage: 'radial-gradient(ellipse at 50% 100%,#000 40%,transparent 100%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', maxWidth: 640, margin: '0 auto' }}>
           <h2 className="mz-final-h2" style={{ margin: 0, fontSize: 52, lineHeight: 1.05, fontWeight: 900, letterSpacing: '-.03em', color: 'var(--text)' }}>Your next lecture deserves better revision.</h2>
           <p style={{ margin: '20px 0 0', fontSize: 17, color: 'var(--muted)' }}>Sign up free and take a Histology challenge tonight.</p>
           <div style={{ display: 'flex', gap: 15, justifyContent: 'center', marginTop: 34, flexWrap: 'wrap' }}>
-            <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', padding: '17px 34px', borderRadius: 14, boxShadow: '0 0 34px rgba(124,58,237,.55)' }}>Start learning free <span style={{ fontSize: 18 }}>→</span></Link>
-            <Link href="/login" className="mz-ghost" style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent-text)', background: 'rgba(124,58,237,.1)', border: '1px solid rgba(139,92,246,.45)', padding: '17px 30px', borderRadius: 14 }}>Log in</Link>
+            <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 700, color: '#F7F9FA', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', padding: '17px 34px', borderRadius: 14, boxShadow: '0 0 34px rgba(0,166,166,.55)' }}>Start learning free <span style={{ fontSize: 18 }}>→</span></Link>
+            <Link href="/login" className="mz-ghost" style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent-text)', background: 'rgba(0,166,166,.1)', border: '1px solid rgba(0,166,166,.45)', padding: '17px 30px', borderRadius: 14 }}>Log in</Link>
           </div>
         </div>
       </section>
@@ -336,13 +336,13 @@ export default function MedZHome() {
       {/* FOOTER */}
       <footer style={{ borderTop: '1px solid var(--line)', padding: '34px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-          <span style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#8B5CF6,#A855F7)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
-            <Image src="/medz-logo.webp" alt="MedZ" width={28} height={28} style={{ objectFit: 'cover' }} />
+          <span style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+            <Image src="/medizee-logo.webp" alt="MediZee" width={28} height={28} style={{ objectFit: 'cover' }} />
           </span>
-          <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>MedZ</span>
+          <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>MediZee</span>
           <span style={{ fontSize: 12, color: 'var(--faint)', marginLeft: 6 }}>Medical education, engineered for recall.</span>
         </div>
-        <div style={{ fontSize: 12, color: 'var(--faint)' }}>© 2026 MedZ</div>
+        <div style={{ fontSize: 12, color: 'var(--faint)' }}>© 2026 MediZee</div>
       </footer>
     </div>
   );

@@ -53,7 +53,7 @@ const RichTextEditor = dynamic(
   {
     loading: () => (
       <div className="fixed right-0 top-0 z-50 h-full w-full max-w-md p-5 text-sm text-text-muted"
-        style={{ backgroundColor: '#0F0F1A', borderLeft: '1px solid #1E1E2E' }}
+        style={{ backgroundColor: '#132B45', borderLeft: '1px solid #132B45' }}
       >
         Loading editor...
       </div>
@@ -494,7 +494,7 @@ export default function QuizEnginePage() {
   }
 
   return (
-    <main className="relative min-h-screen w-full" style={{ backgroundColor: '#09090E' }}>
+    <main className="relative min-h-screen w-full" style={{ backgroundColor: '#0B1F33' }}>
       <TopBar
         currentIndex={safeIndex}
         total={totalQuestions}
@@ -521,9 +521,9 @@ export default function QuizEnginePage() {
             <span
               className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-purple-300"
               style={{
-                backgroundColor: 'rgba(124,58,237,0.2)',
-                border: '1px solid rgba(124,58,237,0.3)',
-                boxShadow: '0 0 18px rgba(124,58,237,0.25)',
+                backgroundColor: 'rgba(0,166,166,0.2)',
+                border: '1px solid rgba(0,166,166,0.3)',
+                boxShadow: '0 0 18px rgba(0,166,166,0.25)',
               }}
             >
               <RotateCcw className="h-3 w-3" />
@@ -735,7 +735,7 @@ function TopBar({
       className="sticky top-0 z-20 backdrop-blur-xl"
       style={{
         backgroundColor: 'rgba(9, 9, 14, 0.88)',
-        borderBottom: '1px solid #1E1E2E',
+        borderBottom: '1px solid #132B45',
       }}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center gap-6 px-6 py-4">
@@ -751,8 +751,8 @@ function TopBar({
             <motion.div
               className="h-full rounded-full"
               style={{
-                background: 'linear-gradient(90deg, #7C3AED 0%, #9F67FF 100%)',
-                boxShadow: '0 0 16px rgba(124,58,237,0.55)',
+                background: 'linear-gradient(90deg, #00A6A6 0%, #33BFBF 100%)',
+                boxShadow: '0 0 16px rgba(0,166,166,0.55)',
               }}
               initial={{ width: 0 }}
               animate={{ width: `${progressPct}%` }}
@@ -839,9 +839,9 @@ function IconButton({
           : 'text-text-muted hover:text-white'
       )}
       style={{
-        border: '1px solid #1E1E2E',
-        backgroundColor: active ? 'rgba(124,58,237,0.18)' : '#0F0F1A',
-        boxShadow: active ? '0 0 14px rgba(124,58,237,0.35)' : undefined,
+        border: '1px solid #132B45',
+        backgroundColor: active ? 'rgba(0,166,166,0.18)' : '#132B45',
+        boxShadow: active ? '0 0 14px rgba(0,166,166,0.35)' : undefined,
       }}
     >
       {icon}
@@ -866,8 +866,8 @@ function PhaseOne({
         <span
           className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-200"
           style={{
-            backgroundColor: 'rgba(124, 58, 237, 0.18)',
-            border: '1px solid rgba(159, 103, 255, 0.4)',
+            backgroundColor: 'rgba(0,166,166, 0.18)',
+            border: '1px solid rgba(51,191,191, 0.4)',
           }}
         >
           <Sparkles className="h-3 w-3" /> {question.topic}
@@ -892,20 +892,20 @@ function PhaseOne({
                 'p-4'
               )}
               style={{
-                backgroundColor: isSelected ? 'rgba(124, 58, 237, 0.12)' : '#0F0F1A',
-                border: `1px solid ${isSelected ? '#7C3AED' : '#1E1E2E'}`,
+                backgroundColor: isSelected ? 'rgba(0,166,166, 0.12)' : '#132B45',
+                border: `1px solid ${isSelected ? '#00A6A6' : '#132B45'}`,
                 boxShadow: isSelected
-                  ? '0 0 24px rgba(124,58,237,0.35)'
+                  ? '0 0 24px rgba(0,166,166,0.35)'
                   : undefined,
               }}
               onMouseEnter={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.borderColor = '#7C3AED';
+                  e.currentTarget.style.borderColor = '#00A6A6';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.borderColor = '#1E1E2E';
+                  e.currentTarget.style.borderColor = '#132B45';
                 }
               }}
             >
@@ -934,8 +934,8 @@ function PhaseOne({
           'disabled:cursor-not-allowed disabled:opacity-50'
         )}
         style={{
-          backgroundColor: '#7C3AED',
-          boxShadow: selectedChoice ? '0 0 28px rgba(124,58,237,0.55)' : 'none',
+          backgroundColor: '#00A6A6',
+          boxShadow: selectedChoice ? '0 0 28px rgba(0,166,166,0.55)' : 'none',
         }}
       >
         Submit Answer
@@ -973,7 +973,7 @@ function PhaseTwoLeft({
   return (
     <div
       className="flex h-full flex-col gap-6 rounded-2xl p-6 lg:p-8"
-      style={{ backgroundColor: '#0F0F1A', border: '1px solid #1E1E2E' }}
+      style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}
     >
       <ResultBadge isCorrect={isCorrect} />
 
@@ -987,8 +987,8 @@ function PhaseTwoLeft({
           const isUserChoice = selectedChoice === choice.id;
           const isWrongUserChoice = isUserChoice && !isCorrectChoice;
 
-          let bg = '#0A0A12';
-          let border = '#1E1E2E';
+          let bg = '#0B1F33';
+          let border = '#132B45';
           let badgeBg = 'rgba(255,255,255,0.05)';
           let badgeText = 'text-text-muted';
           let icon: React.ReactNode = letterFor(idx);
@@ -1051,7 +1051,7 @@ function PhaseTwoLeft({
       </div>
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-5"
-        style={{ borderColor: '#1E1E2E' }}
+        style={{ borderColor: '#132B45' }}
       >
         <div className="flex flex-wrap items-center gap-2">
           <ToolbarButton
@@ -1090,8 +1090,8 @@ function PhaseTwoLeft({
           disabled={submitting}
           className="group inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
           style={{
-            backgroundColor: '#7C3AED',
-            boxShadow: '0 0 24px rgba(124,58,237,0.45)',
+            backgroundColor: '#00A6A6',
+            boxShadow: '0 0 24px rgba(0,166,166,0.45)',
           }}
         >
           {submitting ? (
@@ -1167,8 +1167,8 @@ function ToolbarButton({
         active ? 'text-violet-200' : 'text-text-muted hover:text-white'
       )}
       style={{
-        border: '1px solid #1E1E2E',
-        backgroundColor: active ? 'rgba(124,58,237,0.15)' : '#0A0A12',
+        border: '1px solid #132B45',
+        backgroundColor: active ? 'rgba(0,166,166,0.15)' : '#0B1F33',
       }}
     >
       {icon}
@@ -1189,11 +1189,11 @@ function PhaseTwoRight({
   return (
     <div
       className="flex h-full flex-col rounded-2xl"
-      style={{ backgroundColor: '#0F0F1A', border: '1px solid #1E1E2E' }}
+      style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}
     >
       <div
         className="flex items-center gap-1 p-2"
-        style={{ borderBottom: '1px solid #1E1E2E' }}
+        style={{ borderBottom: '1px solid #132B45' }}
       >
         <TabButton
           active={activeTab === 'explanation'}
@@ -1261,8 +1261,8 @@ function TabButton({
         active ? 'text-white' : 'text-text-muted hover:text-white'
       )}
       style={{
-        backgroundColor: active ? 'rgba(124,58,237,0.18)' : 'transparent',
-        boxShadow: active ? '0 0 14px rgba(124,58,237,0.3)' : 'none',
+        backgroundColor: active ? 'rgba(0,166,166,0.18)' : 'transparent',
+        boxShadow: active ? '0 0 14px rgba(0,166,166,0.3)' : 'none',
       }}
     >
       {icon}
@@ -1331,7 +1331,7 @@ function StructuredExplanation({ question }: { question: HistologyQuestion }) {
                       ? 'rgba(16,185,129,0.08)'
                       : 'rgba(255,255,255,0.02)',
                     border: `1px solid ${
-                      isCorrect ? 'rgba(16,185,129,0.35)' : '#1E1E2E'
+                      isCorrect ? 'rgba(16,185,129,0.35)' : '#132B45'
                     }`,
                   }}
                 >
@@ -1360,8 +1360,8 @@ function StructuredExplanation({ question }: { question: HistologyQuestion }) {
         <div
           className="mt-2.5 rounded-xl p-4"
           style={{
-            backgroundColor: 'rgba(124, 58, 237, 0.08)',
-            border: '1px solid rgba(159, 103, 255, 0.25)',
+            backgroundColor: 'rgba(0,166,166, 0.08)',
+            border: '1px solid rgba(51,191,191, 0.25)',
           }}
         >
           <p className="text-[11px] uppercase tracking-[0.18em] text-violet-300">
@@ -1521,7 +1521,7 @@ function ExitConfirmationModal({
         transition={{ duration: 0.2 }}
         className="relative w-full max-w-md rounded-2xl p-8 shadow-2xl mx-4"
         style={{
-          backgroundColor: '#161B26',
+          backgroundColor: '#132B45',
           border: '1px solid rgba(255,255,255,0.07)',
         }}
       >
@@ -1541,7 +1541,7 @@ function ExitConfirmationModal({
 
         <div
           className="mb-6 mt-4 rounded-xl p-4"
-          style={{ backgroundColor: '#0F0F1A' }}
+          style={{ backgroundColor: '#132B45' }}
         >
           <ExitProgressRow
             label="Questions answered"
@@ -1579,12 +1579,12 @@ function ExitConfirmationModal({
             type="button"
             onClick={onContinue}
             className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
-            style={{ backgroundColor: '#9333EA' }}
+            style={{ backgroundColor: '#33BFBF' }}
             onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = '#7E22CE')
+              (e.currentTarget.style.backgroundColor = '#33BFBF')
             }
             onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = '#9333EA')
+              (e.currentTarget.style.backgroundColor = '#33BFBF')
             }
           >
             Continue Challenge
@@ -1647,7 +1647,7 @@ function ViolationWarning({
         transition={{ duration: 0.2 }}
         className="relative w-full max-w-md rounded-2xl p-8 shadow-2xl mx-4"
         style={{
-          backgroundColor: '#161B26',
+          backgroundColor: '#132B45',
           border: '1px solid rgba(239,68,68,0.4)',
           boxShadow: '0 30px 80px -20px rgba(239,68,68,0.35)',
         }}
@@ -1664,7 +1664,7 @@ function ViolationWarning({
         </p>
         <div
           className="my-4 rounded-xl p-4 text-center"
-          style={{ backgroundColor: '#0F0F1A' }}
+          style={{ backgroundColor: '#132B45' }}
         >
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             Violations
@@ -1682,12 +1682,12 @@ function ViolationWarning({
           type="button"
           onClick={onDismiss}
           className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
-          style={{ backgroundColor: '#9333EA' }}
+          style={{ backgroundColor: '#33BFBF' }}
           onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = '#7E22CE')
+            (e.currentTarget.style.backgroundColor = '#33BFBF')
           }
           onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = '#9333EA')
+            (e.currentTarget.style.backgroundColor = '#33BFBF')
           }
         >
           Resume in focus mode

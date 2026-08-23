@@ -14,7 +14,7 @@ if ((!supabaseUrl || !supabaseAnonKey) && !demoFlag) {
   // loud. A silent fallback to localStorage-auth is exactly the
   // kind of misconfiguration that ships to prod unnoticed.
   const message =
-    '[MedZ] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. ' +
+    '[MediZee] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. ' +
     'Copy .env.local.example, or set NEXT_PUBLIC_DEMO=1 to run in demo mode.';
   if (process.env.NODE_ENV === 'production') {
     throw new Error(message);

@@ -1,4 +1,4 @@
-# MedZ — Adaptive medical learning
+# MediZee — Adaptive medical learning
 
 Next.js 14 (App Router) demo for an adaptive medical question bank, with student,
 professor, and program-admin surfaces. Tailwind, shadcn-style components,

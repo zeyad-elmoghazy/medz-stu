@@ -102,14 +102,14 @@ export default function ProfileSettingsPage() {
     .toUpperCase();
 
   return (
-    <main style={{ minHeight: '100vh', background: '#08070F', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <StudentNavbar />
       <div style={{ maxWidth: 780, margin: '0 auto', padding: '32px 32px 80px' }}>
         <header style={{ marginTop: 4 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#8B5CF6', textTransform: 'uppercase' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#00A6A6', textTransform: 'uppercase' }}>
             Profile &amp; Settings
           </p>
-          <h1 style={{ margin: '10px 0 0', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: '#F8FAFC' }}>
+          <h1 style={{ margin: '10px 0 0', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: '#F7F9FA' }}>
             Your account
           </h1>
         </header>
@@ -119,7 +119,7 @@ export default function ProfileSettingsPage() {
           style={{
             marginTop: 32,
             padding: 24,
-            background: '#12111C',
+            background: '#132B45',
             border: '1px solid rgba(255,255,255,0.07)',
             borderRadius: 16,
             display: 'flex',
@@ -132,8 +132,8 @@ export default function ProfileSettingsPage() {
               width: 60,
               height: 60,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
-              color: '#fff',
+              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+              color: '#F7F9FA',
               display: 'grid',
               placeItems: 'center',
               fontSize: 22,
@@ -144,10 +144,10 @@ export default function ProfileSettingsPage() {
             {initials || 'ME'}
           </span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#F8FAFC' }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#F7F9FA' }}>
               {displayName || 'Student'}
             </div>
-            <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontSize: 13, color: '#8B98A6', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Mail style={{ width: 12, height: 12 }} />
               {email || 'No email on file'}
             </div>
@@ -236,12 +236,12 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
       style={{
         marginTop: 22,
         padding: 22,
-        background: '#12111C',
+        background: '#132B45',
         border: '1px solid rgba(255,255,255,0.07)',
         borderRadius: 16,
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', color: '#8B5CF6', textTransform: 'uppercase', marginBottom: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', color: '#00A6A6', textTransform: 'uppercase', marginBottom: 16 }}>
         {title}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div>
@@ -270,7 +270,7 @@ function Field({
 }) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: '#8B98A6', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
         {icon} {label}
       </span>
       <input
@@ -283,14 +283,14 @@ function Field({
           padding: '11px 14px',
           borderRadius: 10,
           border: '1px solid rgba(255,255,255,0.1)',
-          background: disabled ? 'rgba(255,255,255,0.02)' : '#0B0B14',
-          color: '#F8FAFC',
+          background: disabled ? 'rgba(255,255,255,0.02)' : '#0B1F33',
+          color: '#F7F9FA',
           fontSize: 14,
           fontFamily: 'inherit',
           outline: 'none',
         }}
       />
-      {hint && <span style={{ fontSize: 11, color: '#64748B' }}>{hint}</span>}
+      {hint && <span style={{ fontSize: 11, color: '#8B98A6' }}>{hint}</span>}
     </label>
   );
 }
@@ -311,10 +311,10 @@ function Toggle({
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#F8FAFC', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#F7F9FA', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           {icon} {label}
         </div>
-        {hint && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3 }}>{hint}</div>}
+        {hint && <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3 }}>{hint}</div>}
       </div>
       <button
         type="button"
@@ -327,7 +327,7 @@ function Toggle({
           height: 24,
           borderRadius: 999,
           border: 'none',
-          background: value ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'rgba(255,255,255,0.12)',
+          background: value ? 'linear-gradient(135deg,#00A6A6,#33BFBF)' : 'rgba(255,255,255,0.12)',
           cursor: 'pointer',
           transition: 'background 0.2s',
         }}
@@ -340,7 +340,7 @@ function Toggle({
             width: 20,
             height: 20,
             borderRadius: '50%',
-            background: '#fff',
+            background: '#F7F9FA',
             transition: 'left 0.2s',
           }}
         />

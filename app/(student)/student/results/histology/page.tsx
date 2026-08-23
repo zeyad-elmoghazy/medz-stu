@@ -132,7 +132,7 @@ function HistologyResultsInner() {
     accuracy >= 80 ? '#10B981' : accuracy >= 60 ? '#9F67FF' : '#EF4444';
 
   return (
-    <main className="min-h-screen w-full" style={{ backgroundColor: '#09090E' }}>
+    <main className="min-h-screen w-full" style={{ backgroundColor: '#0B1F33' }}>
       <Header />
 
       <motion.div
@@ -186,7 +186,7 @@ function HistologyResultsInner() {
               icon={<Target className="h-4 w-4" />}
               label="Score"
               value={`${correct} / ${accuracyTotal}`}
-              accent="#9F67FF"
+              accent="#33BFBF"
               footnote={`${attempted - correct} incorrect · ${accuracyTotal - attempted} skipped`}
             />
             <ScoreCard
@@ -200,7 +200,7 @@ function HistologyResultsInner() {
               icon={<Clock className="h-4 w-4" />}
               label="Time"
               value={formatDuration(elapsedMs)}
-              accent="#9F67FF"
+              accent="#33BFBF"
               footnote={
                 attempted > 0
                   ? `${formatDuration(elapsedMs / Math.max(1, attempted))} per attempt`
@@ -217,8 +217,8 @@ function HistologyResultsInner() {
               href="/student/dashboard?view=analytics"
               className="group inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition"
               style={{
-                backgroundColor: '#7C3AED',
-                boxShadow: '0 0 28px rgba(124,58,237,0.5)',
+                backgroundColor: '#00A6A6',
+                boxShadow: '0 0 28px rgba(0,166,166,0.5)',
               }}
             >
               <BarChart3 className="h-4 w-4" />
@@ -231,8 +231,8 @@ function HistologyResultsInner() {
               disabled={practiceIds.length === 0}
               className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
               style={{
-                backgroundColor: 'rgba(124,58,237,0.16)',
-                border: '1px solid rgba(159,103,255,0.45)',
+                backgroundColor: 'rgba(0,166,166,0.16)',
+                border: '1px solid rgba(51,191,191,0.45)',
               }}
             >
               <Crosshair className="h-4 w-4" />
@@ -249,7 +249,7 @@ function HistologyResultsInner() {
             <Link
               href="/student/dashboard"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-medium text-text-primary transition hover:text-white"
-              style={{ border: '1px solid #1E1E2E', backgroundColor: '#0F0F1A' }}
+              style={{ border: '1px solid #132B45', backgroundColor: '#132B45' }}
             >
               <ArrowLeft className="h-4 w-4" />
               Dashboard
@@ -267,7 +267,7 @@ function HistologyResultsInner() {
                 <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-text-muted">
                   <LegendDot color="#10B981" label="Correct" />
                   <LegendDot color="#EF4444" label="Incorrect" />
-                  <LegendDot color="#334155" label="Skipped" />
+                  <LegendDot color="#8B98A6" label="Skipped" />
                 </div>
               }
             />
@@ -290,7 +290,7 @@ function HistologyResultsInner() {
               title="Per-question detail"
               subtitle="Topic and outcome for each item."
             />
-            <ul className="mt-4 divide-y" style={{ borderColor: '#1E1E2E' }}>
+            <ul className="mt-4 divide-y" style={{ borderColor: '#132B45' }}>
               {breakdown.map((b, i) => {
                 const state = b.correct
                   ? 'correct'
@@ -358,16 +358,16 @@ function Header() {
       className="sticky top-0 z-20 backdrop-blur-xl"
       style={{
         backgroundColor: 'rgba(9, 9, 14, 0.85)',
-        borderBottom: '1px solid #1E1E2E',
+        borderBottom: '1px solid #132B45',
       }}
     >
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-6">
         <Link href="/student/dashboard" className="flex items-center gap-2">
           <span
             className="text-lg font-bold tracking-tight text-white"
-            style={{ textShadow: '0 0 14px rgba(124,58,237,0.5)' }}
+            style={{ textShadow: '0 0 14px rgba(0,166,166,0.5)' }}
           >
-            MedZ
+            MediZee
           </span>
           <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
             · Results
@@ -388,7 +388,7 @@ function Card({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="rounded-2xl p-6"
-      style={{ backgroundColor: '#0F0F1A', border: '1px solid #1E1E2E' }}
+      style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}
     >
       {children}
     </div>
@@ -435,7 +435,7 @@ function ScoreCard({
   return (
     <div
       className="relative overflow-hidden rounded-2xl p-5"
-      style={{ backgroundColor: '#0F0F1A', border: '1px solid #1E1E2E' }}
+      style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}
     >
       <div
         aria-hidden
@@ -498,8 +498,8 @@ function BreakdownPill({
     },
     skipped: {
       bg: 'rgba(255,255,255,0.04)',
-      border: '#1E1E2E',
-      color: '#94A3B8',
+      border: '#132B45',
+      color: '#8B98A6',
       icon: null,
     },
   }[state];

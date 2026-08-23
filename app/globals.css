@@ -8,18 +8,18 @@
 
     /* Subjects-page design tokens — kept on :root so any
        descendant component can read them with var(--token). */
-    --bg-primary: #030617;
-    --bg-secondary: #070B24;
-    --card-bg: #0B102B;
-    --card-hover: #12183D;
-    --purple-primary: #8B5CF6;
-    --purple-bright: #A855F7;
-    --purple-electric: #C084FC;
+    --bg-primary: #0B1F33;
+    --bg-secondary: #0B1F33;
+    --card-bg: #132B45;
+    --card-hover: #132B45;
+    --purple-primary: #00A6A6;
+    --purple-bright: #33BFBF;
+    --purple-electric: #33BFBF;
     --neon-blue: #3B82F6;
     --cyan: #06B6D4;
-    --text-primary: #FFFFFF;
-    --text-secondary: #A8B0D3;
-    --text-muted: #6B7280;
+    --text-primary: #F7F9FA;
+    --text-secondary: #8B98A6;
+    --text-muted: #8B98A6;
   }
 
   * {
@@ -63,7 +63,7 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(159, 103, 255, 0.12) 50%,
+      rgba(51,191,191, 0.12) 50%,
       transparent 100%
     );
     background-size: 200% 100%;
@@ -76,9 +76,9 @@
   .skeleton-shimmer {
     background: linear-gradient(
       90deg,
-      #1E1E2E 25%,
+      #132B45 25%,
       #2D2D3F 50%,
-      #1E1E2E 75%
+      #132B45 75%
     );
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s infinite;
@@ -99,11 +99,11 @@
 
   @keyframes glowPulse {
     0%, 100% {
-      box-shadow: 0 0 20px rgba(139,92,246,0.2);
+      box-shadow: 0 0 20px rgba(0,166,166,0.2);
     }
     50% {
-      box-shadow: 0 0 50px rgba(168,85,247,0.5),
-                  0 0 100px rgba(168,85,247,0.2);
+      box-shadow: 0 0 50px rgba(51,191,191,0.5),
+                  0 0 100px rgba(51,191,191,0.2);
     }
   }
 
@@ -118,12 +118,12 @@
      ring behind the Dr. Zahra photo. */
   @keyframes medzGlow {
     0%, 100% {
-      box-shadow: 0 0 0 1px rgba(124,58,237,0.45),
-                  0 0 30px rgba(124,58,237,0.28);
+      box-shadow: 0 0 0 1px rgba(0,166,166,0.45),
+                  0 0 30px rgba(0,166,166,0.28);
     }
     50% {
-      box-shadow: 0 0 0 1px rgba(139,92,246,0.75),
-                  0 0 46px rgba(124,58,237,0.5);
+      box-shadow: 0 0 0 1px rgba(0,166,166,0.75),
+                  0 0 46px rgba(0,166,166,0.5);
     }
   }
   @keyframes ringSpin {
@@ -148,7 +148,7 @@
 
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgba(124, 58, 237, 0.5) transparent;
+    scrollbar-color: rgba(0,166,166, 0.5) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -161,25 +161,25 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgba(124, 58, 237, 0.4);
+    background-color: rgba(0,166,166, 0.4);
     border-radius: 9999px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(159, 103, 255, 0.7);
+    background-color: rgba(51,191,191, 0.7);
   }
 
   .grid-pattern {
     background-image:
-      linear-gradient(rgba(124, 58, 237, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+      linear-gradient(rgba(0,166,166, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,166,166, 0.06) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 
   .glow-ring {
     box-shadow:
-      0 0 0 1px rgba(124, 58, 237, 0.5),
-      0 0 24px rgba(159, 103, 255, 0.35);
+      0 0 0 1px rgba(0,166,166, 0.5),
+      0 0 24px rgba(51,191,191, 0.35);
   }
 
   /* Lightweight fade-in used on auth cards and error banners in
@@ -222,8 +222,8 @@
 
   /* Hero CTA halo — replaces framer boxShadow keyframes. */
   @keyframes hero-halo {
-    0%, 100% { box-shadow: 0 0 20px #7C3AED; }
-    50%      { box-shadow: 0 0 40px #7C3AED; }
+    0%, 100% { box-shadow: 0 0 20px #00A6A6; }
+    50%      { box-shadow: 0 0 40px #00A6A6; }
   }
   .hero-halo {
     animation: hero-halo 2s ease-in-out infinite;

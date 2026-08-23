@@ -34,7 +34,7 @@ const SUPPORTED_SUBJECTS: Record<string, {
   histology: {
     name: 'Histology',
     image: '/subjects/histology.webp',
-    professor: 'Curated by MedZ',
+    professor: 'Curated by MediZee',
     profRole: '450+ MCQs · Live now',
     profInitials: 'MZ',
     qsLabel: '450+',
@@ -48,9 +48,9 @@ const canvasBg: CSSProperties = {
   position: 'relative',
   overflow: 'hidden',
   background:
-    'radial-gradient(900px 520px at 88% -6%, rgba(124,58,237,0.3), transparent 60%),' +
+    'radial-gradient(900px 520px at 88% -6%, rgba(0,166,166,0.3), transparent 60%),' +
     'radial-gradient(760px 520px at 6% 42%, rgba(88,28,235,0.18), transparent 55%),' +
-    '#08070F',
+    '#0B1F33',
   paddingBottom: 2,
 };
 
@@ -123,7 +123,7 @@ export default function SubjectModulesPage() {
   }, []);
 
   return (
-    <main style={{ minHeight: '100vh', background: '#08070F', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={canvasBg}>
         <div aria-hidden style={dotTexture} />
 
@@ -131,12 +131,12 @@ export default function SubjectModulesPage() {
 
         <section style={{ position: 'relative', padding: '34px 44px 56px' }}>
           {/* Breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#64748B', marginBottom: 22 }}>
-            <Link href="/student/dashboard" style={{ color: '#94A3B8', textDecoration: 'none' }}>Home</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#8B98A6', marginBottom: 22 }}>
+            <Link href="/student/dashboard" style={{ color: '#8B98A6', textDecoration: 'none' }}>Home</Link>
             <span>›</span>
-            <Link href="/student/subjects" style={{ color: '#94A3B8', textDecoration: 'none' }}>Subjects</Link>
+            <Link href="/student/subjects" style={{ color: '#8B98A6', textDecoration: 'none' }}>Subjects</Link>
             <span>›</span>
-            <span style={{ color: '#C4B5FD', fontWeight: 600 }}>{subject.name}</span>
+            <span style={{ color: '#33BFBF', fontWeight: 600 }}>{subject.name}</span>
           </div>
 
           {/* Subject header banner */}
@@ -150,13 +150,13 @@ export default function SubjectModulesPage() {
               borderRadius: 20,
               overflow: 'hidden',
               padding: 24,
-              background: 'linear-gradient(135deg,#1c1338,#120f22)',
-              border: '1px solid rgba(139,92,246,0.4)',
-              boxShadow: '0 0 40px rgba(124,58,237,0.18)',
+              background: 'linear-gradient(135deg,#132B45,#0B1F33)',
+              border: '1px solid rgba(0,166,166,0.4)',
+              boxShadow: '0 0 40px rgba(0,166,166,0.18)',
               marginBottom: 32,
             }}
           >
-            <div style={{ height: 150, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(139,92,246,0.3)', position: 'relative' }}>
+            <div style={{ height: 150, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(0,166,166,0.3)', position: 'relative' }}>
               <Image src={subject.image} alt={subject.name} fill sizes="200px" style={{ objectFit: 'cover' }} />
             </div>
             <div>
@@ -169,16 +169,16 @@ export default function SubjectModulesPage() {
                   fontWeight: 800,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
-                  color: '#fff',
-                  background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+                  color: '#F7F9FA',
+                  background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
                   padding: '5px 11px',
                   borderRadius: 7,
-                  boxShadow: '0 0 16px rgba(124,58,237,0.5)',
+                  boxShadow: '0 0 16px rgba(0,166,166,0.5)',
                 }}
               >
                 Exclusive Module
               </div>
-              <h1 style={{ margin: '12px 0 0', fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em', color: '#F8FAFC' }}>
+              <h1 style={{ margin: '12px 0 0', fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em', color: '#F7F9FA' }}>
                 {subject.name}
               </h1>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
@@ -187,36 +187,36 @@ export default function SubjectModulesPage() {
                     width: 30,
                     height: 30,
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+                    background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 11,
                     fontWeight: 700,
-                    color: '#fff',
+                    color: '#F7F9FA',
                   }}
                 >
                   {subject.profInitials}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#E2E8F0' }}>{subject.professor}</div>
-                  <div style={{ fontSize: 10, color: '#64748B' }}>{subject.profRole}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#D9F3F0' }}>{subject.professor}</div>
+                  <div style={{ fontSize: 10, color: '#8B98A6' }}>{subject.profRole}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 26, marginTop: 18 }}>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#8B5CF6' }}>{totalModules}</div>
-                  <div style={{ fontSize: 10, color: '#94A3B8' }}>Modules</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#00A6A6' }}>{totalModules}</div>
+                  <div style={{ fontSize: 10, color: '#8B98A6' }}>Modules</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#8B5CF6' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#00A6A6' }}>
                     {Array.from(liveCounts.values()).reduce((a, n) => a + n, 0)}
                   </div>
-                  <div style={{ fontSize: 10, color: '#94A3B8' }}>Questions</div>
+                  <div style={{ fontSize: 10, color: '#8B98A6' }}>Questions</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: '#10B981' }}>{totalYears}</div>
-                  <div style={{ fontSize: 10, color: '#94A3B8' }}>Academic Years</div>
+                  <div style={{ fontSize: 10, color: '#8B98A6' }}>Academic Years</div>
                 </div>
               </div>
             </div>
@@ -224,7 +224,7 @@ export default function SubjectModulesPage() {
 
           {/* Section header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#F8FAFC' }}>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#F7F9FA' }}>
               Modules by Academic Year
             </h2>
           </div>
@@ -242,23 +242,23 @@ export default function SubjectModulesPage() {
                         height: 34,
                         flex: 'none',
                         borderRadius: 10,
-                        background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+                        background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: 13,
                         fontWeight: 800,
-                        color: '#fff',
-                        boxShadow: '0 0 16px rgba(124,58,237,0.4)',
+                        color: '#F7F9FA',
+                        boxShadow: '0 0 16px rgba(0,166,166,0.4)',
                       }}
                     >
                       {y.yearNum}
                     </div>
                     <div>
-                      <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em', color: '#F8FAFC' }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.01em', color: '#F7F9FA' }}>
                         {y.year}
                       </div>
-                      <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{y.label}</div>
+                      <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 2 }}>{y.label}</div>
                     </div>
                   </div>
                   <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
@@ -328,7 +328,7 @@ function ModuleCard({
         flexDirection: 'column',
         borderRadius: 16,
         overflow: 'hidden',
-        background: '#12111C',
+        background: '#132B45',
         border: '1px solid rgba(255,255,255,0.07)',
       }}
     >
@@ -336,7 +336,7 @@ function ModuleCard({
       <div
         style={{
           padding: '16px 16px 14px',
-          background: 'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(139,92,246,0.03))',
+          background: 'linear-gradient(135deg,rgba(0,166,166,0.12),rgba(0,166,166,0.03))',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
@@ -347,16 +347,16 @@ function ModuleCard({
               fontSize: 10,
               fontWeight: 700,
               letterSpacing: '0.08em',
-              color: '#C4B5FD',
-              background: 'rgba(124,58,237,0.16)',
-              border: '1px solid rgba(139,92,246,0.35)',
+              color: '#33BFBF',
+              background: 'rgba(0,166,166,0.16)',
+              border: '1px solid rgba(0,166,166,0.35)',
               padding: '4px 8px',
               borderRadius: 6,
             }}
           >
             {prefix} {m.code}
           </span>
-          <span style={{ fontSize: 10, color: '#94A3B8' }}>{liveQs ?? m.qs} Qs</span>
+          <span style={{ fontSize: 10, color: '#8B98A6' }}>{liveQs ?? m.qs} Qs</span>
         </div>
         <div
           style={{
@@ -365,7 +365,7 @@ function ModuleCard({
             marginTop: 11,
             lineHeight: 1.3,
             letterSpacing: '-0.01em',
-            color: '#F8FAFC',
+            color: '#F7F9FA',
           }}
         >
           {m.name}
@@ -376,15 +376,15 @@ function ModuleCard({
         {avgProgress > 0 && (
           <div style={{ marginTop: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 5 }}>
-              <span style={{ color: '#94A3B8' }}>{doneCount}/{m.chapters.length} chapters</span>
-              <span style={{ color: '#8B5CF6', fontWeight: 700 }}>{avgProgress}%</span>
+              <span style={{ color: '#8B98A6' }}>{doneCount}/{m.chapters.length} chapters</span>
+              <span style={{ color: '#00A6A6', fontWeight: 700 }}>{avgProgress}%</span>
             </div>
             <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
               <div
                 style={{
                   width: `${avgProgress}%`,
                   height: '100%',
-                  background: 'linear-gradient(90deg,#7C3AED,#8B5CF6)',
+                  background: 'linear-gradient(90deg,#00A6A6,#33BFBF)',
                   borderRadius: 3,
                 }}
               />
@@ -401,7 +401,7 @@ function ModuleCard({
             fontWeight: 700,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: '#64748B',
+            color: '#8B98A6',
             margin: '12px 0 8px',
           }}
         >
@@ -421,7 +421,7 @@ function ModuleCard({
                   padding: '7px 0',
                   borderTop: '1px solid rgba(255,255,255,0.04)',
                   fontSize: 12,
-                  color: locked ? '#64748B' : done ? '#94A3B8' : '#CBD5E1',
+                  color: locked ? '#8B98A6' : done ? '#8B98A6' : '#8B98A6',
                 }}
               >
                 <span
@@ -430,7 +430,7 @@ function ModuleCard({
                     height: 6,
                     flex: 'none',
                     borderRadius: '50%',
-                    background: locked ? '#334155' : done ? '#10B981' : '#8B5CF6',
+                    background: locked ? '#8B98A6' : done ? '#10B981' : '#00A6A6',
                   }}
                 />
                 {locked && (
@@ -439,7 +439,7 @@ function ModuleCard({
                       fontSize: 9,
                       fontWeight: 700,
                       letterSpacing: '0.08em',
-                      color: '#64748B',
+                      color: '#8B98A6',
                       textTransform: 'uppercase',
                     }}
                   >
@@ -460,8 +460,8 @@ function ModuleCard({
             textAlign: 'center',
             fontSize: 11.5,
             fontWeight: 700,
-            color: '#C4B5FD',
-            border: '1px solid rgba(124,58,237,0.4)',
+            color: '#33BFBF',
+            border: '1px solid rgba(0,166,166,0.4)',
             padding: 9,
             borderRadius: 9,
             textDecoration: 'none',

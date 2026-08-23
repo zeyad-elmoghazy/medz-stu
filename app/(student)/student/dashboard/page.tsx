@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, LogOut, Moon } from 'lucide-react';
-import { MedZLogo } from '@/components/brand/MedZLogo';
+import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import {
   clearDemoProfile,
   createBrowserClient,
@@ -162,9 +162,9 @@ function StudentDashboardInner() {
     position: 'relative',
     overflow: 'hidden',
     background:
-      'radial-gradient(900px 520px at 88% -6%, rgba(124,58,237,0.3), transparent 60%),' +
+      'radial-gradient(900px 520px at 88% -6%, rgba(0,166,166,0.3), transparent 60%),' +
       'radial-gradient(760px 520px at 6% 42%, rgba(88,28,235,0.18), transparent 55%),' +
-      '#08070F',
+      '#0B1F33',
     paddingBottom: 2,
   };
 
@@ -178,7 +178,7 @@ function StudentDashboardInner() {
   };
 
   return (
-    <main style={{ minHeight: '100vh', background: '#08070F', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={canvasBg}>
         <div aria-hidden style={dotTexture} />
 
@@ -257,7 +257,7 @@ function Navbar({
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}
     >
-      <MedZLogo size="sm" />
+      <MediZeeLogo size="sm" />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 13.5, fontWeight: 500 }}>
         {NAV_LINKS.map((link) => {
@@ -266,7 +266,7 @@ function Navbar({
               <Link
                 key={link.label}
                 href={link.href}
-                style={{ color: '#94A3B8', textDecoration: 'none' }}
+                style={{ color: '#8B98A6', textDecoration: 'none' }}
               >
                 {link.label}
               </Link>
@@ -279,7 +279,7 @@ function Navbar({
                 type="button"
                 onClick={() => showToast(link.toast!)}
                 style={{
-                  color: '#94A3B8',
+                  color: '#8B98A6',
                   fontWeight: 500,
                   fontSize: 13.5,
                   background: 'transparent',
@@ -297,7 +297,7 @@ function Navbar({
             <span
               key={link.label}
               style={{
-                color: link.active ? '#F8FAFC' : '#94A3B8',
+                color: link.active ? '#F7F9FA' : '#8B98A6',
                 fontWeight: link.active ? 600 : 500,
               }}
             >
@@ -317,11 +317,11 @@ function Navbar({
             gap: 8,
             fontSize: 13,
             fontWeight: 700,
-            color: '#fff',
-            background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+            color: '#F7F9FA',
+            background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
             padding: '9px 16px',
             borderRadius: 10,
-            boxShadow: '0 0 18px rgba(124,58,237,0.4)',
+            boxShadow: '0 0 18px rgba(0,166,166,0.4)',
             cursor: 'pointer',
             border: 'none',
           }}
@@ -340,7 +340,7 @@ function Navbar({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#94A3B8',
+            color: '#8B98A6',
             background: 'transparent',
             cursor: 'pointer',
           }}
@@ -357,7 +357,7 @@ function Navbar({
             gap: 8,
             fontSize: 13.5,
             fontWeight: 600,
-            color: '#CBD5E1',
+            color: '#8B98A6',
             textDecoration: 'none',
           }}
         >
@@ -368,8 +368,8 @@ function Navbar({
               borderRadius: '50%',
               display: 'grid',
               placeItems: 'center',
-              background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
-              color: '#fff',
+              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+              color: '#F7F9FA',
               fontSize: 11,
               fontWeight: 700,
             }}
@@ -389,7 +389,7 @@ function Navbar({
             gap: 6,
             fontSize: 13.5,
             fontWeight: 600,
-            color: '#CBD5E1',
+            color: '#8B98A6',
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
@@ -431,7 +431,7 @@ function HomeView({
           padding: '54px 44px 40px',
         }}
       >
-        {/* MedZ holographic frame — rings + brand mark + orbiting feature chips */}
+        {/* MediZee holographic frame — rings + brand mark + orbiting feature chips */}
         <div
           style={{
             position: 'relative',
@@ -448,7 +448,7 @@ function HomeView({
               width: 360,
               height: 360,
               borderRadius: '50%',
-              border: '1px solid rgba(124,58,237,0.25)',
+              border: '1px solid rgba(0,166,166,0.25)',
               animation: 'ringSpin 26s linear infinite',
             }}
           />
@@ -459,7 +459,7 @@ function HomeView({
               width: 300,
               height: 300,
               borderRadius: '50%',
-              border: '1px dashed rgba(139,92,246,0.3)',
+              border: '1px dashed rgba(0,166,166,0.3)',
             }}
           />
           <div
@@ -470,7 +470,7 @@ function HomeView({
               height: 200,
               bottom: 34,
               borderRadius: '50%',
-              background: 'radial-gradient(ellipse at center, rgba(124,58,237,0.45), transparent 70%)',
+              background: 'radial-gradient(ellipse at center, rgba(0,166,166,0.45), transparent 70%)',
               filter: 'blur(18px)',
             }}
           />
@@ -485,12 +485,12 @@ function HomeView({
               borderRadius: 28,
               display: 'grid',
               placeItems: 'center',
-              background: 'linear-gradient(160deg,#1c1338,#0d0b1a)',
-              border: '1px solid rgba(139,92,246,0.5)',
-              boxShadow: '0 0 0 1px rgba(124,58,237,0.3), 0 0 60px rgba(124,58,237,0.45)',
+              background: 'linear-gradient(160deg,#132B45,#0B1F33)',
+              border: '1px solid rgba(0,166,166,0.5)',
+              boxShadow: '0 0 0 1px rgba(0,166,166,0.3), 0 0 60px rgba(0,166,166,0.45)',
             }}
           >
-            <Image src="/medz-logo.webp" alt="MedZ" width={120} height={120} priority style={{ borderRadius: 20 }} />
+            <Image src="/medizee-logo.webp" alt="MediZee" width={120} height={120} priority style={{ borderRadius: 20 }} />
           </div>
 
           {/* Feature chips positioned around the mark */}
@@ -513,11 +513,11 @@ function HomeView({
                 fontWeight: 700,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: '#DDD6FE',
+                color: '#33BFBF',
                 background: 'rgba(13,11,26,0.82)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
-                border: '1px solid rgba(139,92,246,0.4)',
+                border: '1px solid rgba(0,166,166,0.4)',
                 padding: '8px 12px',
                 borderRadius: 10,
                 boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
@@ -536,14 +536,14 @@ function HomeView({
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: '0.14em',
-                color: '#8B5CF6',
+                color: '#00A6A6',
                 textTransform: 'uppercase',
-                border: '1px solid rgba(139,92,246,0.35)',
+                border: '1px solid rgba(0,166,166,0.35)',
                 padding: '6px 12px',
                 borderRadius: 7,
               }}
             >
-              Exclusive on MedZ
+              Exclusive on MediZee
             </span>
           </div>
 
@@ -554,10 +554,10 @@ function HomeView({
               lineHeight: 1.02,
               fontWeight: 900,
               letterSpacing: '-0.035em',
-              color: '#F8FAFC',
+              color: '#F7F9FA',
             }}
           >
-            Study <span style={{ color: '#8B5CF6' }}>Histology</span> Now
+            Study <span style={{ color: '#00A6A6' }}>Histology</span> Now
           </h1>
 
           <div
@@ -566,22 +566,22 @@ function HomeView({
               fontWeight: 700,
               marginTop: 14,
               letterSpacing: '-0.01em',
-              color: '#F8FAFC',
+              color: '#F7F9FA',
             }}
           >
-            The MedZ Histology Question Bank
+            The MediZee Histology Question Bank
           </div>
 
           <p
             style={{
               fontSize: 15,
-              color: '#94A3B8',
+              color: '#8B98A6',
               margin: '16px 0 0',
               maxWidth: 560,
               lineHeight: 1.6,
             }}
           >
-            High-yield questions, detailed explanations, and visual references — the first live subject in the MedZ bank, with flashcards and an AI tutor on the way.
+            High-yield questions, detailed explanations, and visual references — the first live subject in the MediZee bank, with flashcards and an AI tutor on the way.
           </p>
 
           {/* Micro-stat row */}
@@ -606,11 +606,11 @@ function HomeView({
                 gap: 12,
                 fontSize: 15,
                 fontWeight: 700,
-                color: '#fff',
-                background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+                color: '#F7F9FA',
+                background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
                 padding: '16px 32px',
                 borderRadius: 13,
-                boxShadow: '0 0 30px rgba(124,58,237,0.5)',
+                boxShadow: '0 0 30px rgba(0,166,166,0.5)',
                 cursor: 'pointer',
                 border: 'none',
               }}
@@ -627,9 +627,9 @@ function HomeView({
                 gap: 10,
                 fontSize: 15,
                 fontWeight: 700,
-                color: '#C4B5FD',
-                background: 'rgba(124,58,237,0.1)',
-                border: '1px solid rgba(139,92,246,0.45)',
+                color: '#33BFBF',
+                background: 'rgba(0,166,166,0.1)',
+                border: '1px solid rgba(0,166,166,0.45)',
                 padding: '16px 28px',
                 borderRadius: 13,
                 cursor: 'pointer',
@@ -644,10 +644,10 @@ function HomeView({
       {/* ================= EXPLORE ALL SUBJECTS ================= */}
       <section style={{ position: 'relative', padding: '34px 44px 30px' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', color: '#F8FAFC' }}>
+          <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', color: '#F7F9FA' }}>
             Explore All Subjects
           </h2>
-          <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 8 }}>More subjects coming soon</div>
+          <div style={{ fontSize: 13, color: '#8B98A6', marginTop: 8 }}>More subjects coming soon</div>
         </div>
 
         <div
@@ -664,7 +664,7 @@ function HomeView({
               position: 'relative',
               borderRadius: 18,
               padding: 16,
-              background: 'linear-gradient(165deg,#1c1338,#120f22)',
+              background: 'linear-gradient(165deg,#132B45,#0B1F33)',
               animation: 'medzGlow 3.4s ease-in-out infinite',
               display: 'flex',
               flexDirection: 'column',
@@ -678,7 +678,7 @@ function HomeView({
                 height: 190,
                 borderRadius: 12,
                 overflow: 'hidden',
-                border: '1px solid rgba(139,92,246,0.3)',
+                border: '1px solid rgba(0,166,166,0.3)',
               }}
             >
               <Image
@@ -690,10 +690,10 @@ function HomeView({
               />
             </div>
             <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', color: '#F8FAFC' }}>
+              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', color: '#F7F9FA' }}>
                 Histology
               </div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>Curated by MedZ</div>
+              <div style={{ fontSize: 12, color: '#8B98A6', marginTop: 4 }}>Curated by MediZee</div>
               <div
                 style={{
                   display: 'inline-flex',
@@ -704,8 +704,8 @@ function HomeView({
                   fontWeight: 700,
                   letterSpacing: '0.05em',
                   textTransform: 'uppercase',
-                  color: '#C4B5FD',
-                  border: '1px solid rgba(139,92,246,0.4)',
+                  color: '#33BFBF',
+                  border: '1px solid rgba(0,166,166,0.4)',
                   padding: '6px 11px',
                   borderRadius: 8,
                 }}
@@ -713,9 +713,9 @@ function HomeView({
                 Exclusive Module
               </div>
             </div>
-            <div style={{ marginTop: 'auto', paddingTop: 18, fontSize: 11.5, color: '#CBD5E1' }}>
-              <div style={{ fontWeight: 700, color: '#F8FAFC' }}>450+ High-Yield Questions</div>
-              <div style={{ color: '#94A3B8', marginTop: 4 }}>
+            <div style={{ marginTop: 'auto', paddingTop: 18, fontSize: 11.5, color: '#8B98A6' }}>
+              <div style={{ fontWeight: 700, color: '#F7F9FA' }}>450+ High-Yield Questions</div>
+              <div style={{ color: '#8B98A6', marginTop: 4 }}>
                 Detailed Explanations · Visual References · Exam Focused
               </div>
             </div>
@@ -774,7 +774,7 @@ function AnalyticsView({
       label: 'Total Questions',
       value: loading ? '—' : s.totalQuestionsAnswered.toLocaleString(),
       hint: 'Across all sessions',
-      color: '#F8FAFC',
+      color: '#F7F9FA',
     },
     {
       label: 'Correct Answers',
@@ -787,7 +787,7 @@ function AnalyticsView({
       value: loading ? '—' : s.overallAccuracy.toFixed(1),
       suffix: loading ? '' : '%',
       hint: 'Weighted mean',
-      color: '#F8FAFC',
+      color: '#F7F9FA',
     },
     {
       label: 'Study Streak',
@@ -811,13 +811,13 @@ function AnalyticsView({
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#8B5CF6', letterSpacing: '0.03em', marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#00A6A6', letterSpacing: '0.03em', marginBottom: 6 }}>
             Student Analytics
           </div>
-          <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: '#F8FAFC' }}>
+          <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: '#F7F9FA' }}>
             Your Progress, {firstName}
           </h2>
-          <p style={{ margin: '8px 0 0', fontSize: 13, color: '#94A3B8' }}>
+          <p style={{ margin: '8px 0 0', fontSize: 13, color: '#8B98A6' }}>
             Every metric below is drawn from your completed challenges.
           </p>
         </div>
@@ -827,8 +827,8 @@ function AnalyticsView({
           style={{
             fontSize: 12.5,
             fontWeight: 600,
-            color: '#C4B5FD',
-            border: '1px solid rgba(139,92,246,0.4)',
+            color: '#33BFBF',
+            border: '1px solid rgba(0,166,166,0.4)',
             padding: '10px 16px',
             borderRadius: 10,
             cursor: 'pointer',
@@ -850,16 +850,16 @@ function AnalyticsView({
             justifyContent: 'space-between',
             gap: 16,
             padding: '16px 20px',
-            background: 'linear-gradient(135deg, rgba(124,58,237,0.16), rgba(139,92,246,0.06))',
-            border: '1px solid rgba(139,92,246,0.45)',
+            background: 'linear-gradient(135deg, rgba(0,166,166,0.16), rgba(0,166,166,0.06))',
+            border: '1px solid rgba(0,166,166,0.45)',
             borderRadius: 14,
           }}
         >
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#F8FAFC' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#F7F9FA' }}>
               You have {mistakeQuestionIds.length} question{mistakeQuestionIds.length === 1 ? '' : 's'} to review
             </div>
-            <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 3 }}>
+            <div style={{ fontSize: 12, color: '#8B98A6', marginTop: 3 }}>
               Practice the ones you got wrong — spaced review sticks longest.
             </div>
           </div>
@@ -869,11 +869,11 @@ function AnalyticsView({
             style={{
               fontSize: 13,
               fontWeight: 700,
-              color: '#fff',
-              background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+              color: '#F7F9FA',
+              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
               padding: '11px 18px',
               borderRadius: 10,
-              boxShadow: '0 0 18px rgba(124,58,237,0.4)',
+              boxShadow: '0 0 18px rgba(0,166,166,0.4)',
               border: 'none',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
@@ -891,13 +891,13 @@ function AnalyticsView({
           <div
             key={k.label}
             style={{
-              background: '#12111C',
+              background: '#132B45',
               border: '1px solid rgba(255,255,255,0.07)',
               borderRadius: 16,
               padding: 20,
             }}
           >
-            <div style={{ fontSize: 11, color: '#94A3B8' }}>{k.label}</div>
+            <div style={{ fontSize: 11, color: '#8B98A6' }}>{k.label}</div>
             <div
               style={{
                 fontSize: 30,
@@ -909,10 +909,10 @@ function AnalyticsView({
             >
               {k.value}
               {k.suffix && (
-                <span style={{ fontSize: 16, color: '#94A3B8', fontWeight: 700 }}>{k.suffix}</span>
+                <span style={{ fontSize: 16, color: '#8B98A6', fontWeight: 700 }}>{k.suffix}</span>
               )}
             </div>
-            <div style={{ fontSize: 10, color: '#64748B', marginTop: 6 }}>{k.hint}</div>
+            <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 6 }}>{k.hint}</div>
           </div>
         ))}
       </div>
@@ -924,8 +924,8 @@ function AnalyticsView({
       </div>
 
       {/* Recent challenges */}
-      <div style={{ background: '#12111C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 16, color: '#F8FAFC' }}>Recent Challenges</div>
+      <div style={{ background: '#132B45', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 16, color: '#F7F9FA' }}>Recent Challenges</div>
         <RecentChallenges challenges={s.recentChallenges} loading={loading} />
       </div>
     </section>
@@ -971,11 +971,11 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
   const lastLabel = history[history.length - 1]?.date ?? '';
 
   return (
-    <div style={{ background: '#12111C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
+    <div style={{ background: '#132B45', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#F8FAFC' }}>Accuracy Trend</div>
-          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3 }}>Last 30 days</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#F7F9FA' }}>Accuracy Trend</div>
+          <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3 }}>Last 30 days</div>
         </div>
         {delta !== null && (
           <div
@@ -998,17 +998,17 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
           <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 200, display: 'block' }} preserveAspectRatio="none">
             <defs>
               <linearGradient id="homeArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.45" />
-                <stop offset="100%" stopColor="#7C3AED" stopOpacity="0" />
+                <stop offset="0%" stopColor="#00A6A6" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#00A6A6" stopOpacity="0" />
               </linearGradient>
             </defs>
             <line x1="0" y1="50" x2={W} y2="50" stroke="rgba(255,255,255,0.05)" />
             <line x1="0" y1="100" x2={W} y2="100" stroke="rgba(255,255,255,0.05)" />
             <line x1="0" y1="150" x2={W} y2="150" stroke="rgba(255,255,255,0.05)" />
             {areaPath && <path d={areaPath} fill="url(#homeArea)" />}
-            <path d={path} fill="none" stroke="#8B5CF6" strokeWidth="2.5" />
+            <path d={path} fill="none" stroke="#00A6A6" strokeWidth="2.5" />
           </svg>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#64748B', marginTop: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#8B98A6', marginTop: 8 }}>
             <span>{firstLabel}</span>
             <span>{lastLabel}</span>
           </div>
@@ -1020,7 +1020,7 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
             display: 'grid',
             placeItems: 'center',
             fontSize: 12,
-            color: '#64748B',
+            color: '#8B98A6',
             textAlign: 'center',
             padding: '0 20px',
             lineHeight: 1.5,
@@ -1040,9 +1040,9 @@ function FocusAreas() {
   // yet — it needs question-level rollups that aren't materialized.
   // Show an honest empty state instead of fabricated weak topics.
   return (
-    <div style={{ background: '#12111C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: '#F8FAFC' }}>Focus Areas</div>
-      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3, marginBottom: 16 }}>
+    <div style={{ background: '#132B45', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
+      <div style={{ fontSize: 15, fontWeight: 600, color: '#F7F9FA' }}>Focus Areas</div>
+      <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3, marginBottom: 16 }}>
         Weakest topics — review before exam
       </div>
       <div
@@ -1051,7 +1051,7 @@ function FocusAreas() {
           display: 'grid',
           placeItems: 'center',
           fontSize: 12,
-          color: '#64748B',
+          color: '#8B98A6',
           textAlign: 'center',
           padding: '0 8px',
           lineHeight: 1.5,
@@ -1065,11 +1065,11 @@ function FocusAreas() {
 
 function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult[]; loading: boolean }) {
   if (loading) {
-    return <div style={{ fontSize: 12, color: '#64748B' }}>Loading recent challenges…</div>;
+    return <div style={{ fontSize: 12, color: '#8B98A6' }}>Loading recent challenges…</div>;
   }
   if (challenges.length === 0) {
     return (
-      <div style={{ fontSize: 12, color: '#64748B' }}>
+      <div style={{ fontSize: 12, color: '#8B98A6' }}>
         No completed challenges yet — take a histology quiz to see it here.
       </div>
     );
@@ -1093,10 +1093,10 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
             }}
           >
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#F8FAFC' }}>{c.subjectName}</div>
-              <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>{relativeTime(c.completedAt)}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#F7F9FA' }}>{c.subjectName}</div>
+              <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 2 }}>{relativeTime(c.completedAt)}</div>
             </div>
-            <div style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 12, color: '#94A3B8' }}>
+            <div style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 12, color: '#8B98A6' }}>
               {c.score} / {c.total}
             </div>
             <div style={{ fontSize: 12, fontWeight: 700, minWidth: 52, textAlign: 'right', color }}>{pct}%</div>
@@ -1166,12 +1166,12 @@ function StatMicro({
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       {value && (
-        <span style={{ fontSize: big ? 24 : 19, fontWeight: 900, color: '#8B5CF6' }}>
+        <span style={{ fontSize: big ? 24 : 19, fontWeight: 900, color: '#00A6A6' }}>
           {value}
         </span>
       )}
       {icon && <span style={{ fontSize: 19 }}>{icon}</span>}
-      <span style={{ fontSize: 11, color: '#94A3B8', lineHeight: 1.3 }}>{label}</span>
+      <span style={{ fontSize: 11, color: '#8B98A6', lineHeight: 1.3 }}>{label}</span>
     </div>
   );
 }
@@ -1186,7 +1186,7 @@ function LockedSubjectCard({ subject }: { subject: LockedSubject }) {
       style={{
         borderRadius: 16,
         padding: 14,
-        background: '#12111C',
+        background: '#132B45',
         border: '1px solid rgba(255,255,255,0.07)',
         display: 'flex',
         flexDirection: 'column',
@@ -1223,14 +1223,14 @@ function LockedSubjectCard({ subject }: { subject: LockedSubject }) {
       </div>
       <div style={{ marginTop: 13, flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#F8FAFC' }}>{subject.name}</div>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#64748B', letterSpacing: '0.06em' }}>LOCKED</span>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#F7F9FA' }}>{subject.name}</div>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#8B98A6', letterSpacing: '0.06em' }}>LOCKED</span>
         </div>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: '#8B5CF6', marginTop: 3 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: '#00A6A6', marginTop: 3 }}>
           Coming Soon
         </div>
       </div>
-      <div style={{ marginTop: 12, fontSize: 10.5, color: '#94A3B8', lineHeight: 1.5 }}>
+      <div style={{ marginTop: 12, fontSize: 10.5, color: '#8B98A6', lineHeight: 1.5 }}>
         High-Yield Questions
         <br />
         Detailed Explanations

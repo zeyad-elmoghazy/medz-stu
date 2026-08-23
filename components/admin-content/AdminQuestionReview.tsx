@@ -16,7 +16,7 @@ type Props = {
 type StatusFilter = 'all' | 'draft' | 'under_review' | 'published' | 'archived';
 
 const CARD: React.CSSProperties = {
-  background: '#161B26',
+  background: '#132B45',
   border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: 16,
   padding: 20,
@@ -137,7 +137,7 @@ export function AdminQuestionReview({ onChanged }: Props) {
           const st = STATUS_STYLES[k];
           return (
             <div key={k} style={{ ...CARD, padding: 16 }}>
-              <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>{st.label}</div>
+              <div style={{ fontSize: 11, color: '#8B98A6', fontWeight: 500 }}>{st.label}</div>
               <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6, color: st.color, letterSpacing: '-0.02em' }}>{stats[k]}</div>
             </div>
           );
@@ -150,13 +150,13 @@ export function AdminQuestionReview({ onChanged }: Props) {
       <div style={{ ...CARD, padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ fontSize: 15, fontWeight: 700 }}>{filtered.length} question{filtered.length === 1 ? '' : 's'}</div>
-          <div style={{ fontSize: 11, color: '#64748B' }}>{total} total matching this filter</div>
+          <div style={{ fontSize: 11, color: '#8B98A6' }}>{total} total matching this filter</div>
         </div>
 
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748B', fontSize: 13 }}>Loading…</div>
+          <div style={{ padding: 40, textAlign: 'center', color: '#8B98A6', fontSize: 13 }}>Loading…</div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748B', fontSize: 13 }}>No questions match the current filter.</div>
+          <div style={{ padding: 40, textAlign: 'center', color: '#8B98A6', fontSize: 13 }}>No questions match the current filter.</div>
         ) : (
           <div>
             {filtered.map((q) => {
@@ -167,11 +167,11 @@ export function AdminQuestionReview({ onChanged }: Props) {
               return (
                 <div key={q.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <div style={{ padding: '14px 22px', display: 'grid', gridTemplateColumns: '48px 1fr 200px 140px 220px', gap: 14, alignItems: 'center' }}>
-                    <div style={{ fontSize: 11, color: '#64748B', fontFamily: "'JetBrains Mono', monospace" }}>#{q.id}</div>
+                    <div style={{ fontSize: 11, color: '#8B98A6', fontFamily: "'JetBrains Mono', monospace" }}>#{q.id}</div>
                     <button type="button" onClick={() => setExpanded(isExpanded ? null : q.id)} style={questionCell}>
                       {q.question}
                     </button>
-                    <div style={{ fontSize: 11, color: '#94A3B8' }}>{location}</div>
+                    <div style={{ fontSize: 11, color: '#8B98A6' }}>{location}</div>
                     <span style={{ justifySelf: 'start', fontSize: 11, fontWeight: 700, color: st.color, background: st.bg, padding: '5px 10px', borderRadius: 8 }}>
                       {st.label}
                     </span>
@@ -180,7 +180,7 @@ export function AdminQuestionReview({ onChanged }: Props) {
                         <RowActionButton color="#10B981" border="rgba(16,185,129,0.4)" disabled={updating} onClick={() => setRowStatus(q, 'published')}>Publish</RowActionButton>
                       )}
                       {q.status === 'published' && (
-                        <RowActionButton color="#94A3B8" border="rgba(255,255,255,0.14)" disabled={updating} onClick={() => setRowStatus(q, 'draft')}>Unpublish</RowActionButton>
+                        <RowActionButton color="#8B98A6" border="rgba(255,255,255,0.14)" disabled={updating} onClick={() => setRowStatus(q, 'draft')}>Unpublish</RowActionButton>
                       )}
                       {q.status !== 'archived' && (
                         <RowActionButton
@@ -199,13 +199,13 @@ export function AdminQuestionReview({ onChanged }: Props) {
 
                   {isExpanded && (
                     <div style={{ padding: '4px 22px 20px 82px' }}>
-                      <div style={{ padding: 16, borderRadius: 10, background: '#0F0F1A', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ padding: 16, borderRadius: 10, background: '#132B45', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {q.choices.map((c) => {
                             const isCorrect = c.id === q.correct_answer;
                             return (
-                              <div key={c.id} style={{ display: 'flex', gap: 10, fontSize: 12.5, color: isCorrect ? '#10B981' : '#CBD5E1', fontWeight: isCorrect ? 600 : 400 }}>
-                                <span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#64748B', textTransform: 'uppercase' }}>{c.id}.</span>
+                              <div key={c.id} style={{ display: 'flex', gap: 10, fontSize: 12.5, color: isCorrect ? '#10B981' : '#8B98A6', fontWeight: isCorrect ? 600 : 400 }}>
+                                <span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#8B98A6', textTransform: 'uppercase' }}>{c.id}.</span>
                                 <span>{c.text}</span>
                                 {isCorrect && <span style={{ fontSize: 10, color: '#10B981', marginLeft: 'auto' }}>✓ correct</span>}
                               </div>
@@ -215,8 +215,8 @@ export function AdminQuestionReview({ onChanged }: Props) {
 
                         {q.explanation && (
                           <div style={{ marginTop: 14 }}>
-                            <div style={{ fontSize: 10, color: '#64748B', marginBottom: 4 }}>Explanation</div>
-                            <div style={{ fontSize: 12, color: '#CBD5E1', lineHeight: 1.5 }}>{q.explanation}</div>
+                            <div style={{ fontSize: 10, color: '#8B98A6', marginBottom: 4 }}>Explanation</div>
+                            <div style={{ fontSize: 12, color: '#8B98A6', lineHeight: 1.5 }}>{q.explanation}</div>
                           </div>
                         )}
 
@@ -225,11 +225,11 @@ export function AdminQuestionReview({ onChanged }: Props) {
                             number. This is what step 6's referenceImageUrl
                             resolver was built for. ==== */}
                         <div style={{ marginTop: 14 }}>
-                          <div style={{ fontSize: 10, color: '#64748B', marginBottom: 6 }}>
+                          <div style={{ fontSize: 10, color: '#8B98A6', marginBottom: 6 }}>
                             Reference{q.reference_page ? ` — page ${q.reference_page}` : ''}
                           </div>
                           {q.reference && (
-                            <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8 }}>{q.reference}</div>
+                            <div style={{ fontSize: 11, color: '#8B98A6', marginBottom: 8 }}>{q.reference}</div>
                           )}
                           {q.referenceImageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -251,7 +251,7 @@ export function AdminQuestionReview({ onChanged }: Props) {
                               the module has a book assigned and that book has this page digitized.
                             </div>
                           ) : (
-                            <div style={{ fontSize: 11, color: '#64748B' }}>No page reference set.</div>
+                            <div style={{ fontSize: 11, color: '#8B98A6' }}>No page reference set.</div>
                           )}
                         </div>
 
@@ -312,16 +312,16 @@ const filterInput: React.CSSProperties = {
   height: 40,
   padding: '0 14px',
   borderRadius: 10,
-  background: '#0F0F1A',
+  background: '#132B45',
   border: '1px solid rgba(255,255,255,0.08)',
-  color: '#F8FAFC',
+  color: '#F7F9FA',
   fontSize: 13,
   fontFamily: 'inherit',
 };
 
 const questionCell: React.CSSProperties = {
   fontSize: 13,
-  color: '#F8FAFC',
+  color: '#F7F9FA',
   textAlign: 'left',
   background: 'transparent',
   border: 'none',

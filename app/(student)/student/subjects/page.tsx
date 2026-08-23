@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader2, LogOut, Moon } from 'lucide-react';
-import { MedZLogo } from '@/components/brand/MedZLogo';
+import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { NavToast, useNavToast } from '@/components/ui/NavToast';
 import {
   clearDemoProfile,
@@ -41,14 +41,14 @@ type SubjectEntry = {
 };
 
 // The `professor`/`profRole` fields are repurposed as the subject's
-// curator label — kept for display shape only. Everything on MedZ is
+// curator label — kept for display shape only. Everything on MediZee is
 // student-facing; there are no professor accounts.
 const TBA_LABEL = 'Coming Soon';
 const TBA_ROLE = 'Question bank in progress';
-const TBA_AV = 'linear-gradient(135deg,#7C3AED,#8B5CF6)';
+const TBA_AV = 'linear-gradient(135deg,#00A6A6,#33BFBF)';
 
 const CATALOG: SubjectEntry[] = [
-  { id: 'histology',    name: 'Histology',    professor: 'Curated by MedZ', profRole: '450+ MCQs · Live now', profInitials: 'MZ', profAv: 'linear-gradient(135deg,#7C3AED,#8B5CF6)', qs: '450+', category: 'basic',    available: true,  image: '/subjects/histology.webp' },
+  { id: 'histology',    name: 'Histology',    professor: 'Curated by MediZee', profRole: '450+ MCQs · Live now', profInitials: 'MZ', profAv: 'linear-gradient(135deg,#00A6A6,#33BFBF)', qs: '450+', category: 'basic',    available: true,  image: '/subjects/histology.webp' },
   { id: 'anatomy',      name: 'Anatomy',      professor: TBA_LABEL, profRole: TBA_ROLE, profInitials: '', profAv: TBA_AV, qs: '520', category: 'basic',    available: false, image: '/subjects/anatomy.webp' },
   { id: 'pathology',    name: 'Pathology',    professor: TBA_LABEL, profRole: TBA_ROLE, profInitials: '', profAv: TBA_AV, qs: '480', category: 'clinical', available: false, image: '/subjects/pathology.webp' },
   { id: 'physiology',   name: 'Physiology',   professor: TBA_LABEL, profRole: TBA_ROLE, profInitials: '', profAv: TBA_AV, qs: '410', category: 'basic',    available: false, image: '/subjects/physiology.webp' },
@@ -79,7 +79,7 @@ function filterCatalog(all: SubjectEntry[], f: Filter): SubjectEntry[] {
 // The 45° stripes background used behind emoji-only cards. Ported
 // from the design's `stripes` constant.
 const STRIPES_BG =
-  'repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 10px, rgba(255,255,255,0.012) 10px 20px), #12111C';
+  'repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 10px, rgba(255,255,255,0.012) 10px 20px), #132B45';
 
 // =============================================================
 // Page
@@ -180,9 +180,9 @@ export default function StudentSubjectsPage() {
     position: 'relative',
     overflow: 'hidden',
     background:
-      'radial-gradient(900px 520px at 88% -6%, rgba(124,58,237,0.3), transparent 60%),' +
+      'radial-gradient(900px 520px at 88% -6%, rgba(0,166,166,0.3), transparent 60%),' +
       'radial-gradient(760px 520px at 6% 42%, rgba(88,28,235,0.18), transparent 55%),' +
-      '#08070F',
+      '#0B1F33',
     paddingBottom: 2,
   };
 
@@ -196,7 +196,7 @@ export default function StudentSubjectsPage() {
   };
 
   return (
-    <main style={{ minHeight: '100vh', background: '#08070F', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={canvasBg}>
         <div aria-hidden style={dotTexture} />
 
@@ -219,12 +219,12 @@ export default function StudentSubjectsPage() {
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: '0.14em',
-                  color: '#8B5CF6',
+                  color: '#00A6A6',
                   textTransform: 'uppercase',
                   marginBottom: 10,
                 }}
               >
-                The MedZ Catalog
+                The MediZee Catalog
               </div>
               <h1
                 style={{
@@ -232,7 +232,7 @@ export default function StudentSubjectsPage() {
                   fontSize: 44,
                   fontWeight: 900,
                   letterSpacing: '-0.03em',
-                  color: '#F8FAFC',
+                  color: '#F7F9FA',
                 }}
               >
                 All Subjects
@@ -241,7 +241,7 @@ export default function StudentSubjectsPage() {
                 style={{
                   margin: '12px 0 0',
                   fontSize: 14,
-                  color: '#94A3B8',
+                  color: '#8B98A6',
                   maxWidth: 560,
                   lineHeight: 1.6,
                 }}
@@ -256,9 +256,9 @@ export default function StudentSubjectsPage() {
                 style={{
                   fontSize: 12,
                   fontWeight: 700,
-                  color: '#C4B5FD',
-                  background: 'rgba(124,58,237,0.14)',
-                  border: '1px solid rgba(139,92,246,0.4)',
+                  color: '#33BFBF',
+                  background: 'rgba(0,166,166,0.14)',
+                  border: '1px solid rgba(0,166,166,0.4)',
                   padding: '8px 14px',
                   borderRadius: 10,
                 }}
@@ -269,7 +269,7 @@ export default function StudentSubjectsPage() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: '#94A3B8',
+                  color: '#8B98A6',
                   background: 'rgba(255,255,255,0.03)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   padding: '8px 14px',
@@ -293,9 +293,9 @@ export default function StudentSubjectsPage() {
                   style={{
                     fontSize: 12,
                     fontWeight: active ? 700 : 600,
-                    color: active ? '#fff' : '#94A3B8',
+                    color: active ? '#F7F9FA' : '#8B98A6',
                     background: active
-                      ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)'
+                      ? 'linear-gradient(135deg,#00A6A6,#33BFBF)'
                       : 'rgba(255,255,255,0.03)',
                     border: active
                       ? '1px solid transparent'
@@ -331,7 +331,7 @@ export default function StudentSubjectsPage() {
                 padding: 40,
                 textAlign: 'center',
                 fontSize: 13,
-                color: '#64748B',
+                color: '#8B98A6',
                 border: '1px dashed rgba(255,255,255,0.09)',
                 borderRadius: 16,
               }}
@@ -365,9 +365,9 @@ function SubjectCard({
     flexDirection: 'column',
     borderRadius: 16,
     overflow: 'hidden',
-    background: 'linear-gradient(165deg,#1c1338,#120f22)',
-    border: '1px solid rgba(139,92,246,0.5)',
-    boxShadow: '0 0 0 1px rgba(124,58,237,0.28), 0 0 34px rgba(124,58,237,0.18)',
+    background: 'linear-gradient(165deg,#132B45,#0B1F33)',
+    border: '1px solid rgba(0,166,166,0.5)',
+    boxShadow: '0 0 0 1px rgba(0,166,166,0.28), 0 0 34px rgba(0,166,166,0.18)',
   };
   const baseCard: CSSProperties = {
     position: 'relative',
@@ -375,7 +375,7 @@ function SubjectCard({
     flexDirection: 'column',
     borderRadius: 16,
     overflow: 'hidden',
-    background: '#12111C',
+    background: '#132B45',
     border: '1px solid rgba(255,255,255,0.07)',
   };
 
@@ -397,7 +397,7 @@ function SubjectCard({
           position: 'relative',
           aspectRatio: '4 / 3',
           overflow: 'hidden',
-          background: s.image ? (s.available ? '#1c1338' : '#12111C') : STRIPES_BG,
+          background: s.image ? (s.available ? '#132B45' : '#132B45') : STRIPES_BG,
         }}
       >
         {s.image ? (
@@ -426,7 +426,7 @@ function SubjectCard({
                 fontFamily: 'ui-monospace,Menlo,monospace',
                 fontSize: 8,
                 letterSpacing: '0.16em',
-                color: '#475569',
+                color: '#8B98A6',
                 textTransform: 'uppercase',
               }}
             >
@@ -447,11 +447,11 @@ function SubjectCard({
                   fontWeight: 800,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: '#fff',
-                  background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+                  color: '#F7F9FA',
+                  background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
                   padding: '5px 10px',
                   borderRadius: 7,
-                  boxShadow: '0 0 16px rgba(124,58,237,0.5)',
+                  boxShadow: '0 0 16px rgba(0,166,166,0.5)',
                 }
               : {
                   position: 'absolute',
@@ -461,7 +461,7 @@ function SubjectCard({
                   fontWeight: 800,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: '#94A3B8',
+                  color: '#8B98A6',
                   background: 'rgba(8,7,15,0.7)',
                   backdropFilter: 'blur(4px)',
                   WebkitBackdropFilter: 'blur(4px)',
@@ -483,7 +483,7 @@ function SubjectCard({
 
       {/* Body */}
       <div style={{ padding: '16px 16px 17px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', color: '#F8FAFC' }}>
+        <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', color: '#F7F9FA' }}>
           {s.name}
         </div>
 
@@ -501,7 +501,7 @@ function SubjectCard({
                 justifyContent: 'center',
                 fontSize: 10,
                 fontWeight: 700,
-                color: '#fff',
+                color: '#F7F9FA',
               }}
             >
               {s.profInitials}
@@ -512,7 +512,7 @@ function SubjectCard({
               style={{
                 fontSize: 11.5,
                 fontWeight: 600,
-                color: '#E2E8F0',
+                color: '#D9F3F0',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -523,7 +523,7 @@ function SubjectCard({
             <div
               style={{
                 fontSize: 9.5,
-                color: '#64748B',
+                color: '#8B98A6',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -541,10 +541,10 @@ function SubjectCard({
             gap: 6,
             marginTop: 13,
             fontSize: 11,
-            color: '#94A3B8',
+            color: '#8B98A6',
           }}
         >
-          <span style={{ fontWeight: 700, color: '#C4B5FD' }}>
+          <span style={{ fontWeight: 700, color: '#33BFBF' }}>
             {typeof liveCount === 'number' ? liveCount : s.available ? 0 : '—'}
           </span>
           <span>questions</span>
@@ -560,11 +560,11 @@ function SubjectCard({
                 textDecoration: 'none',
                 fontSize: 12.5,
                 fontWeight: 700,
-                color: '#fff',
-                background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+                color: '#F7F9FA',
+                background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
                 padding: 10,
                 borderRadius: 10,
-                boxShadow: '0 0 18px rgba(124,58,237,0.4)',
+                boxShadow: '0 0 18px rgba(0,166,166,0.4)',
                 cursor: 'pointer',
               }}
             >
@@ -577,7 +577,7 @@ function SubjectCard({
                 textAlign: 'center',
                 fontSize: 12.5,
                 fontWeight: 700,
-                color: '#94A3B8',
+                color: '#8B98A6',
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 padding: 10,
@@ -639,7 +639,7 @@ function Navbar({
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}
     >
-      <MedZLogo size="sm" />
+      <MediZeeLogo size="sm" />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 13.5, fontWeight: 500 }}>
         {NAV_LINKS.map((link) => {
@@ -648,7 +648,7 @@ function Navbar({
               <Link
                 key={link.label}
                 href={link.href}
-                style={{ color: '#94A3B8', textDecoration: 'none', cursor: 'pointer' }}
+                style={{ color: '#8B98A6', textDecoration: 'none', cursor: 'pointer' }}
               >
                 {link.label}
               </Link>
@@ -663,7 +663,7 @@ function Navbar({
                 type="button"
                 onClick={() => showToast(link.toast!)}
                 style={{
-                  color: '#94A3B8',
+                  color: '#8B98A6',
                   fontWeight: 500,
                   fontSize: 13.5,
                   background: 'transparent',
@@ -681,7 +681,7 @@ function Navbar({
             <span
               key={link.label}
               style={{
-                color: link.active ? '#F8FAFC' : '#94A3B8',
+                color: link.active ? '#F7F9FA' : '#8B98A6',
                 fontWeight: link.active ? 600 : 500,
               }}
             >
@@ -700,11 +700,11 @@ function Navbar({
             gap: 8,
             fontSize: 13,
             fontWeight: 700,
-            color: '#fff',
-            background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+            color: '#F7F9FA',
+            background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
             padding: '9px 16px',
             borderRadius: 10,
-            boxShadow: '0 0 18px rgba(124,58,237,0.4)',
+            boxShadow: '0 0 18px rgba(0,166,166,0.4)',
             textDecoration: 'none',
           }}
         >
@@ -722,7 +722,7 @@ function Navbar({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#94A3B8',
+            color: '#8B98A6',
             background: 'transparent',
             cursor: 'pointer',
           }}
@@ -738,7 +738,7 @@ function Navbar({
             gap: 8,
             fontSize: 13.5,
             fontWeight: 600,
-            color: '#CBD5E1',
+            color: '#8B98A6',
             textDecoration: 'none',
           }}
         >
@@ -749,8 +749,8 @@ function Navbar({
               borderRadius: '50%',
               display: 'grid',
               placeItems: 'center',
-              background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
-              color: '#fff',
+              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+              color: '#F7F9FA',
               fontSize: 11,
               fontWeight: 700,
             }}
@@ -770,7 +770,7 @@ function Navbar({
             gap: 6,
             fontSize: 13.5,
             fontWeight: 600,
-            color: '#CBD5E1',
+            color: '#8B98A6',
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',

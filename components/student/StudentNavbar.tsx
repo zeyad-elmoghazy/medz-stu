@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Loader2, LogOut, Moon } from 'lucide-react';
-import { MedZLogo } from '@/components/brand/MedZLogo';
+import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { NavToast, useNavToast } from '@/components/ui/NavToast';
 import {
   clearDemoProfile,
@@ -96,7 +96,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        <MedZLogo size="sm" />
+        <MediZeeLogo size="sm" />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 13.5, fontWeight: 500 }}>
           {links.map((link) => {
@@ -105,7 +105,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                 <Link
                   key={link.label}
                   href={link.href}
-                  style={{ color: '#94A3B8', textDecoration: 'none', cursor: 'pointer' }}
+                  style={{ color: '#8B98A6', textDecoration: 'none', cursor: 'pointer' }}
                 >
                   {link.label}
                 </Link>
@@ -118,7 +118,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                   type="button"
                   onClick={() => showToast(link.toast!)}
                   style={{
-                    color: '#94A3B8',
+                    color: '#8B98A6',
                     fontWeight: 500,
                     fontSize: 13.5,
                     background: 'transparent',
@@ -136,7 +136,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               <span
                 key={link.label}
                 style={{
-                  color: link.active ? '#F8FAFC' : '#94A3B8',
+                  color: link.active ? '#F7F9FA' : '#8B98A6',
                   fontWeight: link.active ? 600 : 500,
                 }}
               >
@@ -155,11 +155,11 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               gap: 8,
               fontSize: 13,
               fontWeight: 700,
-              color: '#fff',
-              background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+              color: '#F7F9FA',
+              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
               padding: '9px 16px',
               borderRadius: 10,
-              boxShadow: '0 0 18px rgba(124,58,237,0.4)',
+              boxShadow: '0 0 18px rgba(0,166,166,0.4)',
               textDecoration: 'none',
             }}
           >
@@ -177,7 +177,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#94A3B8',
+              color: '#8B98A6',
               background: 'transparent',
               cursor: 'pointer',
             }}
@@ -193,7 +193,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               gap: 8,
               fontSize: 13.5,
               fontWeight: 600,
-              color: '#CBD5E1',
+              color: '#8B98A6',
               textDecoration: 'none',
             }}
           >
@@ -204,8 +204,8 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                 borderRadius: '50%',
                 display: 'grid',
                 placeItems: 'center',
-                background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
-                color: '#fff',
+                background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                color: '#F7F9FA',
                 fontSize: 11,
                 fontWeight: 700,
               }}
@@ -225,7 +225,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               gap: 6,
               fontSize: 13.5,
               fontWeight: 600,
-              color: '#CBD5E1',
+              color: '#8B98A6',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',

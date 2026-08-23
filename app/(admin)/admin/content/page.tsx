@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, LogOut } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
-import { MedZLogo } from '@/components/brand/MedZLogo';
+import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { fetchOverview, type AdminOverview } from '@/lib/admin-content-api';
 import { AdminOverviewPanel } from '@/components/admin-content/AdminOverviewPanel';
 import { AdminUploadWizard } from '@/components/admin-content/AdminUploadWizard';
@@ -110,8 +110,8 @@ export default function AdminContentPage() {
       style={{
         display: 'flex',
         minHeight: '100vh',
-        background: '#09090E',
-        color: '#F8FAFC',
+        background: '#0B1F33',
+        color: '#F7F9FA',
         fontFamily: 'Inter, system-ui, sans-serif',
       }}
     >
@@ -120,7 +120,7 @@ export default function AdminContentPage() {
         style={{
           width: 248,
           flex: 'none',
-          background: '#0F0F1A',
+          background: '#132B45',
           borderRight: '1px solid rgba(255,255,255,0.06)',
           padding: '24px 16px',
           display: 'flex',
@@ -132,7 +132,7 @@ export default function AdminContentPage() {
         }}
       >
         <div style={{ padding: '0 8px' }}>
-          <MedZLogo size="sm" />
+          <MediZeeLogo size="sm" />
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -142,7 +142,7 @@ export default function AdminContentPage() {
               fontWeight: 700,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color: '#64748B',
+              color: '#8B98A6',
               padding: '0 10px 8px',
             }}
           >
@@ -164,8 +164,8 @@ export default function AdminContentPage() {
                   fontSize: 12.5,
                   fontWeight: active ? 600 : 500,
                   cursor: 'pointer',
-                  color: active ? '#F8FAFC' : '#94A3B8',
-                  background: active ? 'rgba(124,58,237,0.14)' : 'transparent',
+                  color: active ? '#F7F9FA' : '#8B98A6',
+                  background: active ? 'rgba(0,166,166,0.14)' : 'transparent',
                   border: 'none',
                   textAlign: 'left',
                   width: '100%',
@@ -177,7 +177,7 @@ export default function AdminContentPage() {
                     width: 7,
                     height: 7,
                     borderRadius: 2,
-                    background: active ? '#8B5CF6' : '#475569',
+                    background: active ? '#00A6A6' : '#8B98A6',
                     flex: 'none',
                   }}
                 />
@@ -208,7 +208,7 @@ export default function AdminContentPage() {
             alignItems: 'center',
             gap: 11,
             padding: 12,
-            background: '#161B26',
+            background: '#132B45',
             border: '1px solid rgba(255,255,255,0.07)',
             borderRadius: 12,
           }}
@@ -220,8 +220,8 @@ export default function AdminContentPage() {
               borderRadius: '50%',
               overflow: 'hidden',
               flex: 'none',
-              border: '1px solid rgba(124,58,237,0.5)',
-              background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+              border: '1px solid rgba(0,166,166,0.5)',
+              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -246,7 +246,7 @@ export default function AdminContentPage() {
             <div
               style={{
                 fontSize: 10,
-                color: '#94A3B8',
+                color: '#8B98A6',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -270,7 +270,7 @@ export default function AdminContentPage() {
               borderRadius: 8,
               background: 'transparent',
               border: '1px solid rgba(255,255,255,0.08)',
-              color: '#94A3B8',
+              color: '#8B98A6',
               cursor: signingOut ? 'not-allowed' : 'pointer',
               opacity: signingOut ? 0.5 : 1,
             }}
@@ -294,7 +294,7 @@ export default function AdminContentPage() {
             style={{
               fontSize: 11,
               fontWeight: 600,
-              color: '#7C3AED',
+              color: '#00A6A6',
               letterSpacing: '0.03em',
               marginBottom: 6,
             }}
@@ -304,7 +304,7 @@ export default function AdminContentPage() {
           <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em' }}>
             {pageTitle}
           </h1>
-          <p style={{ margin: '8px 0 0', fontSize: 13, color: '#94A3B8', maxWidth: 560 }}>
+          <p style={{ margin: '8px 0 0', fontSize: 13, color: '#8B98A6', maxWidth: 560 }}>
             {pageSubtitle}
           </p>
         </header>

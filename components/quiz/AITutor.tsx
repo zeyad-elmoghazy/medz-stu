@@ -63,11 +63,11 @@ export default function AITutorPanel({
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
       className="flex h-full flex-col rounded-2xl"
-      style={{ backgroundColor: '#0F0F1A', border: '1px solid #1E1E2E' }}
+      style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}
     >
       <header
         className="flex items-center justify-between gap-2 p-4"
-        style={{ borderBottom: '1px solid #1E1E2E' }}
+        style={{ borderBottom: '1px solid #132B45' }}
       >
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-500/15 text-violet-200">
@@ -87,7 +87,7 @@ export default function AITutorPanel({
           onClick={onClose}
           aria-label="Close tutor"
           className="grid h-8 w-8 place-items-center rounded-lg text-text-muted transition hover:text-white"
-          style={{ border: '1px solid #1E1E2E', backgroundColor: '#0A0A12' }}
+          style={{ border: '1px solid #132B45', backgroundColor: '#0B1F33' }}
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -95,7 +95,7 @@ export default function AITutorPanel({
 
       <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
         <p className="mb-3 rounded-md p-3 text-[11px] italic leading-relaxed text-text-muted"
-          style={{ backgroundColor: '#0A0A12', border: '1px solid #1E1E2E' }}
+          style={{ backgroundColor: '#0B1F33', border: '1px solid #132B45' }}
         >
           Stem in context: &ldquo;{questionStem.slice(0, 140)}{questionStem.length > 140 ? '…' : ''}&rdquo;
         </p>
@@ -115,14 +115,14 @@ export default function AITutorPanel({
                   style={
                     turn.role === 'user'
                       ? {
-                          backgroundColor: '#7C3AED',
+                          backgroundColor: '#00A6A6',
                           color: 'white',
-                          boxShadow: '0 0 14px rgba(124,58,237,0.35)',
+                          boxShadow: '0 0 14px rgba(0,166,166,0.35)',
                         }
                       : {
-                          backgroundColor: '#0A0A12',
-                          color: '#F8FAFC',
-                          border: '1px solid #1E1E2E',
+                          backgroundColor: '#0B1F33',
+                          color: '#F7F9FA',
+                          border: '1px solid #132B45',
                         }
                   }
                 >
@@ -146,16 +146,16 @@ export default function AITutorPanel({
           send();
         }}
         className="flex items-center gap-2 p-3"
-        style={{ borderTop: '1px solid #1E1E2E' }}
+        style={{ borderTop: '1px solid #132B45' }}
       >
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Ask a follow-up…"
           className="h-10 flex-1 rounded-lg px-3 text-sm text-white placeholder:text-text-muted/60 focus:outline-none"
-          style={{ backgroundColor: '#0A0A12', border: '1px solid #1E1E2E' }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = '#7C3AED')}
-          onBlur={(e) => (e.currentTarget.style.borderColor = '#1E1E2E')}
+          style={{ backgroundColor: '#0B1F33', border: '1px solid #132B45' }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = '#00A6A6')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = '#132B45')}
         />
         <button
           type="submit"
@@ -163,8 +163,8 @@ export default function AITutorPanel({
           aria-label="Send"
           className="grid h-10 w-10 place-items-center rounded-lg text-white disabled:cursor-not-allowed disabled:opacity-50"
           style={{
-            backgroundColor: '#7C3AED',
-            boxShadow: '0 0 14px rgba(124,58,237,0.35)',
+            backgroundColor: '#00A6A6',
+            boxShadow: '0 0 14px rgba(0,166,166,0.35)',
           }}
         >
           <Send className="h-4 w-4" />

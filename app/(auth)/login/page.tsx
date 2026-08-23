@@ -116,11 +116,11 @@ function LoginPageInner() {
 
       <div
         style={{
-          backgroundColor: '#0F0F1A',
-          border: '1px solid #1E1E2E',
+          backgroundColor: '#132B45',
+          border: '1px solid #132B45',
           padding: '40px',
         }}
-        className="animate-fade-in-up w-full max-w-md rounded-2xl shadow-[0_40px_120px_-30px_rgba(124,58,237,0.4)]"
+        className="animate-fade-in-up w-full max-w-md rounded-2xl shadow-[0_40px_120px_-30px_rgba(0,166,166,0.4)]"
       >
         <Link
           href="/"
@@ -128,9 +128,9 @@ function LoginPageInner() {
         >
           <span
             className="text-2xl font-bold tracking-tight text-white"
-            style={{ textShadow: '0 0 20px rgba(124,58,237,0.7)' }}
+            style={{ textShadow: '0 0 20px rgba(0,166,166,0.7)' }}
           >
-            MedZ
+            MediZee
           </span>
           <span className="text-[10px] uppercase tracking-[0.28em] text-text-muted">
             Adaptive learning
@@ -148,8 +148,8 @@ function LoginPageInner() {
             <p
               className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-violet-200"
               style={{
-                backgroundColor: 'rgba(124,58,237,0.15)',
-                border: '1px solid rgba(159,103,255,0.35)',
+                backgroundColor: 'rgba(0,166,166,0.15)',
+                border: '1px solid rgba(51,191,191,0.35)',
               }}
             >
               Demo mode · any password works
@@ -175,7 +175,7 @@ function LoginPageInner() {
                 placeholder="you@university.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block h-11 w-full rounded-lg border border-[#1E1E2E] bg-[#0A0A12] pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                className="block h-11 w-full rounded-lg border border-[#132B45] bg-[#0B1F33] pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
               />
             </div>
           </div>
@@ -205,7 +205,7 @@ function LoginPageInner() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block h-11 w-full rounded-lg border border-[#1E1E2E] bg-[#0A0A12] pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                className="block h-11 w-full rounded-lg border border-[#132B45] bg-[#0B1F33] pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
               />
             </div>
           </div>
@@ -221,7 +221,7 @@ function LoginPageInner() {
           <button
             type="submit"
             disabled={loading}
-            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(124,58,237,0.45)] transition hover:bg-violet-500 hover:shadow-[0_0_36px_rgba(124,58,237,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F0F1A] disabled:cursor-not-allowed disabled:opacity-60"
+            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(0,166,166,0.45)] transition hover:bg-violet-500 hover:shadow-[0_0_36px_rgba(0,166,166,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#132B45] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -235,7 +235,7 @@ function LoginPageInner() {
         </form>
 
         <p className="mt-8 text-center text-sm text-text-muted">
-          New to MedZ?{' '}
+          New to MediZee?{' '}
           <Link
             href="/signup"
             className="font-medium text-violet-300 underline-offset-2 transition hover:text-violet-200 hover:underline"

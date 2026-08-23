@@ -105,14 +105,14 @@ export default function NotesEditor({
       transition={{ type: 'spring', stiffness: 280, damping: 32 }}
       className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col"
       style={{
-        backgroundColor: '#0F0F1A',
-        borderLeft: '1px solid #1E1E2E',
+        backgroundColor: '#132B45',
+        borderLeft: '1px solid #132B45',
         boxShadow: '-30px 0 60px rgba(0,0,0,0.5)',
       }}
     >
       <header
         className="flex items-center justify-between p-5"
-        style={{ borderBottom: '1px solid #1E1E2E' }}
+        style={{ borderBottom: '1px solid #132B45' }}
       >
         <div className="flex items-center gap-2.5">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-violet-500/15 text-violet-200">
@@ -130,7 +130,7 @@ export default function NotesEditor({
           onClick={onClose}
           aria-label="Close notes"
           className="grid h-9 w-9 place-items-center rounded-lg text-text-muted transition hover:text-white"
-          style={{ border: '1px solid #1E1E2E', backgroundColor: '#0A0A12' }}
+          style={{ border: '1px solid #132B45', backgroundColor: '#0B1F33' }}
         >
           <X className="h-4 w-4" />
         </button>
@@ -162,9 +162,9 @@ export default function NotesEditor({
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Mnemonics, slide cues, links to lecture clips…"
           className="flex-1 w-full resize-none rounded-xl p-4 text-sm leading-relaxed text-white placeholder:text-text-muted/60 focus:outline-none scrollbar-thin"
-          style={{ backgroundColor: '#0A0A12', border: '1px solid #1E1E2E' }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = '#7C3AED')}
-          onBlur={(e) => (e.currentTarget.style.borderColor = '#1E1E2E')}
+          style={{ backgroundColor: '#0B1F33', border: '1px solid #132B45' }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = '#00A6A6')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = '#132B45')}
         />
 
         <div className="flex items-center justify-between text-xs text-text-muted">
@@ -199,7 +199,7 @@ function ToolbarButton({
       aria-label={label}
       title={label}
       className="grid h-8 w-8 place-items-center rounded-md text-text-muted transition hover:text-white"
-      style={{ border: '1px solid #1E1E2E', backgroundColor: '#0A0A12' }}
+      style={{ border: '1px solid #132B45', backgroundColor: '#0B1F33' }}
     >
       {icon}
     </button>

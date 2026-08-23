@@ -14,7 +14,7 @@ const BODY = 11;
 const MONO = 10;
 
 function coverPage(doc: PDFKit.PDFDocument) {
-  doc.font('Helvetica-Bold').fontSize(H1).text('MedZ — MCQ Upload Format');
+  doc.font('Helvetica-Bold').fontSize(H1).text('MediZee — MCQ Upload Format');
   doc.moveDown(0.4);
   doc
     .font('Helvetica')

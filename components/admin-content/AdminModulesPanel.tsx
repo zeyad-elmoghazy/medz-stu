@@ -10,7 +10,7 @@ import {
 } from '@/lib/admin-content-api';
 
 const CARD: React.CSSProperties = {
-  background: '#161B26',
+  background: '#132B45',
   border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: 16,
   padding: 0,
@@ -21,9 +21,9 @@ const SELECT: React.CSSProperties = {
   height: 36,
   padding: '0 10px',
   borderRadius: 9,
-  background: '#0F0F1A',
+  background: '#132B45',
   border: '1px solid rgba(255,255,255,0.1)',
-  color: '#F8FAFC',
+  color: '#F7F9FA',
   fontSize: 12.5,
   fontFamily: 'inherit',
 };
@@ -97,11 +97,11 @@ export function AdminModulesPanel() {
       <div style={CARD}>
         <div style={{ padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 15, fontWeight: 700 }}>Module reference books</div>
-          <div style={{ fontSize: 11, color: '#64748B' }}>{modules.length} module{modules.length === 1 ? '' : 's'}</div>
+          <div style={{ fontSize: 11, color: '#8B98A6' }}>{modules.length} module{modules.length === 1 ? '' : 's'}</div>
         </div>
 
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748B', fontSize: 13 }}>Loading…</div>
+          <div style={{ padding: 40, textAlign: 'center', color: '#8B98A6', fontSize: 13 }}>Loading…</div>
         ) : (
           <div>
             {modules.map((m) => {
@@ -125,9 +125,9 @@ export function AdminModulesPanel() {
                       fontFamily: "'JetBrains Mono', monospace",
                       fontSize: 11,
                       fontWeight: 700,
-                      color: '#C4B5FD',
-                      background: 'rgba(124,58,237,0.16)',
-                      border: '1px solid rgba(139,92,246,0.35)',
+                      color: '#33BFBF',
+                      background: 'rgba(0,166,166,0.16)',
+                      border: '1px solid rgba(0,166,166,0.35)',
                       padding: '4px 8px',
                       borderRadius: 6,
                       textAlign: 'center',
@@ -136,7 +136,7 @@ export function AdminModulesPanel() {
                     {m.code}
                   </span>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{m.name}</span>
-                  <span style={{ fontSize: 12, color: m.book_id ? '#CBD5E1' : '#64748B' }}>{bookTitle(m.book_id)}</span>
+                  <span style={{ fontSize: 12, color: m.book_id ? '#8B98A6' : '#8B98A6' }}>{bookTitle(m.book_id)}</span>
                   <select
                     value={selected}
                     onChange={(e) => setPending((prev) => ({ ...prev, [m.code]: e.target.value }))}
@@ -156,8 +156,8 @@ export function AdminModulesPanel() {
                     style={{
                       fontSize: 11.5,
                       fontWeight: 700,
-                      color: dirty ? '#fff' : '#475569',
-                      background: dirty ? 'linear-gradient(135deg,#7C3AED,#8B5CF6)' : 'transparent',
+                      color: dirty ? '#F7F9FA' : '#8B98A6',
+                      background: dirty ? 'linear-gradient(135deg,#00A6A6,#33BFBF)' : 'transparent',
                       border: dirty ? 'none' : '1px solid rgba(255,255,255,0.08)',
                       padding: '8px 14px',
                       borderRadius: 9,

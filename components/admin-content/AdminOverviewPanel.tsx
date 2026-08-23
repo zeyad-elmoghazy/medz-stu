@@ -9,7 +9,7 @@ type Props = {
 };
 
 const CARD: React.CSSProperties = {
-  background: '#161B26',
+  background: '#132B45',
   border: '1px solid rgba(255,255,255,0.07)',
   borderRadius: 16,
   padding: 20,
@@ -17,7 +17,7 @@ const CARD: React.CSSProperties = {
 
 const KPI_LABEL: React.CSSProperties = {
   fontSize: 11,
-  color: '#94A3B8',
+  color: '#8B98A6',
   fontWeight: 500,
 };
 
@@ -40,12 +40,12 @@ function actionIcon(action: string): { icon: string; bg: string; color: string }
   if (action.startsWith('question_published') || action.startsWith('bulk_publish'))
     return { icon: '📤', bg: 'rgba(16,185,129,0.15)', color: '#10B981' };
   if (action.startsWith('question_') || action.startsWith('bulk_'))
-    return { icon: '📝', bg: 'rgba(124,58,237,0.15)', color: '#8B5CF6' };
+    return { icon: '📝', bg: 'rgba(0,166,166,0.15)', color: '#00A6A6' };
   if (action.startsWith('user_')) return { icon: '👤', bg: 'rgba(239,68,68,0.15)', color: '#EF4444' };
   if (action.startsWith('module_') || action.startsWith('subject_') || action.startsWith('chapter_'))
     return { icon: '🗂️', bg: 'rgba(14,165,233,0.15)', color: '#0EA5E9' };
   if (action === 'content_uploaded') return { icon: '📄', bg: 'rgba(249,115,22,0.15)', color: '#F97316' };
-  return { icon: '•', bg: 'rgba(148,163,184,0.15)', color: '#94A3B8' };
+  return { icon: '•', bg: 'rgba(148,163,184,0.15)', color: '#8B98A6' };
 }
 
 export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) {
@@ -53,18 +53,18 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
   const q = overview?.counts.questions;
 
   const kpis = [
-    { label: 'Students', value: overview?.counts.students ?? 0, color: '#F8FAFC' },
-    { label: 'Admins', value: overview?.counts.admins ?? 0, color: '#F8FAFC' },
-    { label: 'Modules', value: overview?.counts.modules ?? 0, color: '#F8FAFC' },
-    { label: 'Subjects', value: overview?.counts.subjects ?? 0, color: '#F8FAFC' },
-    { label: 'Chapters', value: overview?.counts.chapters ?? 0, color: '#F8FAFC' },
+    { label: 'Students', value: overview?.counts.students ?? 0, color: '#F7F9FA' },
+    { label: 'Admins', value: overview?.counts.admins ?? 0, color: '#F7F9FA' },
+    { label: 'Modules', value: overview?.counts.modules ?? 0, color: '#F7F9FA' },
+    { label: 'Subjects', value: overview?.counts.subjects ?? 0, color: '#F7F9FA' },
+    { label: 'Chapters', value: overview?.counts.chapters ?? 0, color: '#F7F9FA' },
   ];
 
   const questionKpis = q
     ? [
         { label: 'Published', value: q.published, color: '#10B981' },
         { label: 'Under Review', value: q.under_review, color: '#0EA5E9' },
-        { label: 'Draft', value: q.draft, color: '#94A3B8' },
+        { label: 'Draft', value: q.draft, color: '#8B98A6' },
         { label: 'Archived', value: q.archived, color: '#EF4444' },
       ]
     : [];
@@ -118,7 +118,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
         >
           <div>
             <div style={{ fontSize: 15, fontWeight: 700 }}>Question bank</div>
-            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3 }}>
+            <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3 }}>
               {q ? `${q.total} question${q.total === 1 ? '' : 's'} total` : '—'}
             </div>
           </div>
@@ -138,11 +138,11 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
               style={{
                 padding: 16,
                 borderRadius: 12,
-                background: '#0F0F1A',
+                background: '#132B45',
                 border: '1px solid rgba(255,255,255,0.06)',
               }}
             >
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>{k.label}</div>
+              <div style={{ fontSize: 11, color: '#8B98A6' }}>{k.label}</div>
               <div style={{ fontSize: 22, fontWeight: 800, marginTop: 6, color: k.color }}>
                 {k.value}
               </div>
@@ -155,7 +155,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
                 style={{
                   padding: 16,
                   borderRadius: 12,
-                  background: '#0F0F1A',
+                  background: '#132B45',
                   border: '1px solid rgba(255,255,255,0.06)',
                 }}
               >
@@ -169,9 +169,9 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
         {/* DAU trend */}
         <div style={{ ...CARD, padding: 22 }}>
           <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Daily active students</div>
-          <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 18 }}>Last 14 days</div>
+          <div style={{ fontSize: 11, color: '#8B98A6', marginBottom: 18 }}>Last 14 days</div>
           {dauTrend.length === 0 ? (
-            <div style={{ fontSize: 12, color: '#64748B' }}>
+            <div style={{ fontSize: 12, color: '#8B98A6' }}>
               No completed sessions in the last 14 days yet.
             </div>
           ) : (
@@ -187,7 +187,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
                       marginBottom: 6,
                     }}
                   />
-                  <div style={{ fontSize: 9, color: '#64748B' }}>{d.date.slice(5)}</div>
+                  <div style={{ fontSize: 9, color: '#8B98A6' }}>{d.date.slice(5)}</div>
                 </div>
               ))}
             </div>
@@ -199,7 +199,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
           <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Recent activity</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {activity.length === 0 && (
-              <div style={{ fontSize: 12, color: '#64748B' }}>
+              <div style={{ fontSize: 12, color: '#8B98A6' }}>
                 Nothing logged yet. Every publish, edit, or upload will show up here.
               </div>
             )}
@@ -225,7 +225,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 12, lineHeight: 1.4 }}>{a.summary}</div>
-                    <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>
+                    <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 2 }}>
                       {who} · {relativeTime(a.created_at)}
                     </div>
                   </div>
@@ -239,13 +239,13 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
       {/* Per-author activity */}
       <div style={{ ...CARD, padding: 22 }}>
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Author activity</div>
-        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 18 }}>
+        <div style={{ fontSize: 11, color: '#8B98A6', marginBottom: 18 }}>
           {authors.length > 0
             ? `${authors.length} author${authors.length === 1 ? '' : 's'} with content on the platform`
             : 'Who has authored questions, uploads, or modules'}
         </div>
         {authors.length === 0 ? (
-          <div style={{ fontSize: 12, color: '#64748B' }}>
+          <div style={{ fontSize: 12, color: '#8B98A6' }}>
             No author activity yet. Every question, upload, or module assignment will show up here.
           </div>
         ) : (
@@ -261,7 +261,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
                           textAlign: h === 'Author' ? 'left' : 'right',
                           fontSize: 11,
                           fontWeight: 500,
-                          color: '#94A3B8',
+                          color: '#8B98A6',
                           padding: '0 0 10px',
                           borderBottom: '1px solid rgba(255,255,255,0.07)',
                         }}
@@ -278,7 +278,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
                     <td style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <div style={{ fontWeight: 600 }}>{a.full_name ?? a.email ?? a.id}</div>
                       {a.full_name && a.email && (
-                        <div style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>{a.email}</div>
+                        <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 2 }}>{a.email}</div>
                       )}
                     </td>
                     {(['published', 'under_review', 'draft', 'archived', 'flagged'] as const).map((k) => (
@@ -300,7 +300,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
                         padding: '10px 0',
                         textAlign: 'right',
                         borderBottom: '1px solid rgba(255,255,255,0.05)',
-                        color: '#64748B',
+                        color: '#8B98A6',
                         fontSize: 11,
                       }}
                     >
@@ -320,7 +320,7 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
 const ghostBtn: React.CSSProperties = {
   fontSize: 11.5,
   fontWeight: 700,
-  color: '#94A3B8',
+  color: '#8B98A6',
   border: '1px solid rgba(255,255,255,0.12)',
   padding: '9px 14px',
   borderRadius: 9,
@@ -332,11 +332,11 @@ const ghostBtn: React.CSSProperties = {
 const primaryBtn: React.CSSProperties = {
   fontSize: 11.5,
   fontWeight: 700,
-  color: '#fff',
+  color: '#F7F9FA',
   border: 'none',
   padding: '9px 14px',
   borderRadius: 9,
   cursor: 'pointer',
-  background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+  background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
   fontFamily: 'inherit',
 };

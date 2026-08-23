@@ -38,9 +38,9 @@ const canvasBg: CSSProperties = {
   position: 'relative',
   overflow: 'hidden',
   background:
-    'radial-gradient(900px 520px at 88% -6%, rgba(124,58,237,0.3), transparent 60%),' +
+    'radial-gradient(900px 520px at 88% -6%, rgba(0,166,166,0.3), transparent 60%),' +
     'radial-gradient(760px 520px at 6% 42%, rgba(88,28,235,0.18), transparent 55%),' +
-    '#08070F',
+    '#0B1F33',
   paddingBottom: 2,
 };
 
@@ -130,7 +130,7 @@ export default function ModuleChaptersPage() {
       );
 
   return (
-    <main style={{ minHeight: '100vh', background: '#08070F', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={canvasBg}>
         <div aria-hidden style={dotTexture} />
 
@@ -138,16 +138,16 @@ export default function ModuleChaptersPage() {
 
         <section style={{ position: 'relative', padding: '34px 44px 56px' }}>
           {/* Breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#64748B', marginBottom: 22 }}>
-            <Link href="/student/dashboard" style={{ color: '#94A3B8', textDecoration: 'none' }}>Home</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#8B98A6', marginBottom: 22 }}>
+            <Link href="/student/dashboard" style={{ color: '#8B98A6', textDecoration: 'none' }}>Home</Link>
             <span>›</span>
-            <Link href="/student/subjects" style={{ color: '#94A3B8', textDecoration: 'none' }}>Subjects</Link>
+            <Link href="/student/subjects" style={{ color: '#8B98A6', textDecoration: 'none' }}>Subjects</Link>
             <span>›</span>
-            <Link href={`/student/subjects/${params.subjectId}`} style={{ color: '#94A3B8', textDecoration: 'none' }}>
+            <Link href={`/student/subjects/${params.subjectId}`} style={{ color: '#8B98A6', textDecoration: 'none' }}>
               {subject.name}
             </Link>
             <span>›</span>
-            <span style={{ color: '#C4B5FD', fontWeight: 600 }}>Module {m.code}</span>
+            <span style={{ color: '#33BFBF', fontWeight: 600 }}>Module {m.code}</span>
           </div>
 
           {/* Module header banner */}
@@ -159,9 +159,9 @@ export default function ModuleChaptersPage() {
               gap: 24,
               borderRadius: 20,
               padding: '24px 26px',
-              background: 'linear-gradient(135deg,#1c1338,#120f22)',
-              border: '1px solid rgba(139,92,246,0.4)',
-              boxShadow: '0 0 40px rgba(124,58,237,0.16)',
+              background: 'linear-gradient(135deg,#132B45,#0B1F33)',
+              border: '1px solid rgba(0,166,166,0.4)',
+              boxShadow: '0 0 40px rgba(0,166,166,0.16)',
               marginBottom: 30,
             }}
           >
@@ -172,19 +172,19 @@ export default function ModuleChaptersPage() {
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: '0.08em',
-                  color: '#C4B5FD',
-                  background: 'rgba(124,58,237,0.16)',
-                  border: '1px solid rgba(139,92,246,0.35)',
+                  color: '#33BFBF',
+                  background: 'rgba(0,166,166,0.16)',
+                  border: '1px solid rgba(0,166,166,0.35)',
                   padding: '5px 10px',
                   borderRadius: 7,
                 }}
               >
                 {subject.prefix} {m.code}
               </span>
-              <h1 style={{ margin: '14px 0 0', fontSize: 32, fontWeight: 900, letterSpacing: '-0.03em', color: '#F8FAFC' }}>
+              <h1 style={{ margin: '14px 0 0', fontSize: 32, fontWeight: 900, letterSpacing: '-0.03em', color: '#F7F9FA' }}>
                 {m.name}
               </h1>
-              <div style={{ fontSize: 12.5, color: '#94A3B8', marginTop: 8 }}>
+              <div style={{ fontSize: 12.5, color: '#8B98A6', marginTop: 8 }}>
                 {liveModuleQs ?? m.qs} questions · {m.chapters.length} chapters
               </div>
               {publishedCount === 0 && (
@@ -198,7 +198,7 @@ export default function ModuleChaptersPage() {
                     fontWeight: 700,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
-                    color: '#94A3B8',
+                    color: '#8B98A6',
                     background: 'rgba(255,255,255,0.05)',
                     border: '1px solid rgba(255,255,255,0.1)',
                     padding: '5px 10px',
@@ -213,18 +213,18 @@ export default function ModuleChaptersPage() {
             <div style={{ textAlign: 'center', flex: 'none' }}>
               {publishedCount === 0 ? (
                 <>
-                  <div style={{ fontSize: 34, fontWeight: 900, color: '#64748B', letterSpacing: '-0.02em' }}>—</div>
-                  <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>Module progress</div>
-                  <div style={{ fontSize: 10, color: '#64748B', marginTop: 8, fontWeight: 700 }}>
+                  <div style={{ fontSize: 34, fontWeight: 900, color: '#8B98A6', letterSpacing: '-0.02em' }}>—</div>
+                  <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 2 }}>Module progress</div>
+                  <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 8, fontWeight: 700 }}>
                     Locked until publish
                   </div>
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 34, fontWeight: 900, color: '#8B5CF6', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: 34, fontWeight: 900, color: '#00A6A6', letterSpacing: '-0.02em' }}>
                     {avgProgress}%
                   </div>
-                  <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>Module progress</div>
+                  <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 2 }}>Module progress</div>
                   <div style={{ fontSize: 10, color: '#10B981', marginTop: 8, fontWeight: 700 }}>
                     {doneCount} / {publishedCount} completed
                   </div>
@@ -235,10 +235,10 @@ export default function ModuleChaptersPage() {
 
           {/* Section header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: '#F8FAFC' }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: '#F7F9FA' }}>
               Chapters
             </h2>
-            <span style={{ fontSize: 12, color: '#94A3B8' }}>
+            <span style={{ fontSize: 12, color: '#8B98A6' }}>
               Track your progress through each chapter
             </span>
           </div>
@@ -302,8 +302,8 @@ function ChapterRow({
     : done
       ? { color: '#10B981', background: 'rgba(16,185,129,0.12)' }
       : started
-        ? { color: '#C4B5FD', background: 'rgba(124,58,237,0.16)' }
-        : { color: '#94A3B8', background: 'rgba(255,255,255,0.05)' };
+        ? { color: '#33BFBF', background: 'rgba(0,166,166,0.16)' }
+        : { color: '#8B98A6', background: 'rgba(255,255,255,0.05)' };
 
   const openQuiz = () => {
     // Chapter-scoped quizzes aren't wired at the data layer yet;
@@ -351,17 +351,17 @@ function ChapterRow({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 16,
-            color: '#64748B',
+            color: '#8B98A6',
           }}
         >
           <Lock style={{ width: 16, height: 16 }} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: '#94A3B8' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: '#8B98A6' }}>
             {c.name}
           </div>
-          <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>
+          <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 6 }}>
             Questions coming soon
           </div>
         </div>
@@ -399,7 +399,7 @@ function ChapterRow({
         gap: 18,
         padding: '18px 20px',
         borderRadius: 14,
-        background: '#12111C',
+        background: '#132B45',
         border: '1px solid rgba(255,255,255,0.07)',
         cursor: 'pointer',
       }}
@@ -411,15 +411,15 @@ function ChapterRow({
           height: 40,
           flex: 'none',
           borderRadius: 11,
-          background: 'rgba(124,58,237,0.12)',
-          border: '1px solid rgba(139,92,246,0.3)',
+          background: 'rgba(0,166,166,0.12)',
+          border: '1px solid rgba(0,166,166,0.3)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'ui-monospace,Menlo,monospace',
           fontSize: 13,
           fontWeight: 700,
-          color: '#C4B5FD',
+          color: '#33BFBF',
         }}
       >
         {String(index + 1).padStart(2, '0')}
@@ -427,7 +427,7 @@ function ChapterRow({
 
       {/* Name + progress bar */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: '#F8FAFC' }}>
+        <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: '#F7F9FA' }}>
           {c.name}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
@@ -469,13 +469,13 @@ function ChapterRow({
             gap: 7,
             fontSize: 12,
             fontWeight: 700,
-            color: '#fff',
-            background: 'linear-gradient(135deg,#7C3AED,#8B5CF6)',
+            color: '#F7F9FA',
+            background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
             border: '1px solid transparent',
             padding: '8px 14px',
             borderRadius: 9,
             cursor: 'pointer',
-            boxShadow: '0 0 14px rgba(124,58,237,0.35)',
+            boxShadow: '0 0 14px rgba(0,166,166,0.35)',
             flex: 'none',
           }}
         >
