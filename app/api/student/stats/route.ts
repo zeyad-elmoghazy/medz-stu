@@ -77,33 +77,39 @@ export async function GET() {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
 
   // Live per-subject published question count — sums the
-  // chapters.published_count column that the professor
-  // authoring trigger maintains. Reading it here means the
-  // student dashboard sees a new number the moment a
-  // professor publishes a question (once the cache expires).
+  // chapters.published_count column that the admin authoring
+  // trigger maintains. Reading it here means the student
+  // dashboard sees a new number the moment content is published
+  // (once the cache expires).
   //
-  // Shape: modules.subject_id + JOIN chapters. We fetch both
-  // and sum client-side to keep the query below trivial.
-  const modulesForCountsPromise = (supabase as unknown as {
+  // chapters.subject_id (added in 015_b2c_pivot_rebuild.sql) is
+  // each chapter's real subject — a module can carry several
+  // subjects via module_subjects, so this must NOT be bucketed by
+  // modules.subject_id (the legacy single-value column, 'multi'
+  // for every module created post-pivot; that bug is what this
+  // fix replaces). subjects.slug is fetched alongside so the
+  // bucket key matches SUBJECTS_CONFIG[].id, which is a slug
+  // string ('histology', 'anatomy', ...), not the subject's UUID.
+  const subjectsForCountsPromise = (supabase as unknown as {
     from: (t: string) => {
       select: (c: string) => Promise<{
-        data: Array<{ code: string; subject_id: string }> | null;
+        data: Array<{ id: string; slug: string }> | null;
         error: { message: string } | null;
       }>;
     };
   })
-    .from('modules')
-    .select('code, subject_id');
+    .from('subjects')
+    .select('id, slug');
   const chaptersForCountsPromise = (supabase as unknown as {
     from: (t: string) => {
       select: (c: string) => Promise<{
-        data: Array<{ module_code: string; published_count: number }> | null;
+        data: Array<{ subject_id: string; published_count: number }> | null;
         error: { message: string } | null;
       }>;
     };
   })
     .from('chapters')
-    .select('module_code, published_count');
+    .select('subject_id, published_count');
 
   const [
     subjectStatsRes,
@@ -111,7 +117,7 @@ export async function GET() {
     progressSessionsRes,
     streakRes,
     bookmarksRes,
-    modulesForCountsRes,
+    subjectsForCountsRes,
     chaptersForCountsRes,
   ] = await Promise.all([
     // (b/c) per-subject aggregates — also feeds the overall totals.
@@ -154,21 +160,23 @@ export async function GET() {
       .eq('student_id', user.id),
 
     // (h + i) live per-subject published-question count.
-    modulesForCountsPromise,
+    subjectsForCountsPromise,
     chaptersForCountsPromise,
   ]);
 
-  // Aggregate published_count by subject.
+  // Aggregate published_count by subject slug — keyed by slug (not
+  // the subject's UUID) since that's what SUBJECTS_CONFIG[].id is.
   const publishedBySubject = new Map<string, number>();
-  const modulesForCounts = modulesForCountsRes.data ?? [];
+  const slugById = new Map(
+    (subjectsForCountsRes.data ?? []).map((s) => [s.id, s.slug])
+  );
   const chaptersForCounts = chaptersForCountsRes.data ?? [];
-  for (const mod of modulesForCounts) {
-    const total = chaptersForCounts
-      .filter((c) => c.module_code === mod.code)
-      .reduce((sum, c) => sum + (Number(c.published_count) || 0), 0);
+  for (const c of chaptersForCounts) {
+    const slug = slugById.get(c.subject_id);
+    if (!slug) continue;
     publishedBySubject.set(
-      mod.subject_id,
-      (publishedBySubject.get(mod.subject_id) ?? 0) + total
+      slug,
+      (publishedBySubject.get(slug) ?? 0) + (Number(c.published_count) || 0)
     );
   }
 
