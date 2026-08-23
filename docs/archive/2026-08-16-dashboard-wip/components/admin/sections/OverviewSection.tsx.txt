@@ -1,0 +1,423 @@
+'use client';
+
+/**
+ * Overview (Part 2.4, section 1) — platform-wide KPIs, a 14-day
+ * DAU trend chart, and the unified Activity Log. Reads from
+ * /api/admin/overview and /api/admin/activity.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Activity,
+  BookOpen,
+  Filter,
+  Layers,
+  Loader2,
+  RefreshCw,
+  UserPlus,
+  Users,
+} from 'lucide-react';
+import { EmptyState, Panel, SectionHeader } from '../AdminShell';
+
+type OverviewCounts = {
+  students: number;
+  admins: number;
+  modules: number;
+  subjects: number;
+  chapters: number;
+  questions: {
+    published: number;
+    under_review: number;
+    draft: number;
+    archived: number;
+    total: number;
+  };
+};
+
+type OverviewPayload = {
+  counts: OverviewCounts;
+  dauTrend: { date: string; activeStudents: number }[];
+  recentActivity: ActivityRow[];
+};
+
+type ActivityRow = {
+  id: string | number;
+  actor_id: string | null;
+  action: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  summary: string | null;
+  created_at: string;
+  profiles: { full_name: string | null; email: string | null } | null;
+};
+
+const ENTITY_TYPES = ['question', 'user', 'module', 'subject', 'chapter'] as const;
+
+export function OverviewSection() {
+  const [overview, setOverview] = useState<OverviewPayload | null>(null);
+  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [overviewError, setOverviewError] = useState<string | null>(null);
+
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
+  const [activityFilter, setActivityFilter] = useState<string | null>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
+
+  const loadOverview = useCallback(async () => {
+    setLoadingOverview(true);
+    setOverviewError(null);
+    try {
+      const res = await fetch('/api/admin/overview', { credentials: 'include', cache: 'no-store' });
+      if (!res.ok) {
+        setOverviewError(`Failed (${res.status})`);
+        return;
+      }
+      const body = (await res.json()) as OverviewPayload;
+      setOverview(body);
+    } catch {
+      setOverviewError('Network error');
+    } finally {
+      setLoadingOverview(false);
+    }
+  }, []);
+
+  const loadActivity = useCallback(async (filter: string | null) => {
+    setActivityLoading(true);
+    try {
+      const url = new URL('/api/admin/activity', window.location.origin);
+      if (filter) url.searchParams.set('entityType', filter);
+      url.searchParams.set('limit', '50');
+      const res = await fetch(url.toString(), { credentials: 'include', cache: 'no-store' });
+      if (!res.ok) return;
+      const body = (await res.json()) as { activity: ActivityRow[] };
+      setActivity(body.activity ?? []);
+    } finally {
+      setActivityLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadOverview();
+    void loadActivity(null);
+    // /api/admin/overview is Cache-Control: private, max-age=30 —
+    // polling every 30s keeps the KPIs and activity feed feeling
+    // live without hammering the DB.
+    const iv = window.setInterval(() => {
+      void loadOverview();
+    }, 30000);
+    return () => window.clearInterval(iv);
+  }, [loadOverview, loadActivity]);
+
+  const stats = useMemo(() => {
+    if (!overview) return null;
+    return [
+      {
+        key: 'students',
+        label: 'Students',
+        value: overview.counts.students,
+        icon: Users,
+      },
+      {
+        key: 'published',
+        label: 'Published questions',
+        value: overview.counts.questions.published,
+        icon: BookOpen,
+      },
+      {
+        key: 'review',
+        label: 'In review queue',
+        value: overview.counts.questions.under_review + overview.counts.questions.draft,
+        icon: Layers,
+      },
+      {
+        key: 'modules',
+        label: 'Active taxonomy',
+        value: `${overview.counts.modules}M · ${overview.counts.subjects}S · ${overview.counts.chapters}C`,
+        icon: Activity,
+      },
+    ];
+  }, [overview]);
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        eyebrow="Overview"
+        title="Platform pulse"
+        description="Live counts, daily active students, and every action taken on the platform in the last 24 hours."
+        right={
+          <button
+            type="button"
+            onClick={() => {
+              void loadOverview();
+              void loadActivity(activityFilter);
+            }}
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-white/70 transition hover:text-white"
+            style={{ border: '1px solid #1E1E2E', backgroundColor: '#0F0F1A' }}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh
+          </button>
+        }
+      />
+
+      {/* KPIs */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {loadingOverview && !stats
+          ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
+          : stats?.map((s) => (
+              <KpiCard key={s.key} label={s.label} value={s.value} icon={s.icon} />
+            ))}
+      </div>
+
+      {overviewError ? (
+        <Panel>
+          <div className="flex items-center justify-between text-sm text-rose-300">
+            <span>Overview API error: {overviewError}</span>
+            <button
+              type="button"
+              onClick={() => void loadOverview()}
+              className="rounded-full px-3 py-1 text-xs text-white/80 hover:text-white"
+              style={{ border: '1px solid #402039', backgroundColor: '#1a0d18' }}
+            >
+              Retry
+            </button>
+          </div>
+        </Panel>
+      ) : null}
+
+      {/* DAU trend */}
+      <Panel>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-white/70">
+            Daily active students (last 14 days)
+          </h2>
+          <span className="text-[11px] text-white/40">
+            Grouped from quiz_sessions.completed_at
+          </span>
+        </div>
+        <DauTrendChart data={overview?.dauTrend ?? []} loading={loadingOverview && !overview} />
+      </Panel>
+
+      {/* Activity feed */}
+      <Panel padded={false}>
+        <div
+          className="flex flex-col gap-3 border-b px-5 py-4 md:flex-row md:items-center md:justify-between"
+          style={{ borderColor: '#1E1E2E' }}
+        >
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-white/70">
+              Activity log
+            </h2>
+            <p className="mt-1 text-[12px] text-white/50">
+              Signups, question edits, taxonomy changes, admin actions.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <Filter className="h-3.5 w-3.5 text-white/40" />
+            <button
+              type="button"
+              onClick={() => {
+                setActivityFilter(null);
+                void loadActivity(null);
+              }}
+              className="rounded-full px-2.5 py-1 transition"
+              style={
+                activityFilter === null
+                  ? {
+                      color: '#fff',
+                      backgroundColor: 'rgba(124,58,237,0.2)',
+                      border: '1px solid rgba(159,103,255,0.35)',
+                    }
+                  : { color: 'rgba(255,255,255,0.55)', border: '1px solid #1E1E2E' }
+              }
+            >
+              All
+            </button>
+            {ENTITY_TYPES.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => {
+                  setActivityFilter(t);
+                  void loadActivity(t);
+                }}
+                className="rounded-full px-2.5 py-1 capitalize transition"
+                style={
+                  activityFilter === t
+                    ? {
+                        color: '#fff',
+                        backgroundColor: 'rgba(124,58,237,0.2)',
+                        border: '1px solid rgba(159,103,255,0.35)',
+                      }
+                    : { color: 'rgba(255,255,255,0.55)', border: '1px solid #1E1E2E' }
+                }
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+        {activityLoading ? (
+          <div className="flex items-center justify-center px-5 py-10 text-sm text-white/50">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading activity…
+          </div>
+        ) : activity.length === 0 ? (
+          <EmptyState
+            title="Nothing has happened yet"
+            description="Once questions get published or students sign up, entries will show up here."
+          />
+        ) : (
+          <ul>
+            {activity.map((row) => (
+              <ActivityRow key={String(row.id)} row={row} />
+            ))}
+          </ul>
+        )}
+      </Panel>
+    </div>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: number | string;
+  icon: typeof UserPlus;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="rounded-2xl p-5"
+      style={{ backgroundColor: 'rgba(15,15,26,0.6)', border: '1px solid #1E1E2E' }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] uppercase tracking-[0.22em] text-white/50">{label}</span>
+        <span
+          className="grid h-7 w-7 place-items-center rounded-md"
+          style={{ backgroundColor: 'rgba(124,58,237,0.16)', color: '#C4B5FD' }}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <div className="mt-3 text-2xl font-semibold text-white">{value}</div>
+    </motion.div>
+  );
+}
+
+function KpiSkeleton() {
+  return (
+    <div
+      className="h-24 animate-pulse rounded-2xl"
+      style={{ backgroundColor: 'rgba(15,15,26,0.5)', border: '1px solid #1E1E2E' }}
+    />
+  );
+}
+
+function DauTrendChart({
+  data,
+  loading,
+}: {
+  data: { date: string; activeStudents: number }[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div
+        className="h-40 animate-pulse rounded-lg"
+        style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+      />
+    );
+  }
+  if (data.length === 0) {
+    return (
+      <div className="py-6 text-center text-sm text-white/50">
+        No quiz sessions in the last 14 days yet.
+      </div>
+    );
+  }
+  const max = Math.max(1, ...data.map((d) => d.activeStudents));
+  // Simple inline bar chart — Recharts is already dynamic-imported
+  // on the analytics dashboard; not worth another async component
+  // for a 14-bar sparkline.
+  return (
+    <div className="flex items-end gap-1.5" style={{ height: 140 }}>
+      {data.map((d) => (
+        <div key={d.date} className="flex flex-1 flex-col items-center gap-1">
+          <div
+            className="w-full rounded-t"
+            style={{
+              height: `${(d.activeStudents / max) * 100}%`,
+              minHeight: 4,
+              background: 'linear-gradient(180deg, #A78BFA 0%, #7C3AED 100%)',
+              boxShadow: '0 0 12px rgba(124,58,237,0.35)',
+            }}
+            title={`${d.date}: ${d.activeStudents} students`}
+          />
+          <span className="text-[9px] text-white/40">{d.date.slice(5)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ActivityRow({ row }: { row: ActivityRow }) {
+  const who = row.profiles?.full_name ?? row.profiles?.email ?? 'System';
+  const when = new Date(row.created_at);
+  const ago = formatRelative(when);
+  return (
+    <li
+      className="flex items-start gap-3 px-5 py-3 text-sm"
+      style={{ borderTop: '1px solid rgba(30,30,46,0.6)' }}
+    >
+      <span
+        className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md text-[10px] font-semibold uppercase"
+        style={{
+          backgroundColor: entityTint(row.entity_type),
+          color: '#fff',
+        }}
+      >
+        {(row.entity_type ?? '?')[0]}
+      </span>
+      <div className="flex-1">
+        <div className="text-white/90">{row.summary ?? row.action}</div>
+        <div className="mt-0.5 text-[11px] text-white/40">
+          {who} · {row.action} · {ago}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function entityTint(entity: string | null): string {
+  switch (entity) {
+    case 'question':
+      return 'rgba(124,58,237,0.5)';
+    case 'user':
+      return 'rgba(16,185,129,0.5)';
+    case 'module':
+      return 'rgba(59,130,246,0.5)';
+    case 'subject':
+      return 'rgba(236,72,153,0.5)';
+    case 'chapter':
+      return 'rgba(245,158,11,0.5)';
+    default:
+      return 'rgba(148,163,184,0.5)';
+  }
+}
+
+function formatRelative(then: Date): string {
+  const diffMs = Date.now() - then.getTime();
+  const minutes = Math.round(diffMs / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return then.toLocaleDateString();
+}

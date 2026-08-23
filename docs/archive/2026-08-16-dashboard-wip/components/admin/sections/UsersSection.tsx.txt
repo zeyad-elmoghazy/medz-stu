@@ -1,0 +1,288 @@
+'use client';
+
+/**
+ * User Management (Part 2.4, section 7) — searchable user table
+ * with role filter, suspend/remove, and platform-wide user KPIs.
+ *
+ * Backend:
+ *   GET  /api/admin/users?search=&role=&limit=&offset=
+ *   POST /api/admin/remove-user  { targetUserId }
+ *
+ * "Suspend" is deferred — schema doesn't have a `suspended`
+ * column and the master doc doesn't require it for Phase 1.
+ * "Remove" is the only destructive action wired for now.
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { AlertTriangle, Loader2, Search, Shield, Trash2, X } from 'lucide-react';
+import { EmptyState, Panel, SectionHeader } from '../AdminShell';
+
+type UserRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  username: string | null;
+  role: 'student' | 'admin';
+  total_xp: number | null;
+  created_at: string;
+};
+
+export function UsersSection({ selfId }: { selfId: string | null }) {
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
+  const [role, setRole] = useState<'all' | 'student' | 'admin'>('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<UserRow | null>(null);
+  const [removeBusy, setRemoveBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = new URL('/api/admin/users', window.location.origin);
+      if (search.trim()) url.searchParams.set('search', search.trim());
+      if (role !== 'all') url.searchParams.set('role', role);
+      url.searchParams.set('limit', '100');
+      const res = await fetch(url.toString(), { credentials: 'include', cache: 'no-store' });
+      if (!res.ok) {
+        setError(`Failed (${res.status})`);
+        return;
+      }
+      const body = (await res.json()) as { users: UserRow[]; total: number };
+      setUsers(body.users ?? []);
+      setTotal(body.total ?? 0);
+    } catch {
+      setError('Network error');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, role]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  // Debounce search: don't re-fetch on every keystroke, but the
+  // filter tabs (role) commit immediately since they're chunky.
+  useEffect(() => {
+    const t = window.setTimeout(() => void load(), 250);
+    return () => window.clearTimeout(t);
+  }, [search, load]);
+
+  async function confirmRemove() {
+    if (!removing) return;
+    setRemoveBusy(true);
+    try {
+      const res = await fetch('/api/admin/remove-user', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ targetUserId: removing.id }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(body.error ?? `Failed (${res.status})`);
+        return;
+      }
+      setRemoving(null);
+      void load();
+    } finally {
+      setRemoveBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        eyebrow="Users"
+        title="User management"
+        description="Search, filter, and remove accounts. Suspend flow is deferred — the schema doesn't track a suspended state yet."
+        right={
+          <span className="text-xs text-white/50">
+            {total.toLocaleString()} total
+          </span>
+        }
+      />
+
+      <Panel padded={false}>
+        <div
+          className="flex flex-col gap-3 border-b px-5 py-4 md:flex-row md:items-center md:justify-between"
+          style={{ borderColor: '#1E1E2E' }}
+        >
+          <div
+            className="flex flex-1 items-center gap-2 rounded-md bg-black/30 px-3 py-2"
+            style={{ border: '1px solid #1E1E2E', maxWidth: 360 }}
+          >
+            <Search className="h-4 w-4 text-white/40" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name, email, or username"
+              className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30"
+            />
+          </div>
+          <div className="flex items-center gap-1 rounded-lg p-1" style={{ border: '1px solid #1E1E2E' }}>
+            {(['all', 'student', 'admin'] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className="rounded-md px-3 py-1 text-xs capitalize transition"
+                style={
+                  role === r
+                    ? {
+                        backgroundColor: 'rgba(124,58,237,0.2)',
+                        color: '#fff',
+                        border: '1px solid rgba(159,103,255,0.35)',
+                      }
+                    : { color: 'rgba(255,255,255,0.6)' }
+                }
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {error ? (
+          <div className="px-5 py-4 text-sm text-rose-300">{error}</div>
+        ) : loading ? (
+          <div className="flex items-center justify-center px-5 py-10 text-sm text-white/50">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
+          </div>
+        ) : users.length === 0 ? (
+          <EmptyState title="No users match" description="Try clearing the search or switching the role filter." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead
+                className="text-[10px] uppercase tracking-[0.14em] text-white/50"
+                style={{ borderBottom: '1px solid #1E1E2E' }}
+              >
+                <tr>
+                  <th className="px-5 py-3 font-medium">User</th>
+                  <th className="px-3 py-3 font-medium">Username</th>
+                  <th className="px-3 py-3 font-medium">Role</th>
+                  <th className="px-3 py-3 font-medium">XP</th>
+                  <th className="px-3 py-3 font-medium">Joined</th>
+                  <th className="px-5 py-3 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(30,30,46,0.6)' }}>
+                    <td className="px-5 py-3">
+                      <div className="text-white/90">{u.full_name ?? '(no name)'}</div>
+                      <div className="text-[11px] text-white/40">{u.email ?? '—'}</div>
+                    </td>
+                    <td className="px-3 py-3 text-white/70">
+                      {u.username ? `@${u.username}` : <span className="text-white/30">—</span>}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
+                        style={
+                          u.role === 'admin'
+                            ? {
+                                backgroundColor: 'rgba(124,58,237,0.18)',
+                                color: '#C4B5FD',
+                                border: '1px solid rgba(159,103,255,0.35)',
+                              }
+                            : {
+                                backgroundColor: 'rgba(255,255,255,0.05)',
+                                color: 'rgba(255,255,255,0.6)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                              }
+                        }
+                      >
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 tabular-nums text-white/70">
+                      {(u.total_xp ?? 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3 text-white/50">
+                      {new Date(u.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      {u.id === selfId ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-white/50"
+                          title="You can't remove your own account from here."
+                        >
+                          <Shield className="h-3 w-3" />
+                          you
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setRemoving(u)}
+                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-rose-300 transition hover:text-rose-200"
+                          style={{ border: '1px solid rgba(190,50,80,0.3)' }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Remove
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Panel>
+
+      {removing ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4">
+          <div
+            className="w-full max-w-md rounded-2xl p-6"
+            style={{ backgroundColor: '#0F0F1A', border: '1px solid #1E1E2E' }}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-rose-300">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-base font-semibold">Remove user</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRemoving(null)}
+                className="rounded-full p-1 text-white/60 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm text-white/70">
+              Permanently delete <span className="text-white">{removing.full_name ?? removing.email ?? removing.id}</span>?
+              Cascading FKs also drop their quiz sessions, bookmarks, notes, and streaks. This can&apos;t be undone.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setRemoving(null)}
+                className="rounded-md px-4 py-2 text-xs text-white/70"
+                style={{ border: '1px solid #1E1E2E' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemove}
+                disabled={removeBusy}
+                className="rounded-md px-4 py-2 text-xs text-white disabled:opacity-50"
+                style={{
+                  backgroundColor: '#BE123C',
+                  boxShadow: '0 0 18px rgba(190,18,60,0.4)',
+                }}
+              >
+                {removeBusy ? 'Removing…' : 'Remove permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}

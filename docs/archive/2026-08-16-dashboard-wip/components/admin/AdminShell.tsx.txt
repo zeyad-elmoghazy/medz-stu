@@ -1,0 +1,241 @@
+'use client';
+
+/**
+ * Shell chrome for the 7-section Admin Dashboard (Part 2.4 of the
+ * master doc). Owns the top nav, side nav, and the main slot; the
+ * section switch is a client-side tab state, not a route change —
+ * the dashboard is a single route so switching sections doesn't
+ * re-run the auth gate or refetch the overview.
+ */
+
+import { ReactNode } from 'react';
+import Link from 'next/link';
+import { Activity as ActivityIcon, LogOut, ShieldCheck } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+export type AdminSectionId =
+  | 'overview'
+  | 'taxonomy'
+  | 'library'
+  | 'review'
+  | 'upload'
+  | 'manual'
+  | 'users';
+
+export type AdminSectionMeta = {
+  id: AdminSectionId;
+  label: string;
+  icon: LucideIcon;
+};
+
+export function AdminShell({
+  sections,
+  activeId,
+  onSelect,
+  onLogout,
+  children,
+}: {
+  sections: AdminSectionMeta[];
+  activeId: AdminSectionId;
+  onSelect: (id: AdminSectionId) => void;
+  onLogout: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div style={{ minHeight: '100vh', background: '#08070F', color: '#F8FAFC' }}>
+      <TopNav onLogout={onLogout} />
+      <div className="mx-auto flex w-full max-w-7xl">
+        <SideNav sections={sections} activeId={activeId} onSelect={onSelect} />
+        <main className="flex-1 px-6 py-8 lg:pl-8">{children}</main>
+      </div>
+    </div>
+  );
+}
+
+function TopNav({ onLogout }: { onLogout: () => void }) {
+  return (
+    <header
+      className="sticky top-0 z-30 backdrop-blur-xl"
+      style={{
+        backgroundColor: 'rgba(9, 9, 14, 0.85)',
+        borderBottom: '1px solid #1E1E2E',
+      }}
+    >
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6">
+        <Link href="/admin/dashboard" className="flex items-center gap-2">
+          <span
+            className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-violet-400"
+            style={{ boxShadow: '0 0 18px rgba(124,58,237,0.55)' }}
+          >
+            <ActivityIcon className="h-4 w-4 text-white" />
+          </span>
+          <div className="flex flex-col leading-tight">
+            <span className="text-base font-bold tracking-tight text-white">MedZ</span>
+            <span className="text-[10px] uppercase tracking-[0.22em] text-white/50">Admin</span>
+          </div>
+        </Link>
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs text-emerald-300"
+            style={{
+              backgroundColor: 'rgba(16,185,129,0.12)',
+              border: '1px solid rgba(16,185,129,0.4)',
+            }}
+          >
+            <ShieldCheck className="h-3 w-3" />
+            All systems normal
+          </span>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="inline-flex h-9 items-center gap-2 rounded-full px-3 text-xs text-white/70 transition hover:text-white"
+            style={{ border: '1px solid #1E1E2E', backgroundColor: '#0F0F1A' }}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function SideNav({
+  sections,
+  activeId,
+  onSelect,
+}: {
+  sections: AdminSectionMeta[];
+  activeId: AdminSectionId;
+  onSelect: (id: AdminSectionId) => void;
+}) {
+  return (
+    <aside
+      className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 flex-col px-3 py-6 lg:flex"
+      style={{ borderRight: '1px solid #1E1E2E', backgroundColor: 'rgba(9,9,14,0.6)' }}
+    >
+      <nav className="flex flex-col gap-1">
+        {sections.map((s) => {
+          const Icon = s.icon;
+          const active = s.id === activeId;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onSelect(s.id)}
+              className="group flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition"
+              style={
+                active
+                  ? {
+                      color: '#fff',
+                      backgroundColor: 'rgba(124, 58, 237, 0.18)',
+                      boxShadow: 'inset 0 0 0 1px rgba(159,103,255,0.35)',
+                    }
+                  : { color: 'rgba(255,255,255,0.6)' }
+              }
+            >
+              <span
+                className="grid h-7 w-7 place-items-center rounded-md"
+                style={
+                  active
+                    ? {
+                        backgroundColor: '#7C3AED',
+                        color: '#fff',
+                        boxShadow: '0 0 14px rgba(124,58,237,0.5)',
+                      }
+                    : {
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        color: 'rgba(255,255,255,0.6)',
+                      }
+                }
+              >
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="flex-1">{s.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+      <div className="mt-auto rounded-lg px-3 py-3 text-[11px] leading-relaxed text-white/40" style={{ border: '1px solid #1E1E2E' }}>
+        Admin console · Zoz &amp; Ammar only. Content actions are logged to the Overview activity feed.
+      </div>
+    </aside>
+  );
+}
+
+export function SectionHeader({
+  eyebrow,
+  title,
+  description,
+  right,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  right?: ReactNode;
+}) {
+  return (
+    <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
+        {eyebrow ? (
+          <p className="text-[11px] uppercase tracking-[0.22em] text-violet-300">{eyebrow}</p>
+        ) : null}
+        <h1
+          className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl"
+          style={{ textShadow: '0 0 18px rgba(124,58,237,0.35)' }}
+        >
+          {title}
+        </h1>
+        {description ? (
+          <p className="mt-2 max-w-2xl text-sm text-white/60">{description}</p>
+        ) : null}
+      </div>
+      {right ? <div className="flex flex-shrink-0 items-center gap-2">{right}</div> : null}
+    </div>
+  );
+}
+
+export function Panel({
+  children,
+  className = '',
+  padded = true,
+}: {
+  children: ReactNode;
+  className?: string;
+  padded?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl ${padded ? 'p-5' : ''} ${className}`}
+      style={{
+        backgroundColor: 'rgba(15, 15, 26, 0.6)',
+        border: '1px solid #1E1E2E',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center rounded-2xl px-6 py-14 text-center"
+      style={{ border: '1px dashed #1E1E2E', backgroundColor: 'rgba(15,15,26,0.35)' }}
+    >
+      <h3 className="text-base font-semibold text-white">{title}</h3>
+      {description ? (
+        <p className="mt-2 max-w-md text-sm text-white/60">{description}</p>
+      ) : null}
+      {action ? <div className="mt-4">{action}</div> : null}
+    </div>
+  );
+}

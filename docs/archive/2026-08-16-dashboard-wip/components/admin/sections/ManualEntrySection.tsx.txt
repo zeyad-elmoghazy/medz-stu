@@ -1,0 +1,411 @@
+'use client';
+
+/**
+ * Manual MCQ Entry (Part 2.4, section 6). Direct form entry for
+ * any question not sourced from a scanned file. Backing route
+ * auto-fills reference (book + page) from the chapter's defaults
+ * if the form leaves them blank.
+ *
+ * Backend: POST /api/admin/questions
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, CheckCircle2, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Panel, SectionHeader } from '../AdminShell';
+
+type Module = { code: string; name: string };
+type Subject = { id: string; name: string };
+type Chapter = { id: string; name: string };
+type Choice = { id: string; text: string };
+
+const CHOICE_IDS = ['a', 'b', 'c', 'd', 'e'];
+
+function emptyChoices(count: number): Choice[] {
+  return CHOICE_IDS.slice(0, count).map((id) => ({ id, text: '' }));
+}
+
+export function ManualEntrySection() {
+  const [modules, setModules] = useState<Module[]>([]);
+  const [moduleCode, setModuleCode] = useState('');
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjectId, setSubjectId] = useState('');
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [chapterId, setChapterId] = useState('');
+
+  const [question, setQuestion] = useState('');
+  const [choices, setChoices] = useState<Choice[]>(emptyChoices(4));
+  const [correct, setCorrect] = useState('a');
+  const [explanation, setExplanation] = useState('');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [referencePage, setReferencePage] = useState<number | ''>('');
+  const [publishNow, setPublishNow] = useState(false);
+
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch('/api/admin/modules', { credentials: 'include', cache: 'no-store' });
+      if (res.ok) {
+        const body = (await res.json()) as { modules: Module[] };
+        setModules(body.modules ?? []);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    setSubjectId('');
+    setChapterId('');
+    setSubjects([]);
+    setChapters([]);
+    if (!moduleCode) return;
+    (async () => {
+      const res = await fetch(`/api/admin/modules/${moduleCode}/subjects`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const body = (await res.json()) as { subjects: Subject[] };
+        setSubjects(body.subjects ?? []);
+      }
+    })();
+  }, [moduleCode]);
+
+  useEffect(() => {
+    setChapterId('');
+    setChapters([]);
+    if (!moduleCode || !subjectId) return;
+    (async () => {
+      const url = new URL('/api/admin/chapters', window.location.origin);
+      url.searchParams.set('moduleCode', moduleCode);
+      url.searchParams.set('subjectId', subjectId);
+      const res = await fetch(url.toString(), { credentials: 'include', cache: 'no-store' });
+      if (res.ok) {
+        const body = (await res.json()) as { chapters: Chapter[] };
+        setChapters(body.chapters ?? []);
+      }
+    })();
+  }, [moduleCode, subjectId]);
+
+  const resetContent = useCallback(() => {
+    setQuestion('');
+    setChoices(emptyChoices(4));
+    setCorrect('a');
+    setExplanation('');
+    setReferencePage('');
+    setDifficulty('medium');
+  }, []);
+
+  function updateChoice(i: number, text: string) {
+    setChoices((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], text };
+      return next;
+    });
+  }
+  function addChoice() {
+    if (choices.length >= 5) return;
+    const nextId = CHOICE_IDS[choices.length];
+    setChoices((prev) => [...prev, { id: nextId, text: '' }]);
+  }
+  function removeChoice(i: number) {
+    if (choices.length <= 2) return;
+    const removedId = choices[i].id;
+    setChoices((prev) => prev.filter((_, idx) => idx !== i));
+    if (correct === removedId) setCorrect(choices.find((_, idx) => idx !== i)?.id ?? 'a');
+  }
+
+  async function submit() {
+    setError(null);
+    setSuccess(null);
+    if (!chapterId) {
+      setError('Pick a module, subject, and chapter.');
+      return;
+    }
+    if (question.trim().length < 10) {
+      setError('Question text needs at least 10 characters.');
+      return;
+    }
+    if (choices.some((c) => !c.text.trim())) {
+      setError('Every choice needs text.');
+      return;
+    }
+    if (!choices.some((c) => c.id === correct)) {
+      setError('correctAnswer must match a choice id.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/questions', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          chapterId,
+          question: question.trim(),
+          choices,
+          correctAnswer: correct,
+          explanation: explanation.trim(),
+          difficulty,
+          referencePage: referencePage === '' ? undefined : Number(referencePage),
+          status: publishNow ? 'published' : 'draft',
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.error ?? `Failed (${res.status})`);
+        return;
+      }
+      setSuccess(publishNow ? 'Published — students will see it immediately.' : 'Saved as draft — head to Content Library or Review Queue to publish.');
+      resetContent();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        eyebrow="Manual entry"
+        title="Write a question by hand"
+        description="Direct form entry — bypasses the extraction pipeline. Reference book + page auto-fills from the chapter default if you leave them blank."
+      />
+
+      <Panel>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Select
+            label="Module"
+            value={moduleCode}
+            onChange={setModuleCode}
+            options={[
+              { value: '', label: 'Pick a module' },
+              ...modules.map((m) => ({ value: m.code, label: `M${m.code} · ${m.name}` })),
+            ]}
+          />
+          <Select
+            label="Subject"
+            value={subjectId}
+            onChange={setSubjectId}
+            disabled={!moduleCode}
+            options={[
+              { value: '', label: moduleCode ? 'Pick a subject' : '—' },
+              ...subjects.map((s) => ({ value: s.id, label: s.name })),
+            ]}
+          />
+          <Select
+            label="Chapter"
+            value={chapterId}
+            onChange={setChapterId}
+            disabled={!subjectId}
+            options={[
+              { value: '', label: subjectId ? 'Pick a chapter' : '—' },
+              ...chapters.map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
+        </div>
+
+        <div className="mt-6">
+          <Field label="Question text">
+            <textarea
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              rows={3}
+              className="w-full rounded-md bg-black/30 px-3 py-2 text-sm text-white outline-none"
+              style={{ border: '1px solid #1E1E2E' }}
+              placeholder="Enter the full question, e.g. 'Which of the following is a characteristic of…'"
+            />
+          </Field>
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-white/50">
+              Choices — click the letter to mark the correct answer
+            </div>
+            <button
+              type="button"
+              onClick={addChoice}
+              disabled={choices.length >= 5}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-white/70 disabled:opacity-40"
+              style={{ border: '1px solid #1E1E2E' }}
+            >
+              <Plus className="h-3 w-3" />
+              Add choice
+            </button>
+          </div>
+          <div className="space-y-2">
+            {choices.map((c, i) => (
+              <div key={c.id} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCorrect(c.id)}
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-semibold uppercase"
+                  style={
+                    correct === c.id
+                      ? {
+                          backgroundColor: 'rgba(16,185,129,0.2)',
+                          border: '1px solid rgba(16,185,129,0.4)',
+                          color: '#6EE7B7',
+                        }
+                      : {
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          color: 'rgba(255,255,255,0.6)',
+                        }
+                  }
+                  title={correct === c.id ? 'Correct answer' : 'Mark as correct'}
+                >
+                  {c.id}
+                </button>
+                <input
+                  value={c.text}
+                  onChange={(e) => updateChoice(i, e.target.value)}
+                  placeholder={`Choice ${c.id.toUpperCase()}`}
+                  className="flex-1 rounded-md bg-black/30 px-3 py-2 text-sm text-white outline-none"
+                  style={{ border: '1px solid #1E1E2E' }}
+                />
+                {choices.length > 2 ? (
+                  <button
+                    type="button"
+                    onClick={() => removeChoice(i)}
+                    className="rounded p-1.5 text-rose-300/70 hover:text-rose-300"
+                    title="Remove choice"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <Field label="Explanation (optional)">
+            <textarea
+              value={explanation}
+              onChange={(e) => setExplanation(e.target.value)}
+              rows={3}
+              className="w-full rounded-md bg-black/30 px-3 py-2 text-sm text-white outline-none"
+              style={{ border: '1px solid #1E1E2E' }}
+              placeholder="Why is that answer correct? Explain briefly."
+            />
+          </Field>
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <Field label="Difficulty">
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
+              className="w-full rounded-md bg-black/30 px-3 py-2 text-sm text-white outline-none"
+              style={{ border: '1px solid #1E1E2E' }}
+            >
+              <option value="easy" style={{ color: '#000' }}>Easy</option>
+              <option value="medium" style={{ color: '#000' }}>Medium</option>
+              <option value="hard" style={{ color: '#000' }}>Hard</option>
+            </select>
+          </Field>
+          <Field label="Reference page (overrides chapter default)">
+            <input
+              type="number"
+              min={1}
+              value={referencePage}
+              onChange={(e) => setReferencePage(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full rounded-md bg-black/30 px-3 py-2 text-sm text-white outline-none"
+              style={{ border: '1px solid #1E1E2E' }}
+              placeholder="—"
+            />
+          </Field>
+          <Field label="Publish immediately">
+            <label className="mt-2 inline-flex items-center gap-2 text-sm text-white/70">
+              <input
+                type="checkbox"
+                checked={publishNow}
+                onChange={(e) => setPublishNow(e.target.checked)}
+              />
+              Skip draft — go live now
+            </label>
+          </Field>
+        </div>
+
+        {error ? (
+          <div
+            className="mt-4 flex items-start gap-2 rounded-md px-3 py-2 text-xs text-rose-300"
+            style={{ backgroundColor: 'rgba(190,18,60,0.1)', border: '1px solid rgba(190,18,60,0.3)' }}
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        ) : null}
+        {success ? (
+          <div
+            className="mt-4 flex items-start gap-2 rounded-md px-3 py-2 text-xs text-emerald-300"
+            style={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}
+          >
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{success}</span>
+          </div>
+        ) : null}
+
+        <div className="mt-5 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={submit}
+            disabled={saving || !chapterId}
+            className="inline-flex items-center gap-2 rounded-md px-5 py-2 text-sm text-white disabled:opacity-50"
+            style={{
+              backgroundColor: '#7C3AED',
+              boxShadow: '0 0 18px rgba(124,58,237,0.35)',
+            }}
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {saving ? 'Saving…' : publishNow ? 'Publish' : 'Save as draft'}
+          </button>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  disabled?: boolean;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-1 text-[11px] uppercase tracking-[0.14em] text-white/50">{label}</div>
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md bg-black/30 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+        style={{ border: '1px solid #1E1E2E' }}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} style={{ color: '#000' }}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <div className="mb-1 text-[11px] uppercase tracking-[0.14em] text-white/50">{label}</div>
+      {children}
+    </label>
+  );
+}

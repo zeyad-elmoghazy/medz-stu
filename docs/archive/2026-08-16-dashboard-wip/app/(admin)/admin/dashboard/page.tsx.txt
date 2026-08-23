@@ -1,0 +1,188 @@
+'use client';
+
+/**
+ * Admin Dashboard (Part 2.4 of the master doc).
+ *
+ * The 7 sections are:
+ *   1. Overview       — platform-wide KPIs, DAU trend, activity log
+ *   2. Taxonomy       — Modules · Subjects · Chapters CRUD
+ *   3. Content Library — every question, any status, directly editable
+ *   4. Review Queue   — extraction drafts awaiting first publish
+ *   5. Content Upload — file upload → extraction → Review Queue
+ *   6. Manual Entry   — direct MCQ form
+ *   7. User Management — search / filter / remove users
+ *
+ * This file is intentionally thin: it handles auth-gating, section
+ * routing, and logout. Every section is its own component under
+ * components/admin/sections/*.
+ */
+
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  BookOpen,
+  Edit3,
+  LayoutDashboard,
+  Layers,
+  ListChecks,
+  Loader2,
+  UploadCloud,
+  Users,
+} from 'lucide-react';
+import {
+  clearDemoProfile,
+  createBrowserClient,
+  isDemoMode,
+} from '@/lib/supabase';
+import {
+  AdminShell,
+  type AdminSectionId,
+  type AdminSectionMeta,
+} from '@/components/admin/AdminShell';
+import { OverviewSection } from '@/components/admin/sections/OverviewSection';
+import { TaxonomySection } from '@/components/admin/sections/TaxonomySection';
+import { LibrarySection } from '@/components/admin/sections/LibrarySection';
+import { UploadSection } from '@/components/admin/sections/UploadSection';
+import { ManualEntrySection } from '@/components/admin/sections/ManualEntrySection';
+import { UsersSection } from '@/components/admin/sections/UsersSection';
+
+const SECTIONS: AdminSectionMeta[] = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'taxonomy', label: 'Taxonomy', icon: Layers },
+  { id: 'library', label: 'Content library', icon: BookOpen },
+  { id: 'review', label: 'Review queue', icon: ListChecks },
+  { id: 'upload', label: 'Content upload', icon: UploadCloud },
+  { id: 'manual', label: 'Manual entry', icon: Edit3 },
+  { id: 'users', label: 'User management', icon: Users },
+];
+
+const SECTION_IDS = new Set<AdminSectionId>(SECTIONS.map((s) => s.id));
+
+function isSectionId(v: string): v is AdminSectionId {
+  return SECTION_IDS.has(v as AdminSectionId);
+}
+
+export default function AdminDashboardPage() {
+  const router = useRouter();
+  const supabase = createBrowserClient();
+
+  const [checking, setChecking] = useState(true);
+  const [selfId, setSelfId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<AdminSectionId>('overview');
+
+  // Auth gate. Middleware.ts also guards /admin/*, but repeating it
+  // client-side lets us render a clean loader (not a flash of the
+  // dashboard) and covers demo mode where middleware passes through.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (isDemoMode()) {
+        // Demo mode: no real auth, no per-section API calls will
+        // succeed. Section components will show error/empty states,
+        // which is the correct behavior — this dashboard is not a
+        // fixture surface anymore.
+        if (!cancelled) {
+          setSelfId('demo');
+          setChecking(false);
+        }
+        return;
+      }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.replace('/login');
+          return;
+        }
+        if (!cancelled) {
+          setSelfId(user.id);
+          setChecking(false);
+        }
+      } catch {
+        if (!cancelled) router.replace('/login');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, supabase]);
+
+  // Sync active section with `?section=` so a page reload keeps you
+  // on the same tab and links can deep-link into a section.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const s = params.get('section');
+    if (s && isSectionId(s)) setActiveId(s);
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('section', activeId);
+    window.history.replaceState({}, '', url.toString());
+  }, [activeId]);
+
+  const activeSection = useMemo(() => {
+    switch (activeId) {
+      case 'overview':
+        return <OverviewSection />;
+      case 'taxonomy':
+        return <TaxonomySection />;
+      case 'library':
+        return (
+          <LibrarySection
+            initialStatus="all"
+            title="Every question, one place"
+            description="Filter by taxonomy, search text, and edit any question regardless of status — including published ones. Bulk publish, archive, or re-tag."
+          />
+        );
+      case 'review':
+        return (
+          <LibrarySection
+            initialStatus="draft,under_review"
+            title="Approve extracted drafts"
+            description="AI-extracted questions land here as under_review. Correct anything wrong, tag to the right chapter, then publish."
+          />
+        );
+      case 'upload':
+        return <UploadSection />;
+      case 'manual':
+        return <ManualEntrySection />;
+      case 'users':
+        return <UsersSection selfId={selfId} />;
+    }
+  }, [activeId, selfId]);
+
+  async function handleLogout() {
+    try {
+      if (isDemoMode()) {
+        clearDemoProfile();
+      } else {
+        await supabase.auth.signOut();
+      }
+    } finally {
+      router.replace('/login');
+    }
+  }
+
+  if (checking) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center text-white/60"
+        style={{ backgroundColor: '#08070F' }}
+      >
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <span className="text-sm">Loading admin dashboard…</span>
+      </div>
+    );
+  }
+
+  return (
+    <AdminShell
+      sections={SECTIONS}
+      activeId={activeId}
+      onSelect={setActiveId}
+      onLogout={handleLogout}
+    >
+      {activeSection}
+    </AdminShell>
+  );
+}

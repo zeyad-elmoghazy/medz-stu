@@ -1,0 +1,353 @@
+'use client';
+
+/**
+ * Content Upload (Part 2.4, section 5). Uploads a reviewer-
+ * approved source PDF, kicks off the extraction pipeline, and
+ * lands the extracted rows in the Review Queue as under_review.
+ *
+ * Extraction pipeline itself is the pdf-parse + Tesseract fallback
+ * for now — the VLM replacement (Part 5.5) is a separate task; this
+ * UI stays the same when the backend swaps.
+ *
+ * Backend: POST /api/admin/upload  (multipart)
+ */
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AlertCircle, CheckCircle2, FileText, Loader2, UploadCloud } from 'lucide-react';
+import { Panel, SectionHeader } from '../AdminShell';
+
+type Module = { code: string; name: string };
+type Subject = { id: string; name: string };
+type Chapter = { id: string; name: string };
+
+type UploadResult = {
+  jobId: string;
+  extracted: number;
+  insertedIds?: number[];
+};
+
+export function UploadSection() {
+  const [modules, setModules] = useState<Module[]>([]);
+  const [moduleCode, setModuleCode] = useState('');
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjectId, setSubjectId] = useState('');
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [chapterId, setChapterId] = useState('');
+
+  const [questionsFile, setQuestionsFile] = useState<File | null>(null);
+  const [notesFile, setNotesFile] = useState<File | null>(null);
+
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState<UploadResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const questionsInputRef = useRef<HTMLInputElement>(null);
+  const notesInputRef = useRef<HTMLInputElement>(null);
+
+  const loadModules = useCallback(async () => {
+    const res = await fetch('/api/admin/modules', { credentials: 'include', cache: 'no-store' });
+    if (res.ok) {
+      const body = (await res.json()) as { modules: Module[] };
+      setModules(body.modules ?? []);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadModules();
+  }, [loadModules]);
+
+  useEffect(() => {
+    setSubjectId('');
+    setChapterId('');
+    setSubjects([]);
+    setChapters([]);
+    if (!moduleCode) return;
+    (async () => {
+      const res = await fetch(`/api/admin/modules/${moduleCode}/subjects`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const body = (await res.json()) as { subjects: Subject[] };
+        setSubjects(body.subjects ?? []);
+      }
+    })();
+  }, [moduleCode]);
+
+  useEffect(() => {
+    setChapterId('');
+    setChapters([]);
+    if (!moduleCode || !subjectId) return;
+    (async () => {
+      const url = new URL('/api/admin/chapters', window.location.origin);
+      url.searchParams.set('moduleCode', moduleCode);
+      url.searchParams.set('subjectId', subjectId);
+      const res = await fetch(url.toString(), { credentials: 'include', cache: 'no-store' });
+      if (res.ok) {
+        const body = (await res.json()) as { chapters: Chapter[] };
+        setChapters(body.chapters ?? []);
+      }
+    })();
+  }, [moduleCode, subjectId]);
+
+  async function upload() {
+    setError(null);
+    setResult(null);
+    if (!moduleCode || !chapterId || !questionsFile) {
+      setError('Pick a module, chapter, and questions PDF first.');
+      return;
+    }
+    if (questionsFile.size > 10 * 1024 * 1024) {
+      setError('Questions PDF must be ≤ 10 MB.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.set('moduleCode', moduleCode);
+      form.set('chapterId', chapterId);
+      form.set('questions', questionsFile);
+      if (notesFile) form.set('notes', notesFile);
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: form,
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.error ?? `Failed (${res.status})`);
+        return;
+      }
+      setResult(body as UploadResult);
+      // Reset the file inputs so the same file can be selected again
+      // for a follow-up upload without a page refresh.
+      setQuestionsFile(null);
+      setNotesFile(null);
+      if (questionsInputRef.current) questionsInputRef.current.value = '';
+      if (notesInputRef.current) notesInputRef.current.value = '';
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        eyebrow="Content upload"
+        title="Extract MCQs from a source PDF"
+        description="Upload a reviewer-approved MCQ book or file. The extraction pipeline lands drafts in the Review Queue as under_review — never published directly."
+      />
+
+      <Panel>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Select
+            label="Module"
+            value={moduleCode}
+            onChange={setModuleCode}
+            options={[
+              { value: '', label: 'Pick a module' },
+              ...modules.map((m) => ({ value: m.code, label: `M${m.code} · ${m.name}` })),
+            ]}
+          />
+          <Select
+            label="Subject"
+            value={subjectId}
+            onChange={setSubjectId}
+            disabled={!moduleCode}
+            options={[
+              { value: '', label: moduleCode ? 'Pick a subject' : '—' },
+              ...subjects.map((s) => ({ value: s.id, label: s.name })),
+            ]}
+          />
+          <Select
+            label="Chapter"
+            value={chapterId}
+            onChange={setChapterId}
+            disabled={!subjectId}
+            options={[
+              { value: '', label: subjectId ? 'Pick a chapter' : '—' },
+              ...chapters.map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
+        </div>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <FileDrop
+            label="Questions PDF"
+            required
+            file={questionsFile}
+            inputRef={questionsInputRef}
+            onFile={setQuestionsFile}
+            hint="MCQ source, ≤ 10 MB."
+          />
+          <FileDrop
+            label="Lecture notes PDF"
+            file={notesFile}
+            inputRef={notesInputRef}
+            onFile={setNotesFile}
+            hint="Optional — used for reference-page lookup, ≤ 10 MB."
+          />
+        </div>
+
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <div className="text-xs text-white/50">
+            Extraction runs synchronously on this request. Large files take up to a minute.
+          </div>
+          <button
+            type="button"
+            onClick={upload}
+            disabled={uploading || !questionsFile || !chapterId}
+            className="inline-flex items-center gap-2 rounded-md px-5 py-2 text-sm text-white disabled:opacity-50"
+            style={{
+              backgroundColor: '#7C3AED',
+              boxShadow: '0 0 18px rgba(124,58,237,0.35)',
+            }}
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+            {uploading ? 'Extracting…' : 'Upload & extract'}
+          </button>
+        </div>
+
+        {error ? (
+          <div
+            className="mt-4 flex items-start gap-2 rounded-md px-3 py-2 text-xs text-rose-300"
+            style={{ backgroundColor: 'rgba(190,18,60,0.1)', border: '1px solid rgba(190,18,60,0.3)' }}
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        ) : null}
+
+        {result ? (
+          <div
+            className="mt-4 flex items-start gap-2 rounded-md px-3 py-3 text-sm text-emerald-300"
+            style={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}
+          >
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <div>
+                Extracted <strong>{result.extracted}</strong>{' '}
+                question(s). They&apos;re in the Review Queue as <em>under_review</em>.
+              </div>
+              <div className="mt-1 text-[11px] text-emerald-200/70">Job {result.jobId.slice(0, 8)}</div>
+            </div>
+          </div>
+        ) : null}
+      </Panel>
+    </div>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  disabled?: boolean;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-1 text-[11px] uppercase tracking-[0.14em] text-white/50">{label}</div>
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md bg-black/30 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+        style={{ border: '1px solid #1E1E2E' }}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} style={{ color: '#000' }}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function FileDrop({
+  label,
+  file,
+  onFile,
+  hint,
+  required,
+  inputRef,
+}: {
+  label: string;
+  file: File | null;
+  onFile: (f: File | null) => void;
+  hint?: string;
+  required?: boolean;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  return (
+    <label
+      className="flex cursor-pointer flex-col gap-2 rounded-lg px-4 py-4 transition"
+      style={{
+        border: '1px dashed #1E1E2E',
+        backgroundColor: file ? 'rgba(124,58,237,0.06)' : 'rgba(255,255,255,0.02)',
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] uppercase tracking-[0.14em] text-white/50">
+          {label} {required ? <span className="text-rose-300">*</span> : null}
+        </span>
+        {file ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onFile(null);
+              if (inputRef.current) inputRef.current.value = '';
+            }}
+            className="text-[11px] text-white/50 hover:text-white"
+          >
+            Clear
+          </button>
+        ) : null}
+      </div>
+      <div className="flex items-center gap-3">
+        <span
+          className="grid h-9 w-9 place-items-center rounded-md"
+          style={{
+            backgroundColor: file ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.06)',
+            color: file ? '#C4B5FD' : 'rgba(255,255,255,0.6)',
+          }}
+        >
+          <FileText className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          {file ? (
+            <>
+              <div className="truncate text-sm text-white/90">{file.name}</div>
+              <div className="text-[11px] text-white/40">{(file.size / 1024).toFixed(0)} KB</div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm text-white/70">Click to choose PDF</div>
+              {hint ? <div className="text-[11px] text-white/40">{hint}</div> : null}
+            </>
+          )}
+        </div>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0] ?? null;
+          onFile(f);
+        }}
+      />
+    </label>
+  );
+}
