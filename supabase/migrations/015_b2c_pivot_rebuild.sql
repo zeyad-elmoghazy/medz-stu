@@ -37,9 +37,11 @@ CREATE TABLE IF NOT EXISTS subjects (
 
 ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "subjects_public_read" ON subjects;
 CREATE POLICY "subjects_public_read" ON subjects
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "subjects_admin_write" ON subjects;
 CREATE POLICY "subjects_admin_write" ON subjects
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
@@ -67,9 +69,11 @@ CREATE TABLE IF NOT EXISTS module_subjects (
 
 ALTER TABLE module_subjects ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "module_subjects_public_read" ON module_subjects;
 CREATE POLICY "module_subjects_public_read" ON module_subjects
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "module_subjects_admin_write" ON module_subjects;
 CREATE POLICY "module_subjects_admin_write" ON module_subjects
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
@@ -127,8 +131,13 @@ WHERE subject_id IS NULL;
 ALTER TABLE chapters ALTER COLUMN subject_id SET NOT NULL;
 
 ALTER TABLE chapters DROP CONSTRAINT IF EXISTS chapters_module_code_slug_key;
-ALTER TABLE chapters ADD CONSTRAINT chapters_module_subject_slug_key
-  UNIQUE (module_code, subject_id, slug);
+
+DO $$
+BEGIN
+  ALTER TABLE chapters ADD CONSTRAINT chapters_module_subject_slug_key
+    UNIQUE (module_code, subject_id, slug);
+EXCEPTION WHEN duplicate_table OR duplicate_object THEN NULL;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_chapters_module_subject
   ON chapters(module_code, subject_id);
@@ -136,6 +145,7 @@ CREATE INDEX IF NOT EXISTS idx_chapters_module_subject
 -- Rewrite chapters RLS: was professor-owned via modules.professor_id,
 -- now Admin-only.
 DROP POLICY IF EXISTS "chapters_professor_write" ON chapters;
+DROP POLICY IF EXISTS "chapters_admin_write" ON chapters;
 CREATE POLICY "chapters_admin_write" ON chapters
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
@@ -236,12 +246,14 @@ END $$;
 --    so API routes referencing them don't break mid-migration.
 -- =============================================================
 DROP POLICY IF EXISTS "modules_professor_write" ON modules;
+DROP POLICY IF EXISTS "modules_admin_write" ON modules;
 CREATE POLICY "modules_admin_write" ON modules
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
   );
 
 DROP POLICY IF EXISTS "questions_professor_write" ON questions;
+DROP POLICY IF EXISTS "questions_admin_write" ON questions;
 CREATE POLICY "questions_admin_write" ON questions
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
@@ -295,12 +307,15 @@ CREATE TABLE IF NOT EXISTS friends (
 
 ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "friends_read_own" ON friends;
 CREATE POLICY "friends_read_own" ON friends
   FOR SELECT USING (auth.uid() IN (requester_id, addressee_id));
 
+DROP POLICY IF EXISTS "friends_insert_own" ON friends;
 CREATE POLICY "friends_insert_own" ON friends
   FOR INSERT WITH CHECK (requester_id = auth.uid());
 
+DROP POLICY IF EXISTS "friends_update_addressee" ON friends;
 CREATE POLICY "friends_update_addressee" ON friends
   FOR UPDATE USING (addressee_id = auth.uid());
 
@@ -313,6 +328,7 @@ CREATE TABLE IF NOT EXISTS friend_streaks (
 
 ALTER TABLE friend_streaks ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "friend_streaks_read_own" ON friend_streaks;
 CREATE POLICY "friend_streaks_read_own" ON friend_streaks
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM friends f WHERE f.id = friend_pair_id
@@ -332,6 +348,7 @@ CREATE TABLE IF NOT EXISTS streak_commitments (
 
 ALTER TABLE streak_commitments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "streak_commitments_read_own" ON streak_commitments;
 CREATE POLICY "streak_commitments_read_own" ON streak_commitments
   FOR SELECT USING (
     student_id = auth.uid()
@@ -350,6 +367,7 @@ CREATE TABLE IF NOT EXISTS badges (
 
 ALTER TABLE badges ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "badges_public_read" ON badges;
 CREATE POLICY "badges_public_read" ON badges
   FOR SELECT USING (true);  -- visible on profile/leaderboard to other students
 
@@ -365,9 +383,11 @@ CREATE TABLE IF NOT EXISTS reference_books (
 
 ALTER TABLE reference_books ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "reference_books_public_read" ON reference_books;
 CREATE POLICY "reference_books_public_read" ON reference_books
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "reference_books_admin_write" ON reference_books;
 CREATE POLICY "reference_books_admin_write" ON reference_books
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
@@ -383,9 +403,11 @@ CREATE TABLE IF NOT EXISTS reference_pages (
 
 ALTER TABLE reference_pages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "reference_pages_public_read" ON reference_pages;
 CREATE POLICY "reference_pages_public_read" ON reference_pages
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "reference_pages_admin_write" ON reference_pages;
 CREATE POLICY "reference_pages_admin_write" ON reference_pages
   FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')

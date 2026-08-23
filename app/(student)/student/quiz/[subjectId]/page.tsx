@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Bookmark,
   BookmarkCheck,
+  BookOpen,
   Bot,
   Brain,
   Check,
@@ -28,7 +29,6 @@ import {
   Loader2,
   LogOut,
   Maximize2,
-  PenLine,
   RotateCcw,
   ShieldAlert,
   Sparkles,
@@ -1425,20 +1425,20 @@ function ReferenceCard({
             color: '#E6D9A8',
           }}
         >
-          <PenLine className="h-4 w-4" />
+          <BookOpen className="h-4 w-4" />
         </span>
         <div className="flex flex-col leading-tight">
           <span
             className="text-[10px] uppercase tracking-[0.22em]"
             style={{ color: 'rgba(230, 217, 168, 0.7)' }}
           >
-            Notebook
+            Reference
           </span>
           <span
             className="text-sm font-semibold"
             style={{ color: '#E6D9A8' }}
           >
-            From the MedZ Lecture Notes
+            From the Module Reference Book
           </span>
         </div>
       </div>
@@ -1457,7 +1457,7 @@ function ReferenceCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
-            alt="Source page from lecture notes"
+            alt="Source page from the module reference book"
             style={{
               display: 'block',
               width: '100%',
@@ -1480,7 +1480,7 @@ function ReferenceCard({
         className="mt-6 text-right text-xs italic"
         style={{ color: 'rgba(230, 217, 168, 0.65)' }}
       >
-        — MedZ Notes, Faculty of Medicine
+        — Module Reference Book
       </p>
     </div>
   );

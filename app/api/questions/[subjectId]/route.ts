@@ -74,7 +74,7 @@ type QuestionRow = {
   choice_rationales: Record<string, string> | null;
   reference: string;
   topic: string;
-  notes_storage_prefix: string | null;
+  chapter_id: string | null;
   reference_page: number | null;
 };
 
@@ -104,18 +104,21 @@ async function fetchQuestionsFromDB(subjectId: string): Promise<HistologyQuestio
   const { data, error } = await client
     .from('questions')
     .select(
-      'subject_bundle_id, question, choices, correct_answer, explanation, choice_rationales, reference, topic, notes_storage_prefix, reference_page'
+      'subject_bundle_id, question, choices, correct_answer, explanation, choice_rationales, reference, topic, chapter_id, reference_page'
     )
     .eq('subject_id', subjectId)
     .order('subject_bundle_id', { ascending: true });
 
   if (error) throw new Error(error.message);
 
-  // Separate service-role client, scoped only to signing notes-page
-  // image URLs — never used for the questions query above, which
-  // stays on the anon/cookie-scoped client so RLS keeps enforcing
-  // questions_read_published for this request.
-  const { getSignedNotesPageUrl } = await import('@/lib/ocr/notes-upload');
+  // Separate service-role client, scoped only to resolving/signing
+  // the book-page reference image — never used for the questions
+  // query above, which stays on the anon/cookie-scoped client so RLS
+  // keeps enforcing questions_read_published for this request.
+  //
+  // Book references replace notes references — this is the only
+  // reference path now, no notes_storage_prefix fallback.
+  const { getSignedBookPageUrl } = await import('@/lib/book-reference');
 
   return Promise.all(
     (data ?? []).map(
@@ -128,10 +131,7 @@ async function fetchQuestionsFromDB(subjectId: string): Promise<HistologyQuestio
         choiceRationales: r.choice_rationales ?? undefined,
         reference: r.reference,
         topic: r.topic,
-        referenceImageUrl:
-          r.notes_storage_prefix && r.reference_page
-            ? await getSignedNotesPageUrl(r.notes_storage_prefix, r.reference_page)
-            : null,
+        referenceImageUrl: await getSignedBookPageUrl(r.chapter_id, r.reference_page),
       })
     )
   );

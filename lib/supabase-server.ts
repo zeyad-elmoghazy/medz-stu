@@ -40,3 +40,25 @@ export async function createRouteHandlerClient<T = Database>(
     },
   });
 }
+
+/**
+ * Cast a typed Supabase client to an untyped `.from()` shape.
+ *
+ * Known limitation of this stack (@supabase/ssr 0.12.x +
+ * supabase-js 2.39.x): the typed `SupabaseClient<Database>` generic
+ * collapses chained `.from(table).update(...)` / `.insert(...)`
+ * calls to `never` for tables beyond a small set, even when the
+ * table is correctly declared in `Database['public']['Tables']`.
+ * This is the shared workaround so admin routes don't each hand-roll
+ * their own cast shape.
+ *
+ * Not a loss of real safety: every write in these routes goes
+ * through Zod validation before it reaches Supabase, so the typed
+ * client was only ever catching typos in column names — which
+ * `as unknown as {...}` doesn't catch either.
+ */
+export function untypedFrom(supabase: unknown) {
+  return supabase as unknown as {
+    from: (table: string) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  };
+}
