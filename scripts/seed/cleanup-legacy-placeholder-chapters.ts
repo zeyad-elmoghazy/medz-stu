@@ -49,6 +49,17 @@ import { createClient } from '@supabase/supabase-js';
 
 const GENERIC_PLACEHOLDER = /^Chapter \d+$/;
 
+// Derived from a manual diff against MedZ-Stu's specific pre-existing
+// data on 2026-08-24 (topic-header rows under 205/Anatomy, chapters
+// mislabeled to the wrong subject under 206, chapters reworded
+// differently than the seed JSON under 207/Histology) — not a
+// general-purpose duplicate/mislabel detector. There is no rule here
+// that would rediscover this list on a different database; it is a
+// record of what was specifically wrong in one environment on one
+// date. Before ever running with --execute anywhere other than
+// MedZ-Stu, the dry-run output MUST be read and confirmed against
+// that target database's actual current content — do not assume
+// these entries are still relevant, or relevant at all, elsewhere.
 const KNOWN_MISLABELED: { module_code: string; subject_name: string; slugs: string[] }[] = [
   { module_code: '205', subject_name: 'Anatomy', slugs: ['neuroanatomy', 'head', 'neck'] },
   {
