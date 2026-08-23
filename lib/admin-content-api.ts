@@ -78,6 +78,20 @@ export type AdminOverview = {
     created_at: string;
     profiles: { full_name: string | null; email: string | null } | null;
   }[];
+  authorActivity: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    joined_at: string;
+    stats: {
+      draft: number;
+      under_review: number;
+      published: number;
+      archived: number;
+      flagged: number;
+      last_activity: string | null;
+    };
+  }[];
 };
 
 async function json<T>(res: Response): Promise<T> {
