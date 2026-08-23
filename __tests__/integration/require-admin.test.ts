@@ -10,7 +10,6 @@ jest.mock('@/lib/supabase-server', () => {
 });
 
 import { NextRequest } from 'next/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@/lib/supabase-server';
 import { GET as subjectsGet, POST as subjectsPost } from '@/app/api/admin/content/subjects/route';
 import {
@@ -64,21 +63,21 @@ describeIfSupabase('requireAdmin auth gating', () => {
   });
 
   test('GET rejects an unauthenticated request with 401', async () => {
-    mockCreateRouteHandlerClient.mockResolvedValueOnce(getAnonClient() as SupabaseClient<any>);
+    mockCreateRouteHandlerClient.mockResolvedValueOnce(getAnonClient() as any);
     const res = await subjectsGet();
     expect(res.status).toBe(401);
   });
 
   test('GET rejects a non-admin (student) request with 403', async () => {
     const client = await signInTestUser(studentUser.email, studentUser.password);
-    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as SupabaseClient<any>);
+    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as any);
     const res = await subjectsGet();
     expect(res.status).toBe(403);
   });
 
   test('GET allows an admin request with 200', async () => {
     const client = await signInTestUser(adminUser.email, adminUser.password);
-    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as SupabaseClient<any>);
+    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as any);
     const res = await subjectsGet();
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -94,21 +93,21 @@ describeIfSupabase('requireAdmin auth gating', () => {
   }
 
   test('POST (write route) rejects an unauthenticated request with 401', async () => {
-    mockCreateRouteHandlerClient.mockResolvedValueOnce(getAnonClient() as SupabaseClient<any>);
+    mockCreateRouteHandlerClient.mockResolvedValueOnce(getAnonClient() as any);
     const res = await subjectsPost(postRequest({ name: uniqueSlug('should-not-be-created') }));
     expect(res.status).toBe(401);
   });
 
   test('POST (write route) rejects a non-admin (student) request with 403', async () => {
     const client = await signInTestUser(studentUser.email, studentUser.password);
-    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as SupabaseClient<any>);
+    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as any);
     const res = await subjectsPost(postRequest({ name: uniqueSlug('should-not-be-created') }));
     expect(res.status).toBe(403);
   });
 
   test('POST (write route) allows an admin request and creates the row', async () => {
     const client = await signInTestUser(adminUser.email, adminUser.password);
-    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as SupabaseClient<any>);
+    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as any);
     const name = uniqueSlug('gated-write');
     const res = await subjectsPost(postRequest({ name }));
     expect(res.status).toBe(201);

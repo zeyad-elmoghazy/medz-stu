@@ -7,7 +7,6 @@ jest.mock('@/lib/supabase-server', () => {
 });
 
 import { NextRequest } from 'next/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@/lib/supabase-server';
 import { POST as importPost } from '@/app/api/admin/questions/import/route';
 import {
@@ -118,14 +117,14 @@ describeIfSupabase('import route upsert idempotency', () => {
     const client = await signInTestUser(adminUser.email, adminUser.password);
     const prefix = uniqueSlug('VIS').toUpperCase();
 
-    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as SupabaseClient<any>);
+    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as any);
     const firstRes = await importPost(importRequest(prefix, 'v1'));
     expect(firstRes.status).toBe(201);
     const firstBody = await firstRes.json();
     expect(firstBody.imported).toBe(2);
     const firstIds = [...firstBody.questionIds].sort();
 
-    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as SupabaseClient<any>);
+    mockCreateRouteHandlerClient.mockResolvedValueOnce(client as any);
     const secondRes = await importPost(importRequest(prefix, 'v2'));
     expect(secondRes.status).toBe(201);
     const secondBody = await secondRes.json();
