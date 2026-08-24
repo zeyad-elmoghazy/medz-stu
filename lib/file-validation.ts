@@ -2,8 +2,11 @@
 // attacker-controlled; the magic-byte check is what actually stops
 // a `.pdf.exe` from being renamed to `.pdf` and slipping past.
 //
-// Used from the professor upload routes (PDF ingest, Excel imports)
-// before the file bytes are ever handed to pdf-parse / xlsx / OCR.
+// No production caller as of the professor-surface removal (its
+// only consumer, api/professor/upload-extract, is gone) — kept for
+// __tests__/security/audit.test.ts's coverage and because
+// api/admin/content/upload/route.ts, its likely eventual caller,
+// only checks file size today, not magic bytes/MIME.
 
 export type UploadKind = 'pdf' | 'excel' | 'image';
 

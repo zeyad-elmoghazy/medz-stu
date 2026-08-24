@@ -21,7 +21,7 @@ type NavLink = { label: string; href?: string; active?: boolean; toast?: string 
 
 const DEFAULT_LINKS: NavLink[] = [
   { label: 'Home',         href: '/student/dashboard' },
-  { label: 'Subjects',     href: '/student/subjects' },
+  { label: 'Catalogue',    href: '/student/catalogue' },
   { label: 'Custom Exam',  href: '/student/exam' },
   { label: 'Flashcards',   toast: 'Coming soon.' },
   { label: 'AI Tutor',     toast: 'Coming soon.' },

@@ -13,9 +13,8 @@ export const dynamic = 'force-dynamic';
  * Every module, grouped by year, with the Year-level aggregate stats
  * (modules / distinct subjects / chapters) the Catalogue's Years
  * screen needs. Auth: any signed-in user — same "if (!user) only,
- * no role restriction" pattern as /api/professor/modules and
- * /api/student/stats. This is read-only curriculum structure, not
- * a student's own data.
+ * no role restriction" pattern as /api/student/stats. This is
+ * read-only curriculum structure, not a student's own data.
  *
  * Aggregation, verified against MedZ-Stu before writing this route:
  *   modules  per year = count of modules where year_num matches

@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
  * so the guarantee isn't resting on a single, easy-to-miss layer.
  *
  * Auth: any signed-in user, same if(!user)-only pattern as
- * /api/professor/modules and /api/student/stats — no role check.
+ * /api/student/stats — no role check.
  */
 export async function GET(
   _request: NextRequest,

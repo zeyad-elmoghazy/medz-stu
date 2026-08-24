@@ -85,8 +85,8 @@ export function notesPageImageUrl(
 // notes-pages is now a private bucket (018_notes_pages_private.sql) —
 // this is the replacement for notesPageImageUrl above. Same
 // service-role client pattern as serviceRoleClient() in
-// app/api/professor/students/route.ts: the service role key bypasses
-// RLS entirely, so no client-facing SELECT policy is needed on this
+// lib/book-reference.ts: the service role key bypasses RLS
+// entirely, so no client-facing SELECT policy is needed on this
 // bucket. 15 min TTL — long enough to view the Reference tab, short
 // enough that a leaked/logged URL doesn't stay valid indefinitely.
 function serviceRoleClient() {

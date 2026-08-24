@@ -215,7 +215,7 @@ function StudentDashboardInner() {
 
 const NAV_LINKS: { label: string; href?: string; active?: boolean; toast?: string }[] = [
   { label: 'Home',           active: true },
-  { label: 'Subjects',       href: '/student/subjects' },
+  { label: 'Catalogue',      href: '/student/catalogue' },
   { label: 'Custom Exam',    href: '/student/exam' },
   { label: 'Flashcards',     toast: 'Coming soon.' },
   { label: 'AI Tutor',       toast: 'Coming soon.' },

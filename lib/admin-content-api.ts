@@ -1,8 +1,6 @@
 /**
  * Fetchers for the /api/admin/content/* surface (the port from
- * b2c-pivot-rebuild) plus the standalone JSON import route. Separate
- * from lib/content-api.ts, which still points at the old
- * /api/professor/* routes used by the professor dashboard.
+ * b2c-pivot-rebuild) plus the standalone JSON import route.
  */
 
 export type AdminModule = {

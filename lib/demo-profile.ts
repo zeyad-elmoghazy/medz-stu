@@ -4,11 +4,10 @@
  * @supabase/supabase-js away when it doesn't need real auth.
  */
 
-export type UserRole = 'student' | 'professor' | 'admin';
+export type UserRole = 'student' | 'admin';
 
 const ROLE_DASHBOARD: Record<UserRole, string> = {
   student: '/student/dashboard',
-  professor: '/professor/dashboard',
   admin: '/admin/content',
 };
 
@@ -60,6 +59,5 @@ export function clearDemoProfile() {
 export function inferRoleFromEmail(email: string): UserRole {
   const lower = email.toLowerCase();
   if (/\b(admin|ops|director)\b/.test(lower)) return 'admin';
-  if (/\b(prof|professor|faculty|dr|teach|instructor)\b/.test(lower)) return 'professor';
   return 'student';
 }
