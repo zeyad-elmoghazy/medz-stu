@@ -186,7 +186,6 @@ export async function POST(request: NextRequest) {
       reference_page: q.reference_page ?? null,
       topic: '',
       chapter_id: chapterId,
-      professor_id: user.id,
       status: 'under_review',
       source: 'ai',
       difficulty: 'medium',

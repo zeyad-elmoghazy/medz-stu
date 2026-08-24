@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   let query = untypedFrom(supabase)
     .from('questions')
     .select(
-      'id, question, choices, correct_answer, explanation, reference, reference_page, status, difficulty, source, flag_count, professor_id, created_at, updated_at, chapter_id, chapters(name, module_code, subject_id, subjects(name))',
+      'id, question, choices, correct_answer, explanation, reference, reference_page, status, difficulty, source, flag_count, created_at, updated_at, chapter_id, chapters(name, module_code, subject_id, subjects(name))',
       { count: 'exact' }
     );
 
@@ -166,7 +166,6 @@ export async function POST(request: NextRequest) {
       reference_page: d.referencePage ?? null,
       topic: '',
       chapter_id: d.chapterId,
-      professor_id: user.id, // legacy column name — now always an admin (Zoz/Ammar)
       status: d.status,
       source: 'manual',
       difficulty: d.difficulty,

@@ -204,9 +204,9 @@ export function AdminUploadWizard({ onContentChanged }: Props) {
       setPdfJobId(body.jobId ?? null);
       setPdfExtracted(body.extracted ?? 0);
       // Honest status: a 422 zero-extraction response still carries a
-      // real jobId and error message from upload_jobs — surface it as
-      // a failure, not a silent success, per the "AI upload" known
-      // pdf-extract.ts limitation.
+      // real jobId and error message in the response body — surface
+      // it as a failure, not a silent success, per the "AI upload"
+      // known pdf-extract.ts limitation.
       if (body.error) {
         setPdfPhase('failed');
         setPdfError(body.error);

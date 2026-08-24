@@ -115,17 +115,6 @@ type NoteRow = {
   updated_at: string;
 };
 
-type JobRow = {
-  id: string;
-  professor_id: string;
-  type: string;
-  status: 'queued' | 'processing' | 'completed' | 'failed';
-  result: unknown;
-  error: string | null;
-  created_at: string;
-  completed_at: string | null;
-};
-
 type StudentSubjectStatsRow = {
   student_id: string;
   subject_id: string;
@@ -184,15 +173,6 @@ export type Database = {
           subject_id: string;
         };
         Update: Partial<NoteRow>;
-      };
-      jobs: {
-        Row: JobRow;
-        Insert: Partial<JobRow> & {
-          id: string;
-          professor_id: string;
-          type: string;
-        };
-        Update: Partial<JobRow>;
       };
       student_subject_stats: {
         Row: StudentSubjectStatsRow;

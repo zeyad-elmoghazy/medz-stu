@@ -42,7 +42,6 @@ export type AdminQuestion = {
   difficulty: 'easy' | 'medium' | 'hard' | null;
   source: string | null;
   flag_count: number;
-  professor_id: string | null;
   created_at: string;
   updated_at: string;
   chapter_id: string | null;

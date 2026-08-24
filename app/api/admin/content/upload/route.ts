@@ -90,28 +90,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Chapter has no subject binding' }, { status: 500 });
   }
 
-  const jobRes = await untypedFrom(supabase)
-    .from('upload_jobs')
-    .insert({
-      professor_id: user.id, // legacy column name — always an admin now
-      module_code: moduleCode,
-      chapter_id: chapterId,
-      method: 'ai',
-      questions_file_name: questionsFile.name,
-      notes_file_name: notesFile instanceof File ? notesFile.name : null,
-      status: 'processing',
-    })
-    .select('id')
-    .single();
-
-  if (jobRes.error || !jobRes.data) {
-    return NextResponse.json({ error: jobRes.error?.message ?? 'Failed to open job' }, { status: 500 });
-  }
-  const jobId = (jobRes.data as { id: string }).id;
-
-  const patchJob = async (patch: Record<string, unknown>) => {
-    await untypedFrom(supabase).from('upload_jobs').update(patch).eq('id', jobId);
-  };
+  // upload_jobs (progress/audit bookkeeping for this pipeline) was
+  // dropped in 024_drop_professor_columns_and_jobs_tables.sql —
+  // nothing ever read it back (no polling route, no "recent
+  // uploads" UI survives the professor-surface removal), so jobId
+  // is now just a locally-generated correlation id for the response
+  // shape below, not a persisted row.
+  const jobId = crypto.randomUUID();
 
   try {
     // ---- 1) Extract text ----
@@ -189,11 +174,6 @@ export async function POST(request: Request) {
     extracted = annotateWithReferences(extracted, notesIndex);
 
     if (extracted.length === 0) {
-      await patchJob({
-        status: 'failed',
-        error_message: 'No questions detected. Try a different file or add questions manually.',
-        completed_at: new Date().toISOString(),
-      });
       return NextResponse.json(
         {
           jobId,
@@ -228,7 +208,6 @@ export async function POST(request: Request) {
         reference_page: refPage,
         topic: '',
         chapter_id: chapterId,
-        professor_id: user.id,
         status: 'under_review',
         source: 'ai',
         difficulty: 'medium',
@@ -239,16 +218,8 @@ export async function POST(request: Request) {
     const insertRes = await untypedFrom(supabase).from('questions').insert(rows).select('id');
 
     if (insertRes.error) {
-      await patchJob({ status: 'failed', error_message: insertRes.error.message, completed_at: new Date().toISOString() });
       return NextResponse.json({ error: insertRes.error.message, jobId }, { status: 500 });
     }
-
-    await patchJob({
-      status: 'completed',
-      questions_extracted: rows.length,
-      questions_under_review: rows.length,
-      completed_at: new Date().toISOString(),
-    });
 
     await logActivity(supabase, {
       actorId: user.id,
@@ -268,7 +239,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Extraction failed';
-    await patchJob({ status: 'failed', error_message: msg, completed_at: new Date().toISOString() });
     return NextResponse.json({ error: msg, jobId }, { status: 500 });
   }
 }
