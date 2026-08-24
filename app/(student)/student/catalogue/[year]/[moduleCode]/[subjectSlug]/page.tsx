@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Loader2, Search } from 'lucide-react';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
@@ -330,6 +331,24 @@ export default function CatalogueChaptersPage() {
                               ? `${c.publishedCount} published question${c.publishedCount === 1 ? '' : 's'}`
                               : '0 questions'}
                           </span>
+                          {published && (
+                            <Link
+                              href={`/student/quiz/chapter/${c.id}`}
+                              style={{
+                                flex: 'none',
+                                fontSize: 11,
+                                fontWeight: 700,
+                                whiteSpace: 'nowrap',
+                                padding: '7px 12px',
+                                borderRadius: 7,
+                                color: '#F7F9FA',
+                                background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                                textDecoration: 'none',
+                              }}
+                            >
+                              Start Quiz
+                            </Link>
+                          )}
                         </div>
                       );
                     })}
