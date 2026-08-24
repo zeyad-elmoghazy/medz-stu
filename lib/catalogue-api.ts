@@ -46,6 +46,7 @@ export type CatalogueChapter = {
   name: string;
   ordinal: number;
   publishedCount: number;
+  topic: string | null;
 };
 
 export type ChaptersBySubject = {

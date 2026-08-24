@@ -7,16 +7,6 @@ import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchChaptersBySubject, type ChaptersBySubject } from '@/lib/catalogue-api';
 
-/**
- * Chapter list — flat, not grouped by topic. The mockup supports a
- * "grouped" chapterView keyed on a per-chapter `topic` string, but
- * that field was intentionally dropped during the curriculum seed
- * (scripts/seed/seed-curriculum.ts) — there's no column for it in
- * chapters, so grouping isn't something real data can drive today.
- * Using the mockup's own "flat" chapterView variant here rather than
- * fabricating groups or reintroducing topic storage that wasn't
- * asked for.
- */
 export default function CatalogueChaptersPage() {
   const params = useParams<{ year: string; moduleCode: string; subjectSlug: string }>();
   const { year, moduleCode, subjectSlug } = params;
@@ -24,6 +14,7 @@ export default function CatalogueChaptersPage() {
   const [data, setData] = useState<ChaptersBySubject | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [topicFilter, setTopicFilter] = useState('All');
 
   useEffect(() => {
     let cancelled = false;
@@ -39,12 +30,47 @@ export default function CatalogueChaptersPage() {
     };
   }, [moduleCode, subjectSlug]);
 
+  useEffect(() => {
+    setTopicFilter('All');
+  }, [moduleCode, subjectSlug]);
+
+  const hasTopics = useMemo(() => !!data && data.chapters.some((c) => !!c.topic), [data]);
+
+  const topics = useMemo(() => {
+    if (!data || !hasTopics) return [];
+    const seen: string[] = [];
+    data.chapters.forEach((c) => {
+      const t = c.topic || 'Other';
+      if (!seen.includes(t)) seen.push(t);
+    });
+    return seen;
+  }, [data, hasTopics]);
+
+  const topicChips = useMemo(
+    () => (hasTopics ? ['All', ...topics] : []),
+    [hasTopics, topics]
+  );
+
   const filtered = useMemo(() => {
     if (!data) return [];
     const q = search.trim().toLowerCase();
-    if (!q) return data.chapters;
-    return data.chapters.filter((c) => c.name.toLowerCase().includes(q));
-  }, [data, search]);
+    return data.chapters.filter((c) => {
+      if (q && !c.name.toLowerCase().includes(q)) return false;
+      if (hasTopics && topicFilter !== 'All' && (c.topic || 'Other') !== topicFilter) return false;
+      return true;
+    });
+  }, [data, search, hasTopics, topicFilter]);
+
+  const chapterGroups = useMemo(() => {
+    if (!hasTopics) return [{ topicLabel: '', hasLabel: false, rows: filtered }];
+    const groupsMap: Record<string, typeof filtered> = {};
+    filtered.forEach((c) => {
+      const t = c.topic || 'Other';
+      if (!groupsMap[t]) groupsMap[t] = [];
+      groupsMap[t].push(c);
+    });
+    return Object.keys(groupsMap).map((t) => ({ topicLabel: t, hasLabel: true, rows: groupsMap[t] }));
+  }, [filtered, hasTopics]);
 
   return (
     <CatalogueShell>
@@ -165,6 +191,44 @@ export default function CatalogueChaptersPage() {
             </span>
           </div>
 
+          {hasTopics && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 22 }}>
+              {topicChips.map((t) => {
+                const active = topicFilter === t;
+                return (
+                  <span
+                    key={t}
+                    onClick={() => setTopicFilter(t)}
+                    style={
+                      active
+                        ? {
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: '#F7F9FA',
+                            background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                            padding: '7px 14px',
+                            borderRadius: 8,
+                          }
+                        : {
+                            cursor: 'pointer',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: '#8B98A6',
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.09)',
+                            padding: '7px 14px',
+                            borderRadius: 8,
+                          }
+                    }
+                  >
+                    {t}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
           {filtered.length === 0 ? (
             <div
               style={{
@@ -180,76 +244,98 @@ export default function CatalogueChaptersPage() {
               No chapters match &quot;{search}&quot;.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filtered.map((c) => {
-                const published = c.publishedCount > 0;
-                return (
-                  <div
-                    key={c.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 16,
-                      padding: '14px 18px',
-                      borderRadius: 13,
-                      background: '#132B45',
-                      border: '1px solid rgba(255,255,255,0.07)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 34,
-                        height: 34,
-                        flex: 'none',
-                        borderRadius: 9,
-                        background: 'rgba(0,166,166,0.12)',
-                        border: '1px solid rgba(0,166,166,0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontFamily: 'ui-monospace,Menlo,monospace',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: '#33BFBF',
-                      }}
-                    >
-                      {String(c.ordinal).padStart(2, '0')}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+              {chapterGroups.map((g) => (
+                <div key={g.topicLabel || '__ungrouped'}>
+                  {g.hasLabel && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 800,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          color: '#8B98A6',
+                        }}
+                      >
+                        {g.topicLabel}
+                      </span>
+                      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
                     </div>
-                    <div
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        fontSize: 14,
-                        fontWeight: 600,
-                        letterSpacing: '-0.005em',
-                        color: '#F7F9FA',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {c.name}
-                    </div>
-                    <span
-                      style={{
-                        flex: 'none',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                        padding: '5px 10px',
-                        borderRadius: 7,
-                        color: published ? '#33BFBF' : '#8B98A6',
-                        background: published ? 'rgba(0,166,166,0.14)' : 'rgba(255,255,255,0.05)',
-                        border: published ? '1px solid rgba(0,166,166,0.4)' : '1px solid rgba(255,255,255,0.09)',
-                      }}
-                    >
-                      {published
-                        ? `${c.publishedCount} published question${c.publishedCount === 1 ? '' : 's'}`
-                        : '0 questions'}
-                    </span>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {g.rows.map((c) => {
+                      const published = c.publishedCount > 0;
+                      return (
+                        <div
+                          key={c.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 16,
+                            padding: '14px 18px',
+                            borderRadius: 13,
+                            background: '#132B45',
+                            border: '1px solid rgba(255,255,255,0.07)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 34,
+                              height: 34,
+                              flex: 'none',
+                              borderRadius: 9,
+                              background: 'rgba(0,166,166,0.12)',
+                              border: '1px solid rgba(0,166,166,0.3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontFamily: 'ui-monospace,Menlo,monospace',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: '#33BFBF',
+                            }}
+                          >
+                            {String(c.ordinal).padStart(2, '0')}
+                          </div>
+                          <div
+                            style={{
+                              flex: 1,
+                              minWidth: 0,
+                              fontSize: 14,
+                              fontWeight: 600,
+                              letterSpacing: '-0.005em',
+                              color: '#F7F9FA',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {c.name}
+                          </div>
+                          <span
+                            style={{
+                              flex: 'none',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap',
+                              padding: '5px 10px',
+                              borderRadius: 7,
+                              color: published ? '#33BFBF' : '#8B98A6',
+                              background: published ? 'rgba(0,166,166,0.14)' : 'rgba(255,255,255,0.05)',
+                              border: published ? '1px solid rgba(0,166,166,0.4)' : '1px solid rgba(255,255,255,0.09)',
+                            }}
+                          >
+                            {published
+                              ? `${c.publishedCount} published question${c.publishedCount === 1 ? '' : 's'}`
+                              : '0 questions'}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </>

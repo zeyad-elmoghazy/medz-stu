@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
   const chaptersRes = await client
     .from('chapters')
-    .select('id, slug, name, ordinal, published_count')
+    .select('id, slug, name, ordinal, published_count, topic')
     .eq('module_code', moduleCode)
     .eq('subject_id', subjectId)
     .order('ordinal', { ascending: true });
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: chaptersRes.error.message }, { status: 500 });
   }
 
-  type ChapterRow = { id: string; slug: string; name: string; ordinal: number; published_count: number };
+  type ChapterRow = { id: string; slug: string; name: string; ordinal: number; published_count: number; topic: string | null };
   const chapters = (chaptersRes.data ?? []) as ChapterRow[];
 
   const chapterTotal = chapters.length;
