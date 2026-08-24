@@ -45,6 +45,15 @@ const ImportQuestionSchema = z.object({
     .record(z.string(), z.object({ reason: z.string().optional() }).passthrough())
     .optional(),
   reference_page: z.number().int().min(1).optional(),
+  // Pre-composed citation text (e.g. "Anatomy of Neuroscience
+  // Textbook, p.2") — maps straight to questions.reference (TEXT,
+  // already populated by every other write path; this route was the
+  // one gap). Deliberately a single free-text field rather than
+  // separate reference_document/reference_page inputs: source
+  // batches don't always give a page number that reduces to one
+  // int (e.g. "2 and 4"), so composing the final citation string is
+  // left to whatever produces this JSON, not to this schema.
+  reference: z.string().max(500).optional().default(''),
   // Explicitly NOT declared here (and therefore stripped by Zod's
   // default parse behavior, not stored anywhere): question_number,
   // answer_status, reference_status, scientific_review_required,
@@ -173,7 +182,7 @@ export async function POST(request: NextRequest) {
       explanation: q.explanation ?? '',
       choice_rationales:
         choiceRationales && Object.keys(choiceRationales).length > 0 ? choiceRationales : null,
-      reference: '',
+      reference: q.reference ?? '',
       reference_page: q.reference_page ?? null,
       topic: '',
       chapter_id: chapterId,
