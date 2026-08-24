@@ -14,3 +14,10 @@ yarn-error.log*
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+
+# Reference-page images (book digitization pipeline) — large binary
+# assets, not source. Covers both the intended scripts/import/
+# reference-pages/<book>/ layout and the flat scripts/import/*.png
+# pattern one batch actually landed in.
+scripts/import/reference-pages/
+scripts/import/*.png
