@@ -1,0 +1,596 @@
+[
+  {
+    "question_id": "Q1",
+    "question_number": 1,
+    "stem": "In adults, the spinal cord ends at:",
+    "options": [
+      "a. Lower border of L1.",
+      "b. Lower border of L3.",
+      "c. Lower border of S1.",
+      "d. Lower border of L3."
+    ],
+    "final_answer": "a",
+    "answer_status": "a. Lower border of L1.",
+    "explanation": "The textbook states: 'In the adult, it ends at the level of the disc between L1 and L2 vertebrae,' which corresponds to the lower border of L1. This results from the differential growth rate between the slower-growing spinal cord and the faster-growing vertebral column after birth.",
+    "option_analysis": [
+      "a. CORRECT - The L1-L2 disc is at the lower border of L1 the confirmed adult level of cord termination.",
+      "b. WRONG Lower border of L3 is the level at birth, not in the adult.",
+      "c. WRONG S1 is far below the adult cord termination.",
+      "d. WRONG Duplicate of option b (L3); the neonatal level, not the adult level."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2"
+  },
+  {
+    "question_id": "Q2",
+    "question_number": 2,
+    "stem": "A patient came to emergency room presenting with headache; fever, nausea and stiffness of the neck. He was diagnosed as meningitis. What is the name of the procedure by which a special needle is inserted into the subarachnoid space to get sample of CSF to confirm the diagnosis?",
+    "options": [
+      "a. Conus medullaris.",
+      "b. Lumbar cistern.",
+      "c. Lumbar puncture.",
+      "d. Cauda equine."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. Lumbar puncture.",
+    "explanation": "The textbook states: 'Clinical Importance: subarachnoid lumbar cistern is used for performance of lumbar puncture to withdraw CSF.' [Lumbar Puncture: the clinical procedure of inserting a needle into the subarachnoid space] to collect CSF for diagnostic purposes such as confirming meningitis.",
+    "option_analysis": [
+      "a. WRONG Conus medullaris is the tapered lower end of the spinal cord, not a procedure.",
+      "b. WRONG - Lumbar cistern is the anatomical space accessed, but is not the name of the procedure.",
+      "c. CORRECT Lumbar puncture is the clinical procedure of inserting a needle into the subarachnoid space to withdraw CSF.",
+      "d. WRONG Cauda equina is the nerve-root bundle below the conus; it is not a procedure."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "7"
+  },
+  {
+    "question_id": "Q3",
+    "question_number": 3,
+    "stem": "Cauda equina is:",
+    "options": [
+      "a. The lower segments of the spinal cord.",
+      "b. The roots of lower lumbar, sacral and coccygeal nerves.",
+      "c. The spinal nerves of the conus medullaris.",
+      "d. The spinal nerves of the lower lumbar and sacral segments."
+    ],
+    "final_answer": "b",
+    "answer_status": "b. The roots of lower lumbar, sacral and coccygeal nerves.",
+    "explanation": "[Cauda Equina: Latin for 'horse's tail'] The textbook defines cauda equina as 'a leash of roots of lower lumbar, sacral and coccygeal nerves that occupies the lower third of vertebral canal.' It consists of nerve roots not cord segments and includes coccygeal roots in addition to lumbar and sacral.",
+    "option_analysis": [
+      "a. WRONG - Cauda equina is composed of nerve roots, not spinal cord segments. The lower cord end is the conus medullaris.",
+      "b. CORRECT - Precisely matches the textbook definition: roots of lower lumbar, sacral, and coccygeal nerves.",
+      "c. WRONG The conus medullaris is cord tissue; cauda equina refers to nerve roots descending below it.",
+      "d. WRONG Incomplete omits coccygeal nerve roots, which are also part of the cauda equina."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "4"
+  },
+  {
+    "question_id": "Q4",
+    "question_number": 4,
+    "stem": "The spinal cord has select the best statement",
+    "options": [
+      "a. An outer covering of gray matter and an inner core of white matter.",
+      "b. Anterior and posterior roots of a single spinal nerve attached to a single segment.",
+      "c. Cells in the posterior gray horn give rise to efferent fibers that supply skeletal muscle.",
+      "d. A central canal that is situated in the white commissure."
+    ],
+    "final_answer": "b",
+    "answer_status": "b. Anterior and posterior roots of a single spinal nerve attached to a single segment.",
+    "explanation": "Each spinal segment gives origin to one pair of spinal nerves, each attached by two roots: a ventral (motor) root and a dorsal (sensory) root. The textbook states: 'Each spinal nerve is attached to the side of its corresponding spinal segment by two roots. Unlike the brain, the spinal cord has an inner gray core and outer white matter.",
+    "option_analysis": [
+      "a. WRONG - Reversed arrangement - the spinal cord has inner gray matter and outer white matter, opposite to the brain.",
+      "b. CORRECT Each segment has a ventral (motor) and dorsal (sensory) root forming a single spinal nerve.",
+      "c. WRONG Posterior gray horn receives afferent (sensory) fibers; efferent (motor) fibers originate in the anterior horn.",
+      "d. WRONG The central canal lies within the gray commissure, not the white commissure."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2 and 4"
+  },
+  {
+    "question_id": "Q5",
+    "question_number": 5,
+    "stem": "If we need to insert a needle into the subarachnoid space to sample CSF, where is a relatively safe point for needle insertion?",
+    "options": [
+      "a. Between C-7 and T-1.",
+      "b. Between L-3 and L-4.",
+      "c. Between L-1 and L-2.",
+      "d. Between T-12 and L-1."
+    ],
+    "final_answer": "b",
+    "answer_status": "b. Between L-3 and L-4.",
+    "explanation": "The lumbar cistern (L2 to S2) contains only CSF and cauda equina nerve roots no spinal cord. Since the adult cord ends at L1-L2, inserting the needle between L3 and L4 places it safely within the cistern, well above S2 and well below the conus, avoiding cord injury. The textbook confirms the lumbar cistern's use for lumbar puncture.",
+    "option_analysis": [
+      "a. WRONG-C7-T1 is in the cervical region where the spinal cord is present - dangerous.",
+      "b. CORRECT-L3-L4 is safely within the lumbar cistern below the cord terminus at L1-L2.",
+      "c. WRONG-L1-L2 is the cord termination level too close to the conus to be safe.",
+      "d. WRONG-T12-L1 is at or above cord termination and is not considered a safe site."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "7"
+  },
+  {
+    "question_id": "Q6",
+    "question_number": 6,
+    "stem": "In newborns, conus medullaris lies opposite the:",
+    "options": [
+      "a. 10th thoracic vertebra.",
+      "b. 1st lumbar vertebra.",
+      "c. 3rd lumbar vertebra.",
+      "d. 5th lumbar vertebra."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. 3rd lumbar vertebra.",
+    "explanation": "The textbook states: 'At birth, it ends at the level of L3 vertebra. This is because the vertebral column grows faster than the spinal cord postnatally, causing the cord to appear to ascend. By adulthood it reaches the L1-L2 disc level.",
+    "option_analysis": [
+      "a. WRONG-T10 is above the newborn level; the cord occupies the whole canal only at 3 months of intrauterine life.",
+      "b. WRONG-L1 is the adult cord termination level, not the neonatal level.",
+      "c. CORRECT - At birth, the conus medullaris lies opposite L3 confirmed explicitly in the textbook.",
+      "d. WRONG L5 is below the neonatal cord termination level."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2"
+  },
+  {
+    "question_id": "Q7",
+    "question_number": 7,
+    "stem": "One of the following arteries is not supplying spinal cord:",
+    "options": [
+      "a. Radicular branches of vertebral artery.",
+      "b. Posterior spinal artery.",
+      "c. Medial spinal artery.",
+      "d. Anterior spinal artery."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. Medial spinal artery.",
+    "explanation": "The textbook lists three named sources of arterial supply to the spinal cord: (1) the anterior spinal artery, (2) two posterior spinal arteries, and (3) radicular spinal arteries arising from the vertebral, posterior intercostal, lumbar, and lateral sacral arteries. There is no vessel named 'medial spinal artery' anywhere in this description. [Medial spinal artery: a non-existent vessel].",
+    "option_analysis": [
+      "a. WRONG - Radicular branches of the vertebral artery reinforce the spinal arteries a real contribution.",
+      "b. WRONG-Two posterior spinal arteries supply the posterior 1/3 of the cord they exist.",
+      "c. CORRECT - No 'medial spinal artery' is named or described in the textbook's blood supply section.",
+      "d. WRONG-The anterior spinal artery supplies the anterior 2/3 of the cord a major named vessel."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "8"
+  },
+  {
+    "question_id": "Q8",
+    "question_number": 8,
+    "stem": "The true statement about the spinal cord is:",
+    "options": [
+      "a. The spinal dura end at the level of S4.",
+      "b. It has four enlargements.",
+      "c. The filum terminal is a fold of pia below the termination of spinal cord attached to the. coccyx.",
+      "d. The largest radicular artery is that of S2."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. The filum terminal is a fold of pia below the termination of spinal cord attached to the. coccyx.",
+    "explanation": "The textbook describes the filum terminale as: 'a silvery glistening band of pia mater which extends downward from the tip of conus medullaris among the roots of cauda equina... to get finally attached to back of coccyx.' It is correctly a pia mater extension that anchors the lower cord to the coccyx.",
+    "option_analysis": [
+      "a. WRONG The spinal dura ends at S2, not S4. Explicitly stated in the textbook.",
+      "b. WRONG The cord has only TWO enlargements: cervical (C5-T1) and lumbar (L1-S3).",
+      "c. CORRECT - The filum terminale is a pia mater band extending from the conus to the back of the coccyx.",
+      "d. WRONG - The largest radicular artery is the arteria radicularis magna (lumbar enlargement), not that of S2."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2, 5, and 8"
+  },
+  {
+    "question_id": "Q9",
+    "question_number": 9,
+    "stem": "Cauda equine, choose one true statement:",
+    "options": [
+      "a. Formed of all thoracic and lumber nerves.",
+      "b. Occupy lower part of spinal canal.",
+      "c. Surrounded by the three layers of the meninges.",
+      "d. Pass through the sacrum to end at S2."
+    ],
+    "final_answer": "b",
+    "answer_status": "b. Occupy lower part of spinal canal.",
+    "explanation": "The textbook states that the cauda equina 'occupies the lower third of vertebral canal.' It consists of the roots of lower lumbar, sacral, and coccygeal nerves, which descend within the lumbar cistern (the subarachnoid space below L2) before exiting through their respective intervertebral and sacral foramina.",
+    "option_analysis": [
+      "a. WRONG - Cauda equina consists of lower lumbar, sacral, and coccygeal roots thoracic roots are not included.",
+      "b. CORRECT - The cauda equina occupies the lower third of the vertebral canal confirmed in the textbook.",
+      "c. WRONG While the lumbar cistern is enclosed by meninges, this sweeping statement is not confirmed in this form by the textbook.",
+      "d. WRONG Individual sacral roots exit through sacral foramina individually; the cauda equina does not 'pass through' the sacrum to end at S2."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "4 and 7"
+  },
+  {
+    "question_id": "Q10",
+    "question_number": 10,
+    "stem": "The lower end of spinal cord is called:",
+    "options": [
+      "a. Cauda equina.",
+      "b. Denticulate ligament.",
+      "c. Conus medullaris.",
+      "d. Ganglion impar."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. Conus medullaris.",
+    "explanation": "[Conus Medullaris: Latin for 'medullary cone'] The textbook states the cord 'ends by tapering conical lower part called conus medullaris.' This is the actual tapered lower end of the spinal cord tissue, located at the L1-L2 disc level in adults, from which the filum terminale extends downward among the cauda equina.",
+    "option_analysis": [
+      "a. WRONG - Cauda equina refers to the nerve roots descending below the conus medullaris, not the cord end itself.",
+      "b. WRONG - Denticulate ligaments are lateral pia mater extensions anchoring the cord to the dura not the cord's lower end.",
+      "c. CORRECT - Conus medullaris is the conical tapered lower end of the spinal cord.",
+      "d. WRONG Ganglion impar is the unpaired terminal ganglion of the sympathetic chain unrelated to the spinal cord terminus."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2"
+  },
+  {
+    "question_id": "Q11",
+    "question_number": 11,
+    "stem": "Filum terminal is attached to:",
+    "options": [
+      "a. S3.",
+      "b. S4.",
+      "c. Foramen magnum.",
+      "d. Back of coccyx."
+    ],
+    "final_answer": "d",
+    "answer_status": "d. Back of coccyx.",
+    "explanation": "The textbook explicitly states: 'Filum terminale is median filament that extends between lower end of spinal cord and back of coccyx.' At S2 it pierces the arachnoid and dural tubes, acquires a dural sheath, and ultimately attaches to the back of the coccyx, serving as the most important stabilizing factor of the spinal cord.",
+    "option_analysis": [
+      "a. WRONG - S3 is not the attachment site for the filum terminale.",
+      "b. WRONG-The dura and arachnoid end at S2, but the filum itself continues beyond to the coccyx.",
+      "c. WRONG - Foramen magnum is where the cord begins; the filum attaches at the opposite (caudal) end.",
+      "d. CORRECT - The filum terminale extends from the conus medullaris to the back of the coccyx."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "4 and 5"
+  },
+  {
+    "question_id": "Q12",
+    "question_number": 12,
+    "stem": "Lumbar puncture can be done safely:",
+    "options": [
+      "a. Between L1 and L2 vertebrae.",
+      "b. Between L3 and L4 vertebrae.",
+      "c. Between S3 and S4 vertebrae.",
+      "d. Between T3 and T4 vertebrae."
+    ],
+    "final_answer": "b",
+    "answer_status": "b. Between L3 and L4 vertebrae.",
+    "explanation": "The lumbar cistern (L2 to S2) contains only CSF and cauda equina roots no spinal cord. Inserting the needle between L3 and L4 places it safely within this cistern, well below the cord terminus at L1-L2. The textbook confirms: 'subarachnoid lumbar cistern is used for performance of lumbar puncture to withdraw CSF.",
+    "option_analysis": [
+      "a. WRONG — L1–L2 is where the cord terminates — too close to the conus to be considered safe.",
+      "b. CORRECT — L3–L4 is safely within the lumbar cistern below the cord terminus — the standard clinical site.",
+      "c. WRONG — S3–S4 is within the sacrum, making needle insertion technically impractical.",
+      "d. WRONG — T3–T4 is in the thoracic region where the spinal cord is present — dangerous."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "7"
+  },
+  {
+    "question_id": "Q13",
+    "question_number": 13,
+    "stem": "Anterior spinal artery supplies:",
+    "options": [
+      "a. Posterior 2/3 of spinal cord.",
+      "b. Lateral 2/3 of spinal cord.",
+      "c. Posterior 1/3 of spinal cord.",
+      "d. Anterior 2/3 of spinal cord."
+    ],
+    "final_answer": "d",
+    "answer_status": "d. Anterior 2/3 of spinal cord.",
+    "explanation": "The textbook states: 'It [the anterior spinal artery] gives central branches to supply the anterior 2/3 of the spinal cord.' The remaining posterior 1/3 is supplied by the two posterior spinal arteries. This vascular territory covers the anterior and lateral funiculi and the anterior gray horn.",
+    "option_analysis": [
+      "a. WRONG — Posterior 2/3 would overlap into the territory of the posterior spinal arteries and beyond — incorrect.",
+      "b. WRONG — No 'lateral 2/3' territory is defined in the textbook; the division is anterior vs. posterior.",
+      "c. WRONG — The posterior 1/3 is supplied by the posterior spinal arteries, not the anterior spinal artery.",
+      "d. CORRECT — The anterior spinal artery supplies the anterior 2/3 of the cord's cross-sectional area."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "8"
+  },
+  {
+    "question_id": "Q14",
+    "question_number": 14,
+    "stem": "Regarding the spinal cord, select the true statement:",
+    "options": [
+      "a. The lumbosacral enlargement called conus medullaris.",
+      "b. Denticulate ligament are lateral extension of arachnoid.",
+      "c. The adult spinal cord terminates at intervertebral disc between L2 and L3.",
+      "d. The filum terminale attach the lower end of spinal cord with the back of coccyx."
+    ],
+    "final_answer": "d",
+    "answer_status": "d. The filum terminale attach the lower end of spinal cord with the back of coccyx.",
+    "explanation": "The textbook clearly states the filum terminale 'extends downward from the tip of conus medullaris... to get finally attached to back of coccyx.' It is a band of pia mater and serves as the most important stabilizing factor of the lower end of the spinal cord.",
+    "option_analysis": [
+      "a. WRONG — The lumbosacral enlargement (L1–S3) is a widening of cord, not the conus medullaris. Conus medullaris is the tapered tip below the enlargement.",
+      "b. WRONG — Denticulate ligaments are lateral extensions of the PIA MATER, not the arachnoid.",
+      "c. WRONG — The adult cord terminates at the disc between L1 and L2, not L2 and L3.",
+      "d. CORRECT — Filum terminale extends from the conus medullaris tip to the back of the coccyx — confirmed in the textbook."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2 and 5"
+  },
+  {
+    "question_id": "Q15",
+    "question_number": 15,
+    "stem": "The arterial supply of the lumber enlargement of the spinal cord:",
+    "options": [
+      "a. The arteria radicularis magna.",
+      "b. The anterior spinal artery.",
+      "c. The posterior spinal arteries.",
+      "d. The basilar artery."
+    ],
+    "final_answer": "a",
+    "answer_status": "a. The arteria radicularis magna.",
+    "explanation": "[Arteria Radicularis Magna: also called the artery of Adamkiewicz] The textbook states: 'One of the lower radicular arteries (right or left) is very large and supplies the lumbar enlargement (the arteria radicularis magna). It is the main reinforcing vessel dedicated to the lumbar enlargement.",
+    "option_analysis": [
+      "a. CORRECT - The arteria radicularis magna specifically supplies the lumbar enlargement confirmed in the textbook.",
+      "b. WRONG- The anterior spinal artery runs the length of the cord but is not the dedicated supply to the lumbar enlargement.",
+      "c. WRONG Posterior spinal arteries supply the posterior 1/3 of the cord, not specifically the lumbar enlargement.",
+      "d. WRONG - The basilar artery supplies the brain stem and cerebellum, not the spinal cord."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "8"
+  },
+  {
+    "question_id": "Q16",
+    "question_number": 16,
+    "stem": "Concerning spinal nerve C-8, which of the following is true?",
+    "options": [
+      "a. C-8 enters/exits between vertebrae C6 and C7.",
+      "b. C-8 enters/exits between vertebrae C7 and C8.",
+      "c. C-8 enters/exits between vertebrae C7 and C8.",
+      "d. C-8 enters/exits between vertebrae C7 and T1."
+    ],
+    "final_answer": "d",
+    "answer_status": "d. C-8 enters/exits between vertebrae C7 and T1.",
+    "explanation": "There are 8 cervical spinal nerves but only 7 cervical vertebrae. Cervical nerves C1-C7 exit above their corresponding vertebra. Because there is no C8 vertebra, the C8 spinal nerve exits between the C7 and T1 vertebrae. The textbook confirms 8 cervical segments among 31 spinal nerve pairs.",
+    "option_analysis": [
+      "a. WRONG-The C6-C7 foramen transmits C7, not C8.",
+      "b. WRONG-There is no C8 vertebral body; this foramen does not exist.",
+      "c. WRONG - Duplicate of option b same error. There is no 'C8 vertebra.'",
+      "d. CORRECT C8 exits between C7 and T1, as there is no C8 vertebral body."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "4"
+  },
+  {
+    "question_id": "Q17",
+    "question_number": 17,
+    "stem": "In adults, the spinal cord normally ends at:",
+    "options": [
+      "a. Lower border of L1.",
+      "b. Lower border of L3.",
+      "c. Lower border of S1.",
+      "d. Lower border of L5."
+    ],
+    "final_answer": "a",
+    "answer_status": "a. Lower border of L1.",
+    "explanation": "In adults, the spinal cord terminates at the intervertebral disc between L1 and L2, corresponding to the lower border of L1. The textbook explains this results from the differential growth rate between the spinal cord (slower) and the vertebral column (faster) during postnatal development.",
+    "option_analysis": [
+      "a. CORRECT - The adult cord ends at the L1-L2 disc, i.e., the lower border of L1.",
+      "b. WRONG — Lower border of L3 is the neonatal cord termination level.",
+      "c. WRONG — S1 is far below the normal adult cord termination.",
+      "d. WRONG — L5 is well below the cord terminus and lies within the lumbar cistern."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2"
+  },
+  {
+    "question_id": "Q18",
+    "question_number": 18,
+    "stem": "Regarding the spinal meninges, one of the following is true:",
+    "options": [
+      "a. The spinal arachnoid matter ends at the level of L2.",
+      "b. The spinal arteries lie in the epidural space.",
+      "c. The lower part of the spinal dura forms a sheath around the filum terminale.",
+      "d. The lumbar cistern extends from L1 to S3."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. The lower part of the spinal dura forms a sheath around the filum terminale.",
+    "explanation": "The textbook states that the dura mater forms sheaths around: spinal nerve roots, spinal nerve trunks, and the filum terminale. The filum terminale 'at the level of S2 vertebra... pierces the arachnoid and dural tubes and acquires a dural sheath.' Therefore, the lower portion of the spinal dura forms a sheath enclosing the filum terminale.",
+    "option_analysis": [
+      "a. WRONG — The spinal arachnoid mater ends at S2, not L2. Textbook: 'Below, it ends at the level of the S2 of sacrum.'",
+      "b. WRONG — Spinal blood vessels lie in the SUBARACHNOID space. The epidural space contains the internal vertebral venous plexus, fat, and roots.",
+      "c. CORRECT — The lower spinal dura acquires the filum terminale and forms a sheath around it down to the coccyx.",
+      "d. WRONG — The lumbar cistern extends from L2 to S2, not L1 to S3."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "6 and 7"
+  },
+  {
+    "question_id": "Q19",
+    "question_number": 19,
+    "stem": "Regarding the blood supply of the spinal cord, one of the following is true:",
+    "options": [
+      "a. The posterior spinal artery supplies the anterior and lateral funiculi of the white matter.",
+      "b. The arteria radicularis magna supplies the cervical enlargement.",
+      "c. The internal vertebral venous plexus lies in the subdural space.",
+      "d. The thoracic region of the spinal cord is more liable."
+    ],
+    "final_answer": "d",
+    "answer_status": "d. The thoracic region of the spinal cord is more liable.",
+    "explanation": "The thoracic cord is most vulnerable to vascular insufficiency because it receives the fewest reinforcing radicular arteries — the mid-thoracic area is an arterial 'watershed zone' where the anterior spinal artery is inadequately reinforced, making this segment most susceptible to ischemic injury.",
+    "option_analysis": [
+      "a. WRONG — Posterior spinal arteries supply the POSTERIOR 1/3 of the cord, not the anterior and lateral funiculi.",
+      "b. WRONG — The arteria radicularis magna supplies the LUMBAR enlargement, not the cervical enlargement.",
+      "c. WRONG — The internal vertebral venous plexus lies in the EPIDURAL space, not the subdural space.",
+      "d. CORRECT — The thoracic cord has the sparsest radicular reinforcement and is most prone to vascular insufficiency."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "7 and 8"
+  },
+  {
+    "question_id": "Q20",
+    "question_number": 20,
+    "stem": "Regarding the meninges of the spinal cord, one of the following is true:",
+    "options": [
+      "a. The dura mater ends at the level of the third piece of sacrum.",
+      "b. The arachnoid mater ends at the level of the forth piece of sacrum.",
+      "c. The pia mater forms ligamentum denticulatum.",
+      "d. The subdural space contains the vertebral venous plexuses."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. The pia mater forms ligamentum denticulatum.",
+    "explanation": "[Ligamentum Denticulatum / Denticulate Ligament: from Latin 'denticulatus' = having small teeth] The textbook states: 'Denticulate ligaments: They are two lateral extensions which arise from the sides of the pia mater, midway between roots of the spinal nerves.' These serrated tooth-like processes pierce the arachnoid and attach to the dura, anchoring the spinal cord laterally.",
+    "option_analysis": [
+      "a. WRONG — The spinal dura mater ends at S2, not S3.",
+      "b. WRONG — The spinal arachnoid mater also ends at S2, not S4.",
+      "c. CORRECT — The ligamentum denticulatum is a lateral extension and thickening of the spinal pia mater.",
+      "d. WRONG — Vertebral venous plexuses lie in the EPIDURAL space; the subdural space contains only a thin film of serous fluid."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "5, 6, and 7"
+  },
+  {
+    "question_id": "Q21",
+    "question_number": 21,
+    "stem": "Regarding the spinal cord, one of the following is true:",
+    "options": [
+      "a. The spinal dura ends at the level of S4.",
+      "b. It is drained by spinal and vertebral venous plexuses.",
+      "c. It has three enlargements.",
+      "d. The largest radicular artery is that of S2."
+    ],
+    "final_answer": "b",
+    "answer_status": "b. It is drained by spinal and vertebral venous plexuses.",
+    "explanation": "The textbook describes six longitudinal venous channels draining the spinal cord: anteromedian, posteromedian, right and left anterolateral, and right and left posterolateral. These channels drain ultimately into the internal and external vertebral venous plexuses.",
+    "option_analysis": [
+      "a. WRONG — The spinal dura ends at S2, not S4.",
+      "b. CORRECT — The spinal cord is drained by spinal and vertebral venous plexuses via its six longitudinal venous channels.",
+      "c. WRONG — The cord has only TWO enlargements: cervical (C5–T1) and lumbar (L1–S3).",
+      "d. WRONG — The largest radicular artery is the arteria radicularis magna supplying the lumbar region — not S2."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2 and 9"
+  },
+  {
+    "question_id": "Q22",
+    "question_number": 22,
+    "stem": "The lower end of spinal cord is called:",
+    "options": [
+      "a. Cauda equina.",
+      "b. Denticulate ligament.",
+      "c. Conus medullaris.",
+      "d. Ganglion ispar."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. Conus medullaris.",
+    "explanation": "The textbook states the cord 'ends by tapering conical lower part called conus medullaris.' [Conus: cone; Medullaris: relating to the cord]. This conical termination occurs at the L1–L2 disc level in adults, below which the filum terminale and the cauda equina nerve roots continue within the vertebral canal.",
+    "option_analysis": [
+      "a. WRONG — Cauda equina is the collection of nerve roots below the conus medullaris, not the cord terminus itself.",
+      "b. WRONG — Denticulate ligament is a lateral pia mater extension anchoring the cord to the dura — not the cord's lower end.",
+      "c. CORRECT — Conus medullaris is the correct anatomical term for the tapered lower end of the spinal cord.",
+      "d. WRONG — Ganglion impar is the terminal ganglion of the sympathetic chain — unrelated to the spinal cord terminus."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "2"
+  },
+  {
+    "question_id": "Q23",
+    "question_number": 23,
+    "stem": "The posterior funiculus of the spinal cord contains:",
+    "options": [
+      "a. Long descending fibers.",
+      "b. Long ascending fibers.",
+      "c. Both long ascending and descending fibers.",
+      "d. Associative fibers."
+    ],
+    "final_answer": "b",
+    "answer_status": "b. Long ascending fibers.",
+    "explanation": "[Posterior Funiculus / Dorsal Column] The posterior funiculus carries long ascending sensory tracts (fasciculus gracilis and fasciculus cuneatus) conveying fine touch, vibration, and proprioception to the medulla. The textbook establishes that dorsal (posterior) structures are associated with sensory (afferent) pathways, with the dorsal root carrying 'somatic afferent (sensory) fibres.'",
+    "option_analysis": [
+      "a. WRONG — Long descending (motor) fibers travel in the anterior and lateral funiculi (e.g., corticospinal tract).",
+      "b. CORRECT — The posterior funiculus contains long ascending sensory fibers (gracile and cuneate tracts).",
+      "c. WRONG — The posterior funiculus is exclusively an ascending pathway; it carries no descending fibers.",
+      "d. WRONG — Short associative fibers connect adjacent cord segments; they are not the primary content of the posterior funiculus."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "4"
+  },
+  {
+    "question_id": "Q24",
+    "question_number": 24,
+    "stem": "Regarding the blood supply to the spinal cord, select the correct statement:",
+    "options": [
+      "a. Anterior 2/3 of the spinal cord is supplied by the posterior spinal arteries.",
+      "b. Anterior spinal arteries are reinforced in the cervical region by branches from the vertebral arteries.",
+      "c. There are two anterior spinal arteries.",
+      "d. The cervical region of the spinal cord is predisposed to vascular insufficiency."
+    ],
+    "final_answer": "b",
+    "answer_status": "b. Anterior spinal arteries are reinforced in the cervical region by branches from the vertebral arteries.",
+    "explanation": "The textbook states that radicular arteries 'arise from the vertebral arteries, the posterior intercostal arteries, lumbar arteries, and lateral sacral arteries.' In the cervical region specifically, branches from the vertebral arteries reinforce the anterior spinal artery, providing adequate collateral supply to the cervical cord.",
+    "option_analysis": [
+      "a. WRONG — The ANTERIOR 2/3 is supplied by the anterior spinal artery; the POSTERIOR 1/3 is supplied by the posterior spinal arteries.",
+      "b. CORRECT — Radicular branches from vertebral arteries reinforce the anterior spinal artery in the cervical region.",
+      "c. WRONG — There is ONE anterior spinal artery, formed by the union of two smaller arteries but running as a single vessel.",
+      "d. WRONG — The THORACIC region (not cervical) is predisposed to vascular insufficiency due to sparse radicular supply."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "8"
+  },
+  {
+    "question_id": "Q25",
+    "question_number": 25,
+    "stem": "Regarding the spinal meninges select the correct statement:",
+    "options": [
+      "a. The denticulate ligament attaches pia to the arachnoid mater.",
+      "b. The pia mater is attached to the foramen magnum.",
+      "c. The arachnoid mater ends at L2 level.",
+      "d. The dura mater sends sheaths around the spinal nerve roots."
+    ],
+    "final_answer": "d",
+    "answer_status": "d. The dura mater sends sheaths around the spinal nerve roots.",
+    "explanation": "The textbook explicitly lists the prolongations of the spinal dura: 'It forms sheaths around the following structures: (1) Spinal nerve roots. (2) Spinal nerve trunks in the intervertebral foramina. (3) Filum terminale.' These dural sleeves accompany the nerve roots through the intervertebral foramina.",
+    "option_analysis": [
+      "a. WRONG — Denticulate ligaments arise from the pia mater and attach to the DURA — not to the arachnoid.",
+      "b. WRONG — The pia mater is continuous with cranial pia at the foramen magnum above — this is its superior extent, not an attachment point that defines the structure.",
+      "c. WRONG — The arachnoid mater ends at S2, not L2.",
+      "d. CORRECT — The dura sends tubular sheaths around spinal nerve roots and their trunks in the intervertebral foramina."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "7"
+  },
+  {
+    "question_id": "Q26",
+    "question_number": 26,
+    "stem": "Regarding the spinal meninges, select the true statement:",
+    "options": [
+      "a. The denticulate ligaments are thickening of the dura mater.",
+      "b. The dura mater continues below as the film terminale.",
+      "c. The pia matter is closely adherent to the spinal cord.",
+      "d. The dura mater ends at the level of the fourth sacral vertebra."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. The pia matter is closely adherent to the spinal cord.",
+    "explanation": "The textbook defines the spinal pia mater as: 'It is a delicate vascular membrane that is closely adherent to the spinal cord.' This intimate adhesion means the pia dips into all sulci and fissures on the cord surface, unlike the arachnoid and dura which are separated from the cord by the subarachnoid and subdural spaces respectively.",
+    "option_analysis": [
+      "a. WRONG — Denticulate ligaments are lateral thickenings and extensions of the PIA MATER — not the dura mater.",
+      "b. WRONG — The filum terminale is a continuation of the PIA MATER. The dura merely forms a sheath around it — it does not become it.",
+      "c. CORRECT — The pia mater is closely adherent to the spinal cord surface — described explicitly in the textbook.",
+      "d. WRONG — The dura mater ends at S2, not S4."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "5 and 7"
+  },
+  {
+    "question_id": "Q27",
+    "question_number": 27,
+    "stem": "In performing a lumbar puncture for CSF collection, the needle Is Inserted Into:",
+    "options": [
+      "a. Subdural space.",
+      "b. Epidural space.",
+      "c. Subarachnoid space.",
+      "d. Extradural space."
+    ],
+    "final_answer": "c",
+    "answer_status": "c. Subarachnoid space.",
+    "explanation": "The textbook states: 'Clinical Importance: subarachnoid lumbar cistern is used for performance of lumbar puncture to withdraw CSF.' The subarachnoid space — specifically its inferior expansion called the lumbar cistern — contains the cerebrospinal fluid that is sampled. The needle traverses skin, fascia, ligaments, and the dura before entering this space.",
+    "option_analysis": [
+      "a. WRONG — The subdural space contains only a thin film of serous fluid — not significant CSF — and is not the target.",
+      "b. WRONG — The epidural space contains fat and the internal vertebral venous plexus; used for epidural anesthesia, not CSF sampling.",
+      "c. CORRECT — The subarachnoid space (lumbar cistern) contains the CSF sampled during lumbar puncture.",
+      "d. WRONG — Extradural space is synonymous with epidural space and does not contain CSF."
+    ],
+    "reference_document": "Anatomy of Neuroscience Textbook",
+    "reference_page": "7"
+  }
+]
