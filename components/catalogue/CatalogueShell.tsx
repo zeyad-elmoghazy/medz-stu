@@ -15,7 +15,6 @@ export function CatalogueShell({ children }: { children: React.ReactNode }) {
           maxWidth: 1280,
           margin: '0 auto',
           position: 'relative',
-          overflow: 'hidden',
           background:
             'radial-gradient(900px 520px at 88% -6%, rgba(0,166,166,0.28), transparent 60%),' +
             'radial-gradient(700px 480px at 6% 30%, rgba(0,166,166,0.10), transparent 55%),' +
