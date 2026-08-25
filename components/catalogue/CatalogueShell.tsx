@@ -1,6 +1,6 @@
 'use client';
 
-import { CatalogueNavbar } from './CatalogueNavbar';
+import { StudentNavbar } from '@/components/student/StudentNavbar';
 
 /**
  * Shared page background + navbar for every /student/catalogue/*
@@ -33,7 +33,7 @@ export function CatalogueShell({ children }: { children: React.ReactNode }) {
             pointerEvents: 'none',
           }}
         />
-        <CatalogueNavbar />
+        <StudentNavbar activeLabel="Catalogue" />
         <section style={{ position: 'relative', padding: '30px 44px 64px' }}>{children}</section>
       </div>
     </div>

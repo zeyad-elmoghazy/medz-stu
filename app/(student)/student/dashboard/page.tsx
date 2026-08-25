@@ -245,7 +245,7 @@ function Navbar({
   const { message, showToast } = useNavToast();
 
   // Sticky header with a subtle background/shadow that fades in once the
-  // page has scrolled — same treatment as StudentNavbar/CatalogueNavbar.
+  // page has scrolled — same treatment as StudentNavbar.
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {

@@ -37,8 +37,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
   const [signingOut, setSigningOut] = useState(false);
 
   // Sticky header with a subtle background/shadow that fades in once the
-  // page has scrolled — kept in sync with CatalogueNavbar's identical
-  // treatment, even though the two components stay separate.
+  // page has scrolled — same treatment as dashboard's inline Navbar.
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
