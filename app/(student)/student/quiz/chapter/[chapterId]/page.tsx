@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Loader2, Check, X } from 'lucide-react';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
-import { fetchChapterQuiz, type ChapterQuiz } from '@/lib/chapter-quiz-api';
+import { fetchChapterQuiz, fetchChapterReferenceImage, type ChapterQuiz } from '@/lib/chapter-quiz-api';
 
 /**
  * Chapter-scoped quiz — reads live from the DB-backed
@@ -25,6 +25,8 @@ export default function ChapterQuizPage() {
   const [submitted, setSubmitted] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
+  const [referenceImageLoading, setReferenceImageLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,9 +49,16 @@ export default function ChapterQuizPage() {
   );
 
   function submit() {
-    if (!selectedChoice || submitted) return;
+    if (!selectedChoice || submitted || !question) return;
     setSubmitted(true);
     if (isCorrect) setCorrectCount((n) => n + 1);
+
+    if (question.referencePage != null) {
+      setReferenceImageLoading(true);
+      fetchChapterReferenceImage(chapterId, question.referencePage)
+        .then(setReferenceImageUrl)
+        .finally(() => setReferenceImageLoading(false));
+    }
   }
 
   function next() {
@@ -61,6 +70,8 @@ export default function ChapterQuizPage() {
     setIndex((i) => i + 1);
     setSelectedChoice(null);
     setSubmitted(false);
+    setReferenceImageUrl(null);
+    setReferenceImageLoading(false);
   }
 
   return (
@@ -202,6 +213,47 @@ export default function ChapterQuizPage() {
                 }}
               >
                 {question.explanation}
+              </div>
+            )}
+
+            {submitted && (question.reference || referenceImageUrl) && (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: '14px 16px',
+                  borderRadius: 11,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                {question.reference && (
+                  <div style={{ fontSize: 12, color: '#8B98A6', marginBottom: referenceImageUrl || referenceImageLoading ? 12 : 0 }}>
+                    {question.reference}
+                  </div>
+                )}
+                {referenceImageLoading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#8B98A6' }}>
+                    <Loader2 style={{ width: 13, height: 13 }} className="animate-spin" />
+                    Loading reference image…
+                  </div>
+                )}
+                {referenceImageUrl && (
+                  <div
+                    style={{
+                      overflow: 'hidden',
+                      borderRadius: 9,
+                      border: '1px solid rgba(255,255,255,0.08)',
+                    }}
+                  >
+                    {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={referenceImageUrl}
+                      alt="Source page from the module reference book"
+                      style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 

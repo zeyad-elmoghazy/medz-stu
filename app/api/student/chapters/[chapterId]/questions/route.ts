@@ -59,7 +59,7 @@ export async function GET(
   const questionsRes = await client
     .from('questions')
     .select(
-      'id, question, choices, correct_answer, explanation, choice_rationales, reference, topic'
+      'id, question, choices, correct_answer, explanation, choice_rationales, reference, topic, reference_page'
     )
     .eq('chapter_id', chapterId)
     .eq('status', 'published')
@@ -78,6 +78,7 @@ export async function GET(
     choice_rationales: Record<string, string> | null;
     reference: string;
     topic: string;
+    reference_page: number | null;
   };
   const rows = (questionsRes.data ?? []) as QuestionRow[];
 
@@ -97,6 +98,7 @@ export async function GET(
         choiceRationales: r.choice_rationales ?? undefined,
         reference: r.reference,
         topic: r.topic,
+        referencePage: r.reference_page,
       })),
     },
     { headers: { 'Cache-Control': 'private, max-age=30' } }
