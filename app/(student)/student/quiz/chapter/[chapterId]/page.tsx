@@ -428,7 +428,7 @@ function TabButton({
         background: active ? 'rgba(0,166,166,0.15)' : 'transparent',
         border: `1px solid ${active ? 'rgba(0,166,166,0.4)' : 'rgba(255,255,255,0.08)'}`,
         borderRadius: 8,
-        padding: '6px 12px',
+        padding: '10px 12px',
         cursor: 'pointer',
       }}
     >
