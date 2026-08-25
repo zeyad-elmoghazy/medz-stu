@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Check, X } from 'lucide-react';
+import { Loader2, Check, X, LogOut } from 'lucide-react';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchChapterQuiz, fetchChapterReferenceImage, type ChapterQuiz } from '@/lib/chapter-quiz-api';
@@ -17,6 +17,7 @@ import { fetchChapterQuiz, fetchChapterReferenceImage, type ChapterQuiz } from '
 export default function ChapterQuizPage() {
   const params = useParams<{ chapterId: string }>();
   const { chapterId } = params;
+  const router = useRouter();
 
   const [data, setData] = useState<ChapterQuiz | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +28,7 @@ export default function ChapterQuizPage() {
   const [finished, setFinished] = useState(false);
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
   const [referenceImageLoading, setReferenceImageLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'explanation' | 'reference'>('explanation');
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +74,7 @@ export default function ChapterQuizPage() {
     setSubmitted(false);
     setReferenceImageUrl(null);
     setReferenceImageLoading(false);
+    setActiveTab('explanation');
   }
 
   return (
@@ -85,14 +88,39 @@ export default function ChapterQuizPage() {
           __html: `.chapter-quiz-split{display:grid;grid-template-columns:1fr;gap:14px}@media (min-width:1024px){.chapter-quiz-split{grid-template-columns:3fr 2fr}}`,
         }}
       />
-      <CatalogueBreadcrumb
-        crumbs={[
-          { label: 'Home', href: '/student/catalogue' },
-          { label: `Module ${data?.moduleCode ?? ''}` },
-          { label: data?.subjectName ?? '' },
-          { label: data?.chapterName ?? 'Quiz' },
-        ]}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <CatalogueBreadcrumb
+          crumbs={[
+            { label: 'Home', href: '/student/catalogue' },
+            { label: `Module ${data?.moduleCode ?? ''}` },
+            { label: data?.subjectName ?? '' },
+            { label: data?.chapterName ?? 'Quiz' },
+          ]}
+        />
+        {/* No fullscreen mode on this route and nothing here persists
+            (no DB write, no localStorage) — a plain exit, not a
+            save-and-exit modal, since there's nothing to save. */}
+        <button
+          type="button"
+          onClick={() => router.push('/student/catalogue')}
+          title="Exit the quiz"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 12,
+            fontWeight: 600,
+            color: '#8B98A6',
+            background: 'transparent',
+            border: 'none',
+            padding: '4px 0',
+            cursor: 'pointer',
+          }}
+        >
+          <LogOut style={{ width: 13, height: 13 }} />
+          Exit
+        </button>
+      </div>
 
       {error && (
         <div role="alert" style={{ padding: '12px 16px', color: '#FCA5A5', fontSize: 13 }}>
@@ -123,12 +151,11 @@ export default function ChapterQuizPage() {
         </div>
       )}
 
-      {data && data.questions.length > 0 && !finished && question && (
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <div style={{ fontSize: 12, color: '#8B98A6', marginBottom: 16 }}>
-            Question {index + 1} of {data.questions.length}
-          </div>
+      {data && data.questions.length > 0 && !finished && question && (() => {
+        const hasReferenceContent =
+          Boolean(question.reference) || referenceImageLoading || referenceImageUrl !== null;
 
+        const questionCard = (
           <div
             style={{
               borderRadius: 20,
@@ -208,74 +235,6 @@ export default function ChapterQuizPage() {
               })}
             </div>
 
-            {submitted && (() => {
-              const hasReferenceContent =
-                Boolean(question.reference) || referenceImageLoading || referenceImageUrl !== null;
-
-              const explanationBox = (
-                <div
-                  style={{
-                    padding: '14px 16px',
-                    borderRadius: 11,
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    fontSize: 13,
-                    color: '#D9F3F0',
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {question.explanation}
-                </div>
-              );
-
-              if (!hasReferenceContent) {
-                return <div style={{ marginTop: 18 }}>{explanationBox}</div>;
-              }
-
-              return (
-                <div className="chapter-quiz-split" style={{ marginTop: 18 }}>
-                  {explanationBox}
-                  <div
-                    style={{
-                      padding: '14px 16px',
-                      borderRadius: 11,
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    {question.reference && (
-                      <div style={{ fontSize: 12, color: '#8B98A6', marginBottom: referenceImageUrl || referenceImageLoading ? 12 : 0 }}>
-                        {question.reference}
-                      </div>
-                    )}
-                    {referenceImageLoading && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#8B98A6' }}>
-                        <Loader2 style={{ width: 13, height: 13 }} className="animate-spin" />
-                        Loading reference image…
-                      </div>
-                    )}
-                    {referenceImageUrl && (
-                      <div
-                        style={{
-                          overflow: 'hidden',
-                          borderRadius: 9,
-                          border: '1px solid rgba(255,255,255,0.08)',
-                        }}
-                      >
-                        {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={referenceImageUrl}
-                          alt="Source page from the module reference book"
-                          style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 22 }}>
               {!submitted ? (
                 <button
@@ -317,8 +276,107 @@ export default function ChapterQuizPage() {
               )}
             </div>
           </div>
-        </div>
-      )}
+        );
+
+        if (!submitted) {
+          return (
+            <div style={{ maxWidth: 720, margin: '0 auto' }}>
+              <div style={{ fontSize: 12, color: '#8B98A6', marginBottom: 16 }}>
+                Question {index + 1} of {data.questions.length}
+              </div>
+              {questionCard}
+            </div>
+          );
+        }
+
+        return (
+          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <div style={{ fontSize: 12, color: '#8B98A6', marginBottom: 16 }}>
+              Question {index + 1} of {data.questions.length}
+            </div>
+            <div className="chapter-quiz-split">
+              {questionCard}
+              <div
+                style={{
+                  borderRadius: 20,
+                  padding: '22px 24px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                {hasReferenceContent && (
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
+                    <TabButton active={activeTab === 'explanation'} onClick={() => setActiveTab('explanation')}>
+                      Explanation
+                    </TabButton>
+                    <TabButton active={activeTab === 'reference'} onClick={() => setActiveTab('reference')}>
+                      Reference
+                    </TabButton>
+                  </div>
+                )}
+
+                {(!hasReferenceContent || activeTab === 'explanation') && (
+                  <div>
+                    <div style={{ fontSize: 13, color: '#D9F3F0', lineHeight: 1.6 }}>
+                      {question.explanation}
+                    </div>
+                    {question.choiceRationales && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+                        {question.choices.map((c) => (
+                          <div
+                            key={c.id}
+                            style={{
+                              fontSize: 12,
+                              lineHeight: 1.5,
+                              color: c.id === question.correctAnswer ? '#6EE7B7' : '#8B98A6',
+                            }}
+                          >
+                            <span style={{ fontWeight: 700, textTransform: 'uppercase' }}>{c.id}.</span>{' '}
+                            {question.choiceRationales?.[c.id]}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {hasReferenceContent && activeTab === 'reference' && (
+                  <div>
+                    {question.reference && (
+                      <div style={{ fontSize: 12, color: '#8B98A6', marginBottom: referenceImageUrl || referenceImageLoading ? 12 : 0 }}>
+                        {question.reference}
+                      </div>
+                    )}
+                    {referenceImageLoading && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#8B98A6' }}>
+                        <Loader2 style={{ width: 13, height: 13 }} className="animate-spin" />
+                        Loading reference image…
+                      </div>
+                    )}
+                    {referenceImageUrl && (
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          borderRadius: 9,
+                          border: '1px solid rgba(255,255,255,0.08)',
+                        }}
+                      >
+                        {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={referenceImageUrl}
+                          alt="Source page from the module reference book"
+                          style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {data && finished && (
         <div style={{ maxWidth: 480, margin: '60px auto', textAlign: 'center' }}>
@@ -347,5 +405,34 @@ export default function ChapterQuizPage() {
         </div>
       )}
     </CatalogueShell>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        color: active ? '#F7F9FA' : '#8B98A6',
+        background: active ? 'rgba(0,166,166,0.15)' : 'transparent',
+        border: `1px solid ${active ? 'rgba(0,166,166,0.4)' : 'rgba(255,255,255,0.08)'}`,
+        borderRadius: 8,
+        padding: '6px 12px',
+        cursor: 'pointer',
+      }}
+    >
+      {children}
+    </button>
   );
 }
