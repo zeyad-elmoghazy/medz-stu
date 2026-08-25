@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@/lib/supabase-server';
+import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -19,8 +19,14 @@ export const dynamic = 'force-dynamic';
  * which is why this can't be called directly from the 'use client'
  * quiz page.
  *
- * Auth: any signed-in user, same if(!user)-only pattern as the
- * sibling questions route.
+ * Auth: signed in (if(!user)-only, same as the sibling questions
+ * route), plus an explicit check that some published question in
+ * this chapter actually cites this page — otherwise chapterId+page
+ * alone would let any signed-in user sign a URL for any page of any
+ * linked book, including pages that only belong to under_review
+ * questions or chapters with no published content at all.
+ * getSignedBookPageUrl() itself never touches the questions table,
+ * so this route is the only place that boundary can be enforced.
  */
 export async function GET(
   request: NextRequest,
@@ -39,6 +45,20 @@ export async function GET(
   const page = pageParam ? Number(pageParam) : NaN;
   if (!Number.isInteger(page) || page <= 0) {
     return NextResponse.json({ error: 'Invalid page' }, { status: 400 });
+  }
+
+  const client = untypedFrom(supabase);
+  const { data: match } = await client
+    .from('questions')
+    .select('id')
+    .eq('chapter_id', params.chapterId)
+    .eq('reference_page', page)
+    .eq('status', 'published')
+    .limit(1)
+    .maybeSingle();
+
+  if (!match) {
+    return NextResponse.json({ url: null });
   }
 
   const { getSignedBookPageUrl } = await import('@/lib/book-reference');
