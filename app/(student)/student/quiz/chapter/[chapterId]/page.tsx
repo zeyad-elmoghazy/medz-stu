@@ -76,6 +76,15 @@ export default function ChapterQuizPage() {
 
   return (
     <CatalogueShell>
+      {/* Mirrors the static quiz page's post-answer grid
+          (grid-cols-1 lg:grid-cols-[3fr_2fr]) — single column until
+          the same 1024px breakpoint, explanation left / reference
+          right beyond it. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `.chapter-quiz-split{display:grid;grid-template-columns:1fr;gap:14px}@media (min-width:1024px){.chapter-quiz-split{grid-template-columns:3fr 2fr}}`,
+        }}
+      />
       <CatalogueBreadcrumb
         crumbs={[
           { label: 'Home', href: '/student/catalogue' },
@@ -199,63 +208,73 @@ export default function ChapterQuizPage() {
               })}
             </div>
 
-            {submitted && (
-              <div
-                style={{
-                  marginTop: 18,
-                  padding: '14px 16px',
-                  borderRadius: 11,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  fontSize: 13,
-                  color: '#D9F3F0',
-                  lineHeight: 1.6,
-                }}
-              >
-                {question.explanation}
-              </div>
-            )}
+            {submitted && (() => {
+              const hasReferenceContent =
+                Boolean(question.reference) || referenceImageLoading || referenceImageUrl !== null;
 
-            {submitted && (question.reference || referenceImageUrl) && (
-              <div
-                style={{
-                  marginTop: 14,
-                  padding: '14px 16px',
-                  borderRadius: 11,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
-              >
-                {question.reference && (
-                  <div style={{ fontSize: 12, color: '#8B98A6', marginBottom: referenceImageUrl || referenceImageLoading ? 12 : 0 }}>
-                    {question.reference}
-                  </div>
-                )}
-                {referenceImageLoading && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#8B98A6' }}>
-                    <Loader2 style={{ width: 13, height: 13 }} className="animate-spin" />
-                    Loading reference image…
-                  </div>
-                )}
-                {referenceImageUrl && (
+              const explanationBox = (
+                <div
+                  style={{
+                    padding: '14px 16px',
+                    borderRadius: 11,
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    fontSize: 13,
+                    color: '#D9F3F0',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {question.explanation}
+                </div>
+              );
+
+              if (!hasReferenceContent) {
+                return <div style={{ marginTop: 18 }}>{explanationBox}</div>;
+              }
+
+              return (
+                <div className="chapter-quiz-split" style={{ marginTop: 18 }}>
+                  {explanationBox}
                   <div
                     style={{
-                      overflow: 'hidden',
-                      borderRadius: 9,
+                      padding: '14px 16px',
+                      borderRadius: 11,
+                      background: 'rgba(255,255,255,0.03)',
                       border: '1px solid rgba(255,255,255,0.08)',
                     }}
                   >
-                    {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={referenceImageUrl}
-                      alt="Source page from the module reference book"
-                      style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }}
-                    />
+                    {question.reference && (
+                      <div style={{ fontSize: 12, color: '#8B98A6', marginBottom: referenceImageUrl || referenceImageLoading ? 12 : 0 }}>
+                        {question.reference}
+                      </div>
+                    )}
+                    {referenceImageLoading && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#8B98A6' }}>
+                        <Loader2 style={{ width: 13, height: 13 }} className="animate-spin" />
+                        Loading reference image…
+                      </div>
+                    )}
+                    {referenceImageUrl && (
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          borderRadius: 9,
+                          border: '1px solid rgba(255,255,255,0.08)',
+                        }}
+                      >
+                        {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={referenceImageUrl}
+                          alt="Source page from the module reference book"
+                          style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }}
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              );
+            })()}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 22 }}>
               {!submitted ? (
