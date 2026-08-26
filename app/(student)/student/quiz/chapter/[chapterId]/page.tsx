@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Check, X, LogOut } from 'lucide-react';
+import { Loader2, Check, X, LogOut, Maximize2 } from 'lucide-react';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchChapterQuiz, fetchChapterReferenceImage, type ChapterQuiz } from '@/lib/chapter-quiz-api';
@@ -29,6 +29,12 @@ export default function ChapterQuizPage() {
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
   const [referenceImageLoading, setReferenceImageLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'explanation' | 'reference'>('explanation');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSupported, setFullscreenSupported] = useState(true);
+  // Distinguishes a deliberate exit (Exit link, or submitting an
+  // answer) from Escape/tab-away in the fullscreenchange handler —
+  // same flag name/purpose as the static quiz page's mechanism.
+  const intentionalExitRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,10 +56,71 @@ export default function ChapterQuizPage() {
     [question, selectedChoice]
   );
 
+  const enterFullscreen = useCallback(async () => {
+    if (typeof document === 'undefined') return;
+    const el = document.documentElement;
+    if (!el.requestFullscreen) {
+      setFullscreenSupported(false);
+      return;
+    }
+    try {
+      if (!document.fullscreenElement) {
+        await el.requestFullscreen();
+      }
+    } catch {
+      // Browser requires a user gesture — the manual "Enter focus
+      // mode" button covers this, same fallback as the static quiz.
+    }
+  }, []);
+
+  const exitFullscreen = useCallback(async () => {
+    if (typeof document === 'undefined') return;
+    intentionalExitRef.current = true;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Ignore — the view already reflects the non-fullscreen state.
+    }
+  }, []);
+
+  // Re-enters fullscreen before every question's answer phase — not
+  // just once at quiz start — mirroring the static page exactly.
+  useEffect(() => {
+    if (!submitted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      enterFullscreen();
+    }
+  }, [submitted, index, enterFullscreen]);
+
+  useEffect(() => {
+    function onChange() {
+      const fs = !!document.fullscreenElement;
+      setIsFullscreen(fs);
+      if (fs) return;
+
+      // Intentional exit (Exit link, or the exitFullscreen() call
+      // inside submit()) — nothing further to do.
+      if (intentionalExitRef.current) {
+        intentionalExitRef.current = false;
+      }
+      // Unintentional exit (Escape, browser UI, alt-tab): unlike the
+      // static Histology challenge, this lightweight practice quiz
+      // has no score/streak at stake and is not proctored, so this
+      // deliberately does NOT port that page's violation-counting/
+      // forced-end behavior — flagged in the PR description, not
+      // silently dropped.
+    }
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
   function submit() {
     if (!selectedChoice || submitted || !question) return;
     setSubmitted(true);
     if (isCorrect) setCorrectCount((n) => n + 1);
+    exitFullscreen();
 
     if (question.referencePage != null) {
       setReferenceImageLoading(true);
@@ -61,6 +128,14 @@ export default function ChapterQuizPage() {
         .then(setReferenceImageUrl)
         .finally(() => setReferenceImageLoading(false));
     }
+  }
+
+  function handleExitClick() {
+    intentionalExitRef.current = true;
+    if (typeof document !== 'undefined' && document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+    router.push('/student/catalogue');
   }
 
   function next() {
@@ -97,29 +172,53 @@ export default function ChapterQuizPage() {
             { label: data?.chapterName ?? 'Quiz' },
           ]}
         />
-        {/* No fullscreen mode on this route and nothing here persists
-            (no DB write, no localStorage) — a plain exit, not a
-            save-and-exit modal, since there's nothing to save. */}
-        <button
-          type="button"
-          onClick={() => router.push('/student/catalogue')}
-          title="Exit the quiz"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 12,
-            fontWeight: 600,
-            color: '#8B98A6',
-            background: 'transparent',
-            border: 'none',
-            padding: '4px 0',
-            cursor: 'pointer',
-          }}
-        >
-          <LogOut style={{ width: 13, height: 13 }} />
-          Exit
-        </button>
+        {/* Nothing on this route persists (no DB write, no
+            localStorage) — a plain exit, not a save-and-exit modal,
+            since there's nothing to save. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {!isFullscreen && fullscreenSupported && !submitted && (
+            <button
+              type="button"
+              onClick={() => enterFullscreen()}
+              title="Enter focus mode"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#8B98A6',
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 0',
+                cursor: 'pointer',
+              }}
+            >
+              <Maximize2 style={{ width: 13, height: 13 }} />
+              Focus mode
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleExitClick}
+            title="Exit the quiz"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#8B98A6',
+              background: 'transparent',
+              border: 'none',
+              padding: '4px 0',
+              cursor: 'pointer',
+            }}
+          >
+            <LogOut style={{ width: 13, height: 13 }} />
+            Exit
+          </button>
+        </div>
       </div>
 
       {error && (
