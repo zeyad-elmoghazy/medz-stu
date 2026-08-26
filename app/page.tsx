@@ -3,7 +3,14 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
+import { fetchCatalogueStats, fetchLandingModules, type CatalogueStats, type LandingModuleCard } from '@/lib/catalogue-stats';
+
+// The specific modules shown on the landing page's catalogue strip —
+// one per year group is Anatomy/Spinal Cord's own module (205); the
+// rest are real neighboring modules, published or not. Names come
+// from the database (fetchLandingModules), not hardcoded here — this
+// array is only the set of codes to ask for.
+const LANDING_MODULE_CODES = ['101', '102', '103', '205', '206', '309', '310'];
 
 type Theme = 'dark' | 'light';
 
@@ -65,14 +72,6 @@ const STEPS = [
   { title: 'Learn & track', body: 'Review split-view explanations, re-quiz your mistakes, and watch your accuracy and streak climb on your dashboard.' },
 ];
 
-const LOCKED = [
-  { name: 'Anatomy', img: '/subjects/anatomy.webp', tint: 'rgba(59,130,246,.35)' },
-  { name: 'Physiology', img: '/subjects/physiology.webp', tint: 'rgba(239,68,68,.35)' },
-  { name: 'Biochemistry', img: '/subjects/biochemistry.webp', tint: 'rgba(16,185,129,.35)' },
-  { name: 'Pharmacology', img: '/subjects/pharmacology.webp', tint: 'rgba(244,114,182,.35)' },
-  { name: 'Pathology', img: '/subjects/pathology.webp', tint: 'rgba(234,179,8,.35)' },
-];
-
 const PAGE_CSS = `
 [data-mz-root]{--bg:#0B1F33;--bg2:#0B1F33;--surface:#132B45;--text:#F7F9FA;--text2:#D9F3F0;--text3:#8B98A6;--muted:#8B98A6;--faint:#8B98A6;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);--fill:rgba(255,255,255,.04);--nav-bg:rgba(8,7,15,.72);--accent-card:linear-gradient(165deg,#132B45,#0B1F33);--price-card:linear-gradient(165deg,#132B45,#0B1F33);--card-locked:#0B1F33;--accent-text:#33BFBF}
 [data-mz-root][data-mz-theme="light"]{--bg:#D9F3F0;--bg2:#D9F3F0;--surface:#F7F9FA;--text:#132B45;--text2:#332E44;--text3:#8B98A6;--muted:#8B98A6;--faint:#8B98A6;--line:rgba(24,20,46,.10);--line2:rgba(24,20,46,.16);--fill:rgba(24,20,46,.035);--nav-bg:rgba(246,245,251,.82);--accent-card:linear-gradient(165deg,#D9F3F0,#F7F9FA);--price-card:linear-gradient(165deg,#D9F3F0,#F7F9FA);--card-locked:#D9F3F0;--accent-text:#00A6A6}
@@ -111,13 +110,14 @@ const PAGE_CSS = `
 }
 `;
 
-const NAV_SECTIONS = ['features', 'how', 'subjects', 'pricing'] as const;
+const NAV_SECTIONS = ['features', 'how', 'catalogue', 'pricing'] as const;
 type NavSection = typeof NAV_SECTIONS[number];
 
 export default function MediZeeHome() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [activeSection, setActiveSection] = useState<NavSection | ''>('');
   const [catalogueStats, setCatalogueStats] = useState<CatalogueStats | null>(null);
+  const [landingModules, setLandingModules] = useState<LandingModuleCard[] | null>(null);
 
   // Anon-readable — modules_public_read / chapters_public_read /
   // questions_read_published are all public-role RLS policies, no
@@ -126,6 +126,9 @@ export default function MediZeeHome() {
     let cancelled = false;
     fetchCatalogueStats().then((s) => {
       if (!cancelled) setCatalogueStats(s);
+    });
+    fetchLandingModules(LANDING_MODULE_CODES).then((m) => {
+      if (!cancelled) setLandingModules(m);
     });
     return () => {
       cancelled = true;
@@ -272,10 +275,10 @@ export default function MediZeeHome() {
       </section>
 
       {/* SUBJECTS */}
-      <section id="subjects" style={{ position: 'relative', padding: '88px 0' }}>
+      <section id="catalogue" style={{ position: 'relative', padding: '88px 0' }}>
         <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 40px', padding: '0 44px' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#00A6A6' }}>The catalog</div>
-          <h2 className="mz-h2" style={{ margin: '14px 0 0', fontSize: 44, lineHeight: 1.08, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--text)' }}>Start with Histology</h2>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#00A6A6' }}>The Catalogue</div>
+          <h2 className="mz-h2" style={{ margin: '14px 0 0', fontSize: 44, lineHeight: 1.08, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--text)' }}>Explore the Full Curriculum</h2>
           <p style={{ margin: '16px 0 0', fontSize: 16, lineHeight: 1.6, color: 'var(--muted)' }}>
             {catalogueStats
               ? `${catalogueStats.moduleCount} modules · ${catalogueStats.chapterCount} chapters across the full curriculum. Scroll →`
@@ -285,30 +288,42 @@ export default function MediZeeHome() {
         <div className="mz-subjects-scroller" style={{ display: 'flex', gap: 18, overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x mandatory', padding: '4px 44px 24px', WebkitOverflowScrolling: 'touch' }}>
           <Link href="/signup" className="mz-subj mz-featured-glow" style={{ flex: 'none', width: 480, scrollSnapAlign: 'start', position: 'relative', borderRadius: 20, padding: 18, background: 'var(--accent-card)', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
             <div style={{ position: 'relative', height: 220, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(0,166,166,.3)' }}>
-              <Image src="/subjects/histology.webp" alt="Histology" fill sizes="480px" style={{ objectFit: 'cover' }} />
+              <Image src="/subjects/anatomy.webp" alt="Anatomy" fill sizes="480px" style={{ objectFit: 'cover' }} />
               <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: '#33BFBF', background: 'rgba(13,11,26,.8)', border: '1px solid rgba(0,166,166,.5)', padding: '5px 10px', borderRadius: 8, zIndex: 1 }}>✦ Live now</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
               <span style={{ width: 44, height: 44, borderRadius: 11, border: '1px solid rgba(0,166,166,.5)', flex: 'none', display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', color: '#F7F9FA', fontSize: 15, fontWeight: 800, letterSpacing: '-.02em', boxShadow: '0 0 16px rgba(0,166,166,.45)' }}>MZ</span>
               <div>
-                <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)', lineHeight: 1 }}>Histology</div>
+                <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)', lineHeight: 1 }}>Spinal Cord</div>
                 <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
-                  {catalogueStats ? `${catalogueStats.publishedQuestionCount} published questions · ` : ''}Curated by MediZee
+                  Anatomy · Module 205{catalogueStats ? ` · ${catalogueStats.publishedQuestionCount} published questions` : ''}
                 </div>
               </div>
             </div>
-            <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--text3)', flex: 1 }}>High-yield questions, detailed explanations, and visual references — the first live subject in the MediZee bank.</p>
+            <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--text3)', flex: 1 }}>High-yield questions, detailed explanations, and visual references from Module 205&apos;s Spinal Cord chapter — live and ready to study.</p>
             <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 18, fontSize: 14, fontWeight: 700, color: '#F7F9FA', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', padding: 13, borderRadius: 12, boxShadow: '0 0 24px rgba(0,166,166,.45)' }}>Start learning →</div>
           </Link>
-          {LOCKED.map(l => (
-            <div key={l.name} className="mz-subj" style={{ flex: 'none', width: 300, scrollSnapAlign: 'start', borderRadius: 20, overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--card-locked)', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ position: 'relative', height: 160, overflow: 'hidden' }}>
-                <Image src={l.img} alt={l.name} fill sizes="300px" style={{ objectFit: 'cover', filter: 'grayscale(.4) brightness(.75)' }} />
-                <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, ${l.tint}, rgba(8,7,15,.55))` }} />
+          {(landingModules ?? []).map(m => (
+            <div key={m.code} className="mz-subj" style={{ flex: 'none', width: 300, scrollSnapAlign: 'start', borderRadius: 20, padding: 18, border: '1px solid var(--line)', background: 'var(--card-locked)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 10.5, fontWeight: 700, letterSpacing: '.08em', color: '#33BFBF', background: 'rgba(0,166,166,.16)', border: '1px solid rgba(0,166,166,.35)', padding: '4px 8px', borderRadius: 6 }}>
+                  MODULE {m.code}
+                </span>
+                {/* Real data, not a hardcoded per-card flag — same
+                    publishedCount aggregate (sum of chapters.published_count
+                    for this module) already confirmed correct on
+                    /student/catalogue/[year], fetched here via the
+                    anon-safe fetchLandingModules() instead of that
+                    authenticated route. */}
+                {m.publishedCount === 0 && (
+                  <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--muted)', background: 'var(--fill)', border: '1px solid var(--line2)', padding: '4px 8px', borderRadius: 6, flex: 'none' }}>
+                    Coming soon
+                  </span>
+                )}
               </div>
-              <div style={{ padding: 18, flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text2)' }}>{l.name}</div>
-                <span style={{ marginTop: 'auto', alignSelf: 'flex-start', fontSize: 9.5, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--muted)', background: 'var(--fill)', border: '1px solid var(--line2)', padding: '5px 10px', borderRadius: 7 }}>🔒 Coming soon</span>
+              <div style={{ fontSize: 18, fontWeight: 800, marginTop: 14, letterSpacing: '-.01em', color: 'var(--text2)' }}>{m.name}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 8 }}>
+                Year {m.yearNum}{m.publishedCount > 0 ? ` · ${m.publishedCount} published question${m.publishedCount === 1 ? '' : 's'}` : ''}
               </div>
             </div>
           ))}
