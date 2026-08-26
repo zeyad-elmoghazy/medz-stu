@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
 
 type Theme = 'dark' | 'light';
 
@@ -116,6 +117,20 @@ type NavSection = typeof NAV_SECTIONS[number];
 export default function MediZeeHome() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [activeSection, setActiveSection] = useState<NavSection | ''>('');
+  const [catalogueStats, setCatalogueStats] = useState<CatalogueStats | null>(null);
+
+  // Anon-readable — modules_public_read / chapters_public_read /
+  // questions_read_published are all public-role RLS policies, no
+  // session required. Confirmed live before wiring this in.
+  useEffect(() => {
+    let cancelled = false;
+    fetchCatalogueStats().then((s) => {
+      if (!cancelled) setCatalogueStats(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // localStorage isn't available during SSR, so the saved theme can
   // only be read post-mount — a lazy useState initializer would read
@@ -261,7 +276,11 @@ export default function MediZeeHome() {
         <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 40px', padding: '0 44px' }}>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#00A6A6' }}>The catalog</div>
           <h2 className="mz-h2" style={{ margin: '14px 0 0', fontSize: 44, lineHeight: 1.08, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--text)' }}>Start with Histology</h2>
-          <p style={{ margin: '16px 0 0', fontSize: 16, lineHeight: 1.6, color: 'var(--muted)' }}>Six subjects on our roadmap. Scroll →</p>
+          <p style={{ margin: '16px 0 0', fontSize: 16, lineHeight: 1.6, color: 'var(--muted)' }}>
+            {catalogueStats
+              ? `${catalogueStats.moduleCount} modules · ${catalogueStats.chapterCount} chapters across the full curriculum. Scroll →`
+              : 'Loading the curriculum… Scroll →'}
+          </p>
         </div>
         <div className="mz-subjects-scroller" style={{ display: 'flex', gap: 18, overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x mandatory', padding: '4px 44px 24px', WebkitOverflowScrolling: 'touch' }}>
           <Link href="/signup" className="mz-subj mz-featured-glow" style={{ flex: 'none', width: 480, scrollSnapAlign: 'start', position: 'relative', borderRadius: 20, padding: 18, background: 'var(--accent-card)', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
@@ -273,7 +292,9 @@ export default function MediZeeHome() {
               <span style={{ width: 44, height: 44, borderRadius: 11, border: '1px solid rgba(0,166,166,.5)', flex: 'none', display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', color: '#F7F9FA', fontSize: 15, fontWeight: 800, letterSpacing: '-.02em', boxShadow: '0 0 16px rgba(0,166,166,.45)' }}>MZ</span>
               <div>
                 <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)', lineHeight: 1 }}>Histology</div>
-                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>450+ MCQs · Curated by MediZee</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
+                  {catalogueStats ? `${catalogueStats.publishedQuestionCount} published questions · ` : ''}Curated by MediZee
+                </div>
               </div>
             </div>
             <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--text3)', flex: 1 }}>High-yield questions, detailed explanations, and visual references — the first live subject in the MediZee bank.</p>
