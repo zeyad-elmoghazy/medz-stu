@@ -6,13 +6,8 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, LogOut, Moon } from 'lucide-react';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
-import {
-  clearDemoProfile,
-  createBrowserClient,
-  isDemoMode,
-  readDemoProfile,
-  type Profile,
-} from '@/lib/supabase';
+import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabase';
+import { useDisplayName } from '@/lib/use-display-name';
 import {
   getEmptyStudentStats,
   type ChallengeResult,
@@ -43,43 +38,11 @@ function StudentDashboardInner() {
 
   const initialView = searchParams.get('view') === 'analytics' ? 'analytics' : 'home';
   const [view, setView] = useState<'home' | 'analytics'>(initialView);
-  const [firstName, setFirstName] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const displayName = useDisplayName();
+  const firstName = displayName.split(/\s+/)[0] ?? displayName;
   const [signingOut, setSigningOut] = useState(false);
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
-
-  // Populate name from the demo profile (or real Supabase profile).
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (isDemoMode()) {
-        const demo = readDemoProfile();
-        if (demo?.full_name && !cancelled) {
-          setDisplayName(demo.full_name);
-          setFirstName(demo.full_name.split(/\s+/)[0] ?? demo.full_name);
-        }
-        return;
-      }
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
-          .single();
-        const profile = data as Pick<Profile, 'full_name'> | null;
-        if (!cancelled && profile?.full_name) {
-          setDisplayName(profile.full_name);
-          setFirstName(profile.full_name.split(/\s+/)[0] ?? profile.full_name);
-        }
-      } catch {
-        /* leave name blank if the profile fetch fails */
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [supabase]);
 
   // Fetch per-student stats from /api/student/stats. In demo mode
   // the API needs a real Supabase session, so we short-circuit to
@@ -372,7 +335,7 @@ function Navbar({
           >
             {initials || 'ME'}
           </span>
-          {userLabel}
+          {userLabel || 'Guest'}
         </Link>
 
         <button

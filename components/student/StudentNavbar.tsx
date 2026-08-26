@@ -6,13 +6,8 @@ import { useEffect, useState } from 'react';
 import { Loader2, LogOut, Moon } from 'lucide-react';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { NavToast, useNavToast } from '@/components/ui/NavToast';
-import {
-  clearDemoProfile,
-  createBrowserClient,
-  isDemoMode,
-  readDemoProfile,
-  type Profile,
-} from '@/lib/supabase';
+import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabase';
+import { useDisplayName } from '@/lib/use-display-name';
 
 // Single source of truth for the student top bar. Every /student
 // page renders this so the header stays identical.
@@ -33,7 +28,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
   const supabase = createBrowserClient();
   const { message, showToast } = useNavToast();
 
-  const [displayName, setDisplayName] = useState('');
+  const displayName = useDisplayName();
   const [signingOut, setSigningOut] = useState(false);
 
   // Sticky header with a subtle background/shadow that fades in once the
@@ -54,31 +49,6 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (isDemoMode()) {
-        const demo = readDemoProfile();
-        if (demo?.full_name && !cancelled) setDisplayName(demo.full_name);
-        return;
-      }
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
-          .single();
-        const profile = data as Pick<Profile, 'full_name'> | null;
-        if (!cancelled && profile?.full_name) setDisplayName(profile.full_name);
-      } catch {
-        /* leave blank on failure */
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [supabase]);
 
   async function handleLogout() {
     if (signingOut) return;
