@@ -129,21 +129,47 @@ export default function CatalogueModulesPage() {
                   borderBottom: '1px solid rgba(255,255,255,0.06)',
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: 'ui-monospace,Menlo,monospace',
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
-                    color: '#33BFBF',
-                    background: 'rgba(0,166,166,0.16)',
-                    border: '1px solid rgba(0,166,166,0.35)',
-                    padding: '4px 8px',
-                    borderRadius: 6,
-                  }}
-                >
-                  MODULE {m.code}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span
+                    style={{
+                      fontFamily: 'ui-monospace,Menlo,monospace',
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      color: '#33BFBF',
+                      background: 'rgba(0,166,166,0.16)',
+                      border: '1px solid rgba(0,166,166,0.35)',
+                      padding: '4px 8px',
+                      borderRadius: 6,
+                    }}
+                  >
+                    MODULE {m.code}
+                  </span>
+                  {/* Real data, not a hardcoded per-card flag: a module
+                      shows "Coming soon" only when publishedCount (the
+                      sum of chapters.published_count across every
+                      chapter in this module, computed server-side) is
+                      zero — a partially-live module like 205 (one
+                      published chapter out of many) never shows it. */}
+                  {m.publishedCount === 0 && (
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: '#8B98A6',
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        flex: 'none',
+                      }}
+                    >
+                      Coming soon
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 12, letterSpacing: '-0.01em', color: '#F7F9FA' }}>
                   {m.name}
                 </div>
