@@ -18,11 +18,20 @@ export default function NotesEditor({
 }: {
   topic: string;
   initialValue: string;
-  onChange: (value: string) => void;
+  /**
+   * Returns whether the save actually succeeded. The "Saved"
+   * indicator below is gated on this resolving `true` — it does not
+   * show optimistically before the request completes, since a
+   * caller backing this with a real network write (rather than a
+   * synchronous local-state setter) needs the copy to mean what it
+   * says.
+   */
+  onChange: (value: string) => Promise<boolean> | void;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(initialValue);
   const [savedTick, setSavedTick] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -55,12 +64,22 @@ export default function NotesEditor({
   function handleChange(value: string) {
     setDraft(value);
     pendingValueRef.current = value;
+    setSaveFailed(false);
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      onChange(value);
+    saveTimer.current = setTimeout(async () => {
+      const result = onChange(value);
+      // A void-returning onChange (the static quiz's synchronous
+      // local-state setter) means "saved" the instant it's called —
+      // there's no async boundary to wait on. A Promise<boolean>
+      // (a real network write) must actually resolve true first.
+      const ok = result === undefined ? true : await result;
       pendingValueRef.current = null;
-      setSavedTick(true);
-      setTimeout(() => setSavedTick(false), 1400);
+      if (ok) {
+        setSavedTick(true);
+        setTimeout(() => setSavedTick(false), 1400);
+      } else {
+        setSaveFailed(true);
+      }
     }, 350);
   }
 
@@ -170,7 +189,9 @@ export default function NotesEditor({
         <div className="flex items-center justify-between text-xs text-text-muted">
           <span className="flex items-center gap-1.5">
             <Save className="h-3.5 w-3.5" />
-            {savedTick ? (
+            {saveFailed ? (
+              <span className="text-rose-300">Failed to save — check your connection</span>
+            ) : savedTick ? (
               <span className="text-emerald-300">Saved</span>
             ) : (
               <span>Auto-save on</span>

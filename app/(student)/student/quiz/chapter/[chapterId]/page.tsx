@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Check, X, LogOut, Maximize2, Bookmark, BookmarkCheck } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { Loader2, Check, X, LogOut, Maximize2, Bookmark, BookmarkCheck, StickyNote } from 'lucide-react';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import {
@@ -12,8 +13,14 @@ import {
   fetchBookmarkStatus,
   addBookmark,
   removeBookmark,
+  fetchNote,
+  saveNote,
   type ChapterQuiz,
 } from '@/lib/chapter-quiz-api';
+
+// Same lazy-load reasoning as the static quiz page: the editor's UI
+// deps aren't paid for on initial quiz load, only when opened.
+const NotesEditor = dynamic(() => import('@/components/quiz/NotesEditor'), { ssr: false });
 
 /**
  * Chapter-scoped quiz — reads live from the DB-backed
@@ -44,6 +51,8 @@ export default function ChapterQuizPage() {
   const intentionalExitRef = useRef(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +79,17 @@ export default function ChapterQuizPage() {
     let cancelled = false;
     fetchBookmarkStatus(question.id).then((b) => {
       if (!cancelled) setBookmarked(b);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [question?.id]);
+
+  useEffect(() => {
+    if (!question) return;
+    let cancelled = false;
+    fetchNote(question.id).then((content) => {
+      if (!cancelled) setNoteContent(content);
     });
     return () => {
       cancelled = true;
@@ -298,33 +318,53 @@ export default function ChapterQuizPage() {
               <h1 style={{ margin: 0, fontSize: 19, fontWeight: 700, color: '#F7F9FA', lineHeight: 1.5 }}>
                 {question.question}
               </h1>
-              <button
-                type="button"
-                onClick={toggleBookmark}
-                disabled={bookmarkLoading}
-                title={bookmarked ? 'Remove bookmark' : 'Bookmark this question'}
-                style={{
-                  flex: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  background: bookmarked ? 'rgba(0,166,166,0.15)' : 'transparent',
-                  color: bookmarked ? '#33BFBF' : '#8B98A6',
-                  cursor: bookmarkLoading ? 'default' : 'pointer',
-                }}
-              >
-                {bookmarkLoading ? (
-                  <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" />
-                ) : bookmarked ? (
-                  <BookmarkCheck style={{ width: 14, height: 14 }} />
-                ) : (
-                  <Bookmark style={{ width: 14, height: 14 }} />
-                )}
-              </button>
+              <div style={{ display: 'flex', gap: 8, flex: 'none' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowNotesPanel(true)}
+                  title="Open notes"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: noteContent ? 'rgba(0,166,166,0.15)' : 'transparent',
+                    color: noteContent ? '#33BFBF' : '#8B98A6',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <StickyNote style={{ width: 14, height: 14 }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleBookmark}
+                  disabled={bookmarkLoading}
+                  title={bookmarked ? 'Remove bookmark' : 'Bookmark this question'}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: bookmarked ? 'rgba(0,166,166,0.15)' : 'transparent',
+                    color: bookmarked ? '#33BFBF' : '#8B98A6',
+                    cursor: bookmarkLoading ? 'default' : 'pointer',
+                  }}
+                >
+                  {bookmarkLoading ? (
+                    <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" />
+                  ) : bookmarked ? (
+                    <BookmarkCheck style={{ width: 14, height: 14 }} />
+                  ) : (
+                    <Bookmark style={{ width: 14, height: 14 }} />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 22 }}>
@@ -561,6 +601,32 @@ export default function ChapterQuizPage() {
             Back to Catalogue
           </Link>
         </div>
+      )}
+
+      {showNotesPanel && question && (
+        <>
+          <div
+            onClick={() => setShowNotesPanel(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 40,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(2px)',
+            }}
+          />
+          <NotesEditor
+            // Remounts on question change instead of resetting via an
+            // effect, same reasoning as the static quiz page — a
+            // pending debounced save flushes through the unmount
+            // cleanup rather than being silently discarded.
+            key={question.id}
+            topic={question.topic}
+            initialValue={noteContent}
+            onChange={(value) => saveNote(question.id, value)}
+            onClose={() => setShowNotesPanel(false)}
+          />
+        </>
       )}
     </CatalogueShell>
   );

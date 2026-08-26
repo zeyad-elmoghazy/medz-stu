@@ -105,3 +105,30 @@ export async function removeBookmark(questionId: number): Promise<boolean> {
   });
   return res.ok;
 }
+
+/** The signed-in student's saved note content for this question, or '' if none. */
+export async function fetchNote(questionId: number): Promise<string> {
+  const res = await fetch(`/api/student/notes?questionId=${questionId}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!res.ok) return '';
+  const body = (await res.json()) as { content: string };
+  return body.content;
+}
+
+/**
+ * Saves note content for this question. Returns whether the write
+ * actually succeeded — the "Saved" indicator in NotesEditor is
+ * gated on this, not shown optimistically before the request
+ * resolves.
+ */
+export async function saveNote(questionId: number, content: string): Promise<boolean> {
+  const res = await fetch('/api/student/notes', {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ questionId, content }),
+  });
+  return res.ok;
+}
