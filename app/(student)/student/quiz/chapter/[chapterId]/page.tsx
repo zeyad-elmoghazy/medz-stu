@@ -3,10 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Check, X, LogOut, Maximize2 } from 'lucide-react';
+import { Loader2, Check, X, LogOut, Maximize2, Bookmark, BookmarkCheck } from 'lucide-react';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
-import { fetchChapterQuiz, fetchChapterReferenceImage, type ChapterQuiz } from '@/lib/chapter-quiz-api';
+import {
+  fetchChapterQuiz,
+  fetchChapterReferenceImage,
+  fetchBookmarkStatus,
+  addBookmark,
+  removeBookmark,
+  type ChapterQuiz,
+} from '@/lib/chapter-quiz-api';
 
 /**
  * Chapter-scoped quiz — reads live from the DB-backed
@@ -35,6 +42,8 @@ export default function ChapterQuizPage() {
   // answer) from Escape/tab-away in the fullscreenchange handler —
   // same flag name/purpose as the static quiz page's mechanism.
   const intentionalExitRef = useRef(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,6 +64,27 @@ export default function ChapterQuizPage() {
     () => !!question && selectedChoice === question.correctAnswer,
     [question, selectedChoice]
   );
+
+  useEffect(() => {
+    if (!question) return;
+    let cancelled = false;
+    fetchBookmarkStatus(question.id).then((b) => {
+      if (!cancelled) setBookmarked(b);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [question?.id]);
+
+  async function toggleBookmark() {
+    if (!question || bookmarkLoading) return;
+    setBookmarkLoading(true);
+    const ok = bookmarked
+      ? await removeBookmark(question.id)
+      : await addBookmark(question.id);
+    if (ok) setBookmarked((b) => !b);
+    setBookmarkLoading(false);
+  }
 
   const enterFullscreen = useCallback(async () => {
     if (typeof document === 'undefined') return;
@@ -264,9 +294,38 @@ export default function ChapterQuizPage() {
               boxShadow: '0 0 40px rgba(0,166,166,0.14)',
             }}
           >
-            <h1 style={{ margin: 0, fontSize: 19, fontWeight: 700, color: '#F7F9FA', lineHeight: 1.5 }}>
-              {question.question}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+              <h1 style={{ margin: 0, fontSize: 19, fontWeight: 700, color: '#F7F9FA', lineHeight: 1.5 }}>
+                {question.question}
+              </h1>
+              <button
+                type="button"
+                onClick={toggleBookmark}
+                disabled={bookmarkLoading}
+                title={bookmarked ? 'Remove bookmark' : 'Bookmark this question'}
+                style={{
+                  flex: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: bookmarked ? 'rgba(0,166,166,0.15)' : 'transparent',
+                  color: bookmarked ? '#33BFBF' : '#8B98A6',
+                  cursor: bookmarkLoading ? 'default' : 'pointer',
+                }}
+              >
+                {bookmarkLoading ? (
+                  <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" />
+                ) : bookmarked ? (
+                  <BookmarkCheck style={{ width: 14, height: 14 }} />
+                ) : (
+                  <Bookmark style={{ width: 14, height: 14 }} />
+                )}
+              </button>
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 22 }}>
               {question.choices.map((c) => {

@@ -68,3 +68,40 @@ export async function fetchChapterReferenceImage(
   const body = (await res.json()) as { url: string | null };
   return body.url ?? null;
 }
+
+/** Whether the signed-in student has bookmarked this question. */
+export async function fetchBookmarkStatus(questionId: number): Promise<boolean> {
+  const res = await fetch(`/api/student/bookmarks?questionId=${questionId}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!res.ok) return false;
+  const body = (await res.json()) as { bookmarked: boolean };
+  return body.bookmarked;
+}
+
+/**
+ * Creates a bookmark row for this question. Returns whether the
+ * write actually succeeded — callers should only flip their UI
+ * state on `true`, not optimistically before this resolves, since
+ * the whole point of this endpoint is that the toggle reflects a
+ * real row, not just local state.
+ */
+export async function addBookmark(questionId: number): Promise<boolean> {
+  const res = await fetch('/api/student/bookmarks', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ questionId }),
+  });
+  return res.ok;
+}
+
+/** Removes the bookmark row for this question. Same success contract as addBookmark. */
+export async function removeBookmark(questionId: number): Promise<boolean> {
+  const res = await fetch(`/api/student/bookmarks?questionId=${questionId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  return res.ok;
+}
