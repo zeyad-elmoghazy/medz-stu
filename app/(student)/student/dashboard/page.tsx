@@ -21,30 +21,8 @@ import {
 } from '@/lib/dashboard-data';
 import { useQuizStore } from '@/lib/store';
 import { NavToast, useNavToast } from '@/components/ui/NavToast';
-
-// =============================================================
-// Static UI copy (not user data — these are visual constants that
-// describe the product itself, not the current student).
-// =============================================================
-
-type LockedSubject = {
-  name: string;
-  image: string;         // path under /public
-  gradientFrom: string;  // color-coded overlay start — the emoji is gone
-  gradientTo: string;    // but the color identity per subject stays
-};
-
-// "Coming soon" subject placeholders on the home grid. Not user
-// data — this is the marketing catalog. Real per-subject stats
-// come from /api/student/stats.subjects. Images live in
-// public/subjects/<name>.png.
-const LOCKED: LockedSubject[] = [
-  { name: 'Anatomy',      image: '/subjects/anatomy.webp',      gradientFrom: 'rgba(59,130,246,0.55)', gradientTo: 'rgba(15,23,42,0.15)' },
-  { name: 'Physiology',   image: '/subjects/physiology.webp',   gradientFrom: 'rgba(239,68,68,0.55)',  gradientTo: 'rgba(15,23,42,0.15)' },
-  { name: 'Biochemistry', image: '/subjects/biochemistry.webp', gradientFrom: 'rgba(16,185,129,0.55)', gradientTo: 'rgba(15,23,42,0.15)' },
-  { name: 'Pathology',    image: '/subjects/pathology.webp',    gradientFrom: 'rgba(236,72,153,0.55)', gradientTo: 'rgba(15,23,42,0.15)' },
-  { name: 'Pharmacology', image: '/subjects/pharmacology.webp', gradientFrom: 'rgba(249,115,22,0.55)', gradientTo: 'rgba(15,23,42,0.15)' },
-];
+import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
+import { fetchModulesByYear, type ModulesByYear } from '@/lib/catalogue-api';
 
 // =============================================================
 // Page
@@ -62,7 +40,6 @@ function StudentDashboardInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createBrowserClient();
-  const startSession = useQuizStore((s) => s.startSession);
 
   const initialView = searchParams.get('view') === 'analytics' ? 'analytics' : 'home';
   const [view, setView] = useState<'home' | 'analytics'>(initialView);
@@ -148,11 +125,6 @@ function StudentDashboardInner() {
     router.refresh();
   }
 
-  function handleStartHistology() {
-    startSession();
-    router.push('/student/quiz/histology');
-  }
-
   const toggleView = () => setView((v) => (v === 'home' ? 'analytics' : 'home'));
 
   // Canvas background — design's radial gradients + dotted texture.
@@ -192,7 +164,6 @@ function StudentDashboardInner() {
         {view === 'home' ? (
           <HomeView
             firstName={firstName}
-            onStartHistology={handleStartHistology}
             onViewAnalytics={() => setView('analytics')}
           />
         ) : (
@@ -436,13 +407,31 @@ function Navbar({
 // =============================================================
 
 function HomeView({
-  onStartHistology,
   onViewAnalytics,
 }: {
   firstName: string;
-  onStartHistology: () => void;
   onViewAnalytics: () => void;
 }) {
+  const [catalogueStats, setCatalogueStats] = useState<CatalogueStats | null>(null);
+  const [modulesByYear, setModulesByYear] = useState<ModulesByYear | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchCatalogueStats().then((s) => {
+      if (!cancelled) setCatalogueStats(s);
+    });
+    fetchModulesByYear()
+      .then((d) => {
+        if (!cancelled) setModulesByYear(d);
+      })
+      .catch(() => {
+        /* leave modulesByYear null — the section below handles it */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <>
       {/* ================= HERO ================= */}
@@ -575,14 +564,14 @@ function HomeView({
           <h1
             style={{
               margin: 0,
-              fontSize: 62,
-              lineHeight: 1.02,
+              fontSize: 56,
+              lineHeight: 1.05,
               fontWeight: 900,
               letterSpacing: '-0.035em',
               color: '#F7F9FA',
             }}
           >
-            Study <span style={{ color: '#00A6A6' }}>Histology</span> Now
+            Master Your Curriculum, <span style={{ color: '#00A6A6' }}>Chapter by Chapter</span>
           </h1>
 
           <div
@@ -594,7 +583,7 @@ function HomeView({
               color: '#F7F9FA',
             }}
           >
-            The MediZee Histology Question Bank
+            The Full MediZee Curriculum Catalogue
           </div>
 
           <p
@@ -606,25 +595,36 @@ function HomeView({
               lineHeight: 1.6,
             }}
           >
-            High-yield questions, detailed explanations, and visual references — the first live subject in the MediZee bank, with flashcards and an AI tutor on the way.
+            Every module and chapter organized the way your program teaches it — high-yield questions, detailed explanations, and visual references, publishing chapter by chapter.
           </p>
 
-          {/* Micro-stat row */}
+          {/* Micro-stat row — real structural counts, not a single
+              headline number. Published-question count is shown
+              smaller and explicitly labeled rather than implying
+              the whole bank is live. */}
           <div style={{ display: 'flex', gap: 30, alignItems: 'center', margin: '30px 0 34px' }}>
-            <StatMicro value="450+" label={<>High-Yield<br />Questions</>} big />
+            <StatMicro
+              value={catalogueStats ? String(catalogueStats.moduleCount) : '—'}
+              label={<>Modules</>}
+              big
+            />
             <Divider />
-            <StatMicro label={<>Detailed<br />Explanations</>} />
+            <StatMicro
+              value={catalogueStats ? String(catalogueStats.chapterCount) : '—'}
+              label={<>Chapters</>}
+              big
+            />
             <Divider />
-            <StatMicro label={<>Visual<br />References</>} />
-            <Divider />
-            <StatMicro label={<>Exam<br />Focused</>} />
+            <StatMicro
+              value={catalogueStats ? String(catalogueStats.publishedQuestionCount) : '—'}
+              label={<>Published<br />so far</>}
+            />
           </div>
 
           {/* CTAs */}
           <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={onStartHistology}
+            <Link
+              href="/student/catalogue"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -638,10 +638,11 @@ function HomeView({
                 boxShadow: '0 0 30px rgba(0,166,166,0.5)',
                 cursor: 'pointer',
                 border: 'none',
+                textDecoration: 'none',
               }}
             >
-              Start Learning Histology <span style={{ fontSize: 17 }}>→</span>
-            </button>
+              Browse the Catalogue <span style={{ fontSize: 17 }}>→</span>
+            </Link>
 
             <button
               type="button"
@@ -666,90 +667,57 @@ function HomeView({
         </div>
       </section>
 
-      {/* ================= EXPLORE ALL SUBJECTS ================= */}
+      {/* ================= CATALOGUE ================= */}
       <section style={{ position: 'relative', padding: '34px 44px 30px' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', color: '#F7F9FA' }}>
-            Explore All Subjects
+            Browse the Catalogue
           </h2>
-          <div style={{ fontSize: 13, color: '#8B98A6', marginTop: 8 }}>More subjects coming soon</div>
+          <div style={{ fontSize: 13, color: '#8B98A6', marginTop: 8, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
+            {catalogueStats
+              ? `${catalogueStats.moduleCount} modules · ${catalogueStats.chapterCount} chapters across your curriculum. Spinal Cord (Anatomy) is the only chapter published so far — the rest are publishing over time.`
+              : 'Loading…'}
+          </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1.55fr repeat(5, 1fr)',
-            gap: 16,
-            alignItems: 'stretch',
-          }}
-        >
-          {/* Featured: Histology */}
+        {modulesByYear ? (
           <div
             style={{
-              position: 'relative',
-              borderRadius: 18,
-              padding: 16,
-              background: 'linear-gradient(165deg,#132B45,#0B1F33)',
-              animation: 'medzGlow 3.4s ease-in-out infinite',
-              display: 'flex',
-              flexDirection: 'column',
-              cursor: 'pointer',
+              display: 'grid',
+              gridTemplateColumns: `repeat(${modulesByYear.years.length || 1}, 1fr)`,
+              gap: 16,
             }}
-            onClick={onStartHistology}
           >
-            <div
-              style={{
-                position: 'relative',
-                height: 190,
-                borderRadius: 12,
-                overflow: 'hidden',
-                border: '1px solid rgba(0,166,166,0.3)',
-              }}
-            >
-              <Image
-                src="/subjects/histology.webp"
-                alt="Histology"
-                fill
-                sizes="320px"
-                style={{ objectFit: 'cover' }}
-              />
-            </div>
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', color: '#F7F9FA' }}>
-                Histology
-              </div>
-              <div style={{ fontSize: 12, color: '#8B98A6', marginTop: 4 }}>Curated by MediZee</div>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 7,
-                  marginTop: 14,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  color: '#33BFBF',
-                  border: '1px solid rgba(0,166,166,0.4)',
-                  padding: '6px 11px',
-                  borderRadius: 8,
-                }}
-              >
-                Exclusive Module
-              </div>
-            </div>
-            <div style={{ marginTop: 'auto', paddingTop: 18, fontSize: 11.5, color: '#8B98A6' }}>
-              <div style={{ fontWeight: 700, color: '#F7F9FA' }}>450+ High-Yield Questions</div>
-              <div style={{ color: '#8B98A6', marginTop: 4 }}>
-                Detailed Explanations · Visual References · Exam Focused
-              </div>
-            </div>
+            {modulesByYear.years.map((y) => (
+              <YearCard key={y.year} year={y} />
+            ))}
           </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: '#8B98A6', fontSize: 13, padding: 40 }}>
+            <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+            Loading catalogue…
+          </div>
+        )}
 
-          {/* Locked subjects */}
-          {LOCKED.map((s) => (
-            <LockedSubjectCard key={s.name} subject={s} />
-          ))}
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <Link
+            href="/student/catalogue"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              color: '#33BFBF',
+              background: 'rgba(0,166,166,0.1)',
+              border: '1px solid rgba(0,166,166,0.45)',
+              padding: '12px 22px',
+              borderRadius: 11,
+              textDecoration: 'none',
+            }}
+          >
+            View full Catalogue →
+          </Link>
         </div>
       </section>
 
@@ -1205,61 +1173,46 @@ function Divider() {
   return <div style={{ width: 1, height: 34, background: 'rgba(255,255,255,0.12)' }} />;
 }
 
-function LockedSubjectCard({ subject }: { subject: LockedSubject }) {
+function YearCard({ year }: { year: ModulesByYear['years'][number] }) {
   return (
-    <div
+    <Link
+      href={`/student/catalogue/${year.year}`}
       style={{
+        cursor: 'pointer',
+        position: 'relative',
         borderRadius: 16,
-        padding: 14,
+        overflow: 'hidden',
         background: '#132B45',
         border: '1px solid rgba(255,255,255,0.07)',
-        display: 'flex',
-        flexDirection: 'column',
+        padding: 20,
+        textDecoration: 'none',
+        display: 'block',
       }}
     >
       <div
         style={{
-          height: 118,
-          borderRadius: 11,
-          overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.06)',
-          position: 'relative',
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 15,
+          fontWeight: 800,
+          color: '#F7F9FA',
+          marginBottom: 14,
         }}
       >
-        <Image
-          src={subject.image}
-          alt={subject.name}
-          fill
-          sizes="180px"
-          style={{ objectFit: 'cover' }}
-        />
-        {/* Color-coded overlay preserves each subject's visual
-            identity (was the emoji tint) and softens the image
-            just enough to signal "coming soon". */}
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: `linear-gradient(135deg, ${subject.gradientFrom}, ${subject.gradientTo})`,
-            mixBlendMode: 'multiply',
-          }}
-        />
+        {year.year}
       </div>
-      <div style={{ marginTop: 13, flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#F7F9FA' }}>{subject.name}</div>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#8B98A6', letterSpacing: '0.06em' }}>LOCKED</span>
-        </div>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', color: '#00A6A6', marginTop: 3 }}>
-          Coming Soon
-        </div>
+      <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', color: '#F7F9FA' }}>
+        Year {year.year}
       </div>
-      <div style={{ marginTop: 12, fontSize: 10.5, color: '#8B98A6', lineHeight: 1.5 }}>
-        High-Yield Questions
-        <br />
-        Detailed Explanations
+      <div style={{ fontSize: 11.5, color: '#8B98A6', marginTop: 3 }}>{year.label}</div>
+      <div style={{ fontSize: 10.5, color: '#8B98A6', marginTop: 12 }}>
+        {year.moduleCount} modules · {year.chapterCount} chapters
       </div>
-    </div>
+    </Link>
   );
 }
