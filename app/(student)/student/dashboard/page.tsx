@@ -150,8 +150,6 @@ const NAV_LINKS: { label: string; href?: string; active?: boolean; toast?: strin
   { label: 'Home',           active: true },
   { label: 'Catalogue',      href: '/student/catalogue' },
   { label: 'Custom Exam',    href: '/student/exam' },
-  { label: 'Flashcards',     toast: 'Coming soon.' },
-  { label: 'AI Tutor',       toast: 'Coming soon.' },
   { label: 'Leaderboard' },
 ];
 
@@ -470,39 +468,30 @@ function HomeView({
             <Image src="/medizee-logo.webp" alt="MediZee" width={120} height={120} priority style={{ borderRadius: 20 }} />
           </div>
 
-          {/* Feature chips positioned around the mark */}
-          {[
-            { label: 'MCQ Bank',        top: '10%', left: '4%'  },
-            { label: 'Generated Exams', top: '10%', right: '4%' },
-            { label: 'Flashcards Soon', bottom: '12%', left: '4%'  },
-            { label: 'AI Tutor Soon',   bottom: '12%', right: '4%' },
-          ].map((chip) => (
-            <div
-              key={chip.label}
-              style={{
-                position: 'absolute',
-                zIndex: 3,
-                top: chip.top,
-                left: chip.left,
-                right: chip.right,
-                bottom: chip.bottom,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                color: '#33BFBF',
-                background: 'rgba(13,11,26,0.82)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                border: '1px solid rgba(0,166,166,0.4)',
-                padding: '8px 12px',
-                borderRadius: 10,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-              }}
-            >
-              {chip.label}
-            </div>
-          ))}
+          {/* Feature chip above the mark */}
+          <div
+            style={{
+              position: 'absolute',
+              zIndex: 3,
+              top: '8%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: '#33BFBF',
+              background: 'rgba(13,11,26,0.82)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(0,166,166,0.4)',
+              padding: '8px 12px',
+              borderRadius: 10,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            }}
+          >
+            MCQ Bank
+          </div>
         </div>
 
         {/* Hero copy */}

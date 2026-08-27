@@ -30,19 +30,9 @@ const FEATURES = [
     icon: (<><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="12" y1="4" x2="12" y2="20" /></>),
   },
   {
-    title: 'Flashcards (coming soon)',
-    body: 'Spaced-repetition decks generated from the same question bank, so every mistake becomes a card that comes back until it sticks.',
-    icon: (<><path d="M5 4h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5z" /><line x1="5" y1="4" x2="5" y2="22" /><line x1="9" y1="9" x2="15" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /></>),
-  },
-  {
     title: 'Generate your own exams',
     body: 'Pick subjects, chapters, and length. MediZee builds a fresh mock exam, timed and graded, from the full MCQ bank.',
     icon: (<><rect x="4" y="3" width="16" height="18" rx="2" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12" y2="16" /></>),
-  },
-  {
-    title: 'AI Tutor (coming soon)',
-    body: 'Ask why an answer is right, get an explanation grounded in the source notes. Available on any question, any time.',
-    icon: (<><path d="M12 3l1.9 4.6L18 9l-3.5 3 1 4.9L12 15l-3.5 1.9L9.5 12 6 9l4.1-1.4L12 3z" /></>),
   },
   {
     title: 'Analytics & study streaks',
@@ -220,14 +210,14 @@ export default function MediZeeHome() {
             Not another <span className="mz-hero-word">PDF</span><br />in a Telegram group.
           </h1>
           <p style={{ margin: '26px 0 0', maxWidth: 600, fontSize: 17, lineHeight: 1.65, color: 'var(--muted)' }}>
-            MediZee is a full MCQ bank with instant split-view feedback, generated mock exams, flashcards, and an AI tutor — one place to drill, review, and see exactly where you&apos;re weak.
+            MediZee is a full MCQ bank with instant split-view feedback — one place to drill, review, and see exactly where you&apos;re weak.
           </p>
           <div style={{ display: 'flex', gap: 15, alignItems: 'center', marginTop: 38, flexWrap: 'wrap', justifyContent: 'center' }}>
             <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 700, color: '#F7F9FA', background: 'linear-gradient(135deg,#00A6A6,#33BFBF)', padding: '17px 34px', borderRadius: 14, boxShadow: '0 0 34px rgba(0,166,166,.55)' }}>Start learning free <span style={{ fontSize: 18 }}>→</span></Link>
             <a href="#how" className="mz-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 16, fontWeight: 700, color: 'var(--accent-text)', background: 'rgba(0,166,166,.1)', border: '1px solid rgba(0,166,166,.45)', padding: '17px 30px', borderRadius: 14 }}>See how it works</a>
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginTop: 46 }}>
-            {['MCQ bank', 'Generated exams', 'Flashcards soon', 'AI tutor soon'].map(c => (
+            {['MCQ bank'].map(c => (
               <span key={c} style={{ fontSize: 12.5, color: 'var(--text3)', background: 'var(--fill)', border: '1px solid var(--line)', padding: '9px 15px', borderRadius: 999 }}>{c}</span>
             ))}
           </div>
@@ -346,7 +336,7 @@ export default function MediZeeHome() {
             </div>
             <p style={{ margin: '12px 0 0', fontSize: 14, color: 'var(--muted)' }}>Full access to every live module during the demo. No card required.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, margin: '28px 0 0', textAlign: 'left' }}>
-              {['Unlimited MCQ challenges', 'Personal analytics, streaks & quiz-on-mistakes', 'Generated mock exams and lecture-note references'].map(b => (
+              {['Unlimited MCQ challenges', 'Personal analytics, streaks & quiz-on-mistakes', 'Lecture-note references on every question'].map(b => (
                 <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 11, fontSize: 14, color: 'var(--text3)' }}><span style={{ color: '#10B981' }}>✓</span>{b}</div>
               ))}
             </div>

@@ -18,8 +18,6 @@ const DEFAULT_LINKS: NavLink[] = [
   { label: 'Home',         href: '/student/dashboard' },
   { label: 'Catalogue',    href: '/student/catalogue' },
   { label: 'Custom Exam',  href: '/student/exam' },
-  { label: 'Flashcards',   toast: 'Coming soon.' },
-  { label: 'AI Tutor',     toast: 'Coming soon.' },
   { label: 'Leaderboard' },
 ];
 
