@@ -8,6 +8,7 @@ import { Loader2, LogOut, Moon } from 'lucide-react';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabase';
 import { useDisplayName } from '@/lib/use-display-name';
+import { useScrollShadow } from '@/lib/use-scroll-shadow';
 import {
   getEmptyStudentStats,
   type ChallengeResult,
@@ -178,26 +179,12 @@ function Navbar({
 
   // Sticky header with a subtle background/shadow that fades in once the
   // page has scrolled — same treatment as StudentNavbar.
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      setScrolled(window.scrollY > 4);
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
+  const scrolled = useScrollShadow();
 
   return (
     <>
     <nav
+      className={`mz-nav-scroll${scrolled ? ' is-scrolled' : ''}`}
       style={{
         position: 'sticky',
         top: 0,
@@ -207,11 +194,6 @@ function Navbar({
         justifyContent: 'space-between',
         padding: '20px 34px',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: scrolled ? 'rgba(11,31,51,0.85)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(10px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(10px)' : 'none',
-        boxShadow: scrolled ? '0 4px 20px rgba(0,0,0,0.25)' : '0 0 0 rgba(0,0,0,0)',
-        transition: 'background-color 0.25s ease, box-shadow 0.25s ease, backdrop-filter 0.25s ease',
       }}
     >
       <MediZeeLogo size="sm" />

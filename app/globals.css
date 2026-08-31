@@ -38,6 +38,14 @@
 }
 
 @layer utilities {
+  /* The build's CSS minifier collapses backdrop-filter +
+     -webkit-backdrop-filter declared on the same rule into a single
+     declaration (keeps whichever is written last, drops the other) —
+     confirmed by swapping the order and rebuilding, not assumed. An
+     @supports fallback puts the -webkit- form in a structurally
+     separate rule that survives the same minify pass, so old Safari
+     (<18, no unprefixed support) gets the prefixed version and every
+     other browser gets the standard one. */
   .glass {
     background: linear-gradient(
       180deg,
@@ -45,8 +53,13 @@
       rgba(9, 9, 14, 0.6) 100%
     );
     backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass {
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+    }
   }
 
   .glass-strong {
@@ -57,6 +70,32 @@
     );
     backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .glass-strong {
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+    }
+  }
+
+  /* Sticky-nav scroll shadow. lib/use-scroll-shadow.ts sets the
+     `is-scrolled` class from React state when scrollY crosses the
+     threshold; once the class is on, the fade is entirely the
+     compositor's job. No backdrop-filter here on purpose: the
+     original scroll-toggled backdrop-filter was the actually
+     expensive part of this pattern (a live backdrop blur recomputed
+     on every scroll-position flip), and a plain background-color +
+     box-shadow gives the same "distinguish scrolled from top"
+     affordance for a fraction of the compositing cost. */
+  .mz-nav-scroll {
+    background: transparent;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .mz-nav-scroll.is-scrolled {
+    background: rgba(11, 31, 51, 0.85);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   }
 
   .shimmer-bg {

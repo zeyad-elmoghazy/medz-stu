@@ -2,6 +2,14 @@
   "name": "medz-demo",
   "version": "0.1.0",
   "private": true,
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Edge versions",
+    "last 3 Safari versions",
+    "last 3 iOS versions",
+    "not dead"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
