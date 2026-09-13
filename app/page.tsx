@@ -63,8 +63,13 @@ const STEPS = [
 ];
 
 const PAGE_CSS = `
-[data-mz-root]{--bg:#0B1F33;--bg2:#0B1F33;--surface:#132B45;--text:#F7F9FA;--text2:#D9F3F0;--text3:#8B98A6;--muted:#8B98A6;--faint:#8B98A6;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);--fill:rgba(255,255,255,.04);--nav-bg:rgba(8,7,15,.72);--accent-card:linear-gradient(165deg,#132B45,#0B1F33);--price-card:linear-gradient(165deg,#132B45,#0B1F33);--card-locked:#0B1F33;--accent-text:#33BFBF}
-[data-mz-root][data-mz-theme="light"]{--bg:#D9F3F0;--bg2:#D9F3F0;--surface:#F7F9FA;--text:#132B45;--text2:#332E44;--text3:#8B98A6;--muted:#8B98A6;--faint:#8B98A6;--line:rgba(24,20,46,.10);--line2:rgba(24,20,46,.16);--fill:rgba(24,20,46,.035);--nav-bg:rgba(246,245,251,.82);--accent-card:linear-gradient(165deg,#D9F3F0,#F7F9FA);--price-card:linear-gradient(165deg,#D9F3F0,#F7F9FA);--card-locked:#D9F3F0;--accent-text:#00A6A6}
+/* The dark-defaults + light-override token blocks that used to
+   live here (identical selectors: [data-mz-root] and
+   [data-mz-root][data-mz-theme="light"]) now live once, in
+   app/globals.css, so this page and the student area consume
+   the same values instead of each keeping its own copy. This
+   block only ever *reads* the tokens via var(--…) below — it no
+   longer defines them. */
 [data-mz-root]{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;transition:background .3s ease,color .3s ease}
 [data-mz-root] a{color:inherit;text-decoration:none}
 .mz-link{position:relative;color:var(--muted);font-size:14px;font-weight:500;transition:color .2s;padding:4px 0}
@@ -128,12 +133,28 @@ export default function MediZeeHome() {
   // localStorage isn't available during SSR, so the saved theme can
   // only be read post-mount — a lazy useState initializer would read
   // it on the client's first render and mismatch the server-rendered
-  // (always-'dark') HTML.
+  // (always-'dark') HTML. The anti-flash inline script in
+  // app/layout.tsx's <head> already set document.documentElement's
+  // data-mz-theme before first paint from the same localStorage key,
+  // so this effect is just catching React's own state up to what's
+  // already on screen (see the sync effect below).
   useEffect(() => {
     const saved = (typeof window !== 'undefined' && (window.localStorage.getItem('mz-theme') as Theme)) || 'dark';
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(saved);
   }, []);
+
+  // The theme attribute now lives on <html> (not on this component's
+  // own [data-mz-root] div) so the same value can theme every
+  // [data-mz-root] wrapper in the tree — including the student
+  // area's, mounted under a completely different component. React
+  // state here stays the source of truth for this page's own UI
+  // (the Sun/Moon icon), and this effect is what actually applies it.
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.dataset.mzTheme = theme;
+    }
+  }, [theme]);
 
   useEffect(() => {
     const els = NAV_SECTIONS.map(id => document.getElementById(id)).filter((el): el is HTMLElement => !!el);
@@ -168,7 +189,7 @@ export default function MediZeeHome() {
   const isLight = theme === 'light';
 
   return (
-    <div data-mz-root data-mz-theme={theme} style={{ minHeight: '100vh' }}>
+    <div data-mz-root style={{ minHeight: '100vh' }}>
       <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
 
       {/* NAV */}
