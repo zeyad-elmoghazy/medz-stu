@@ -20,11 +20,21 @@ function serviceRoleClient() {
 
 /**
  * Resolves a question's book-page reference into a signed, viewable
- * image URL: chapter -> module -> modules.book_id -> the
- * reference_pages row matching (book_id, page_number = referencePage)
- * -> its image_url, signed the same way getSignedNotesPageUrl()
- * signs notes-pages objects. Shared by both the student fetch route
- * and the admin review route so there's one resolution path, not two.
+ * image URL: chapters.default_book_id if set, otherwise chapter ->
+ * module -> modules.book_id -> the reference_pages row matching
+ * (book_id, page_number = referencePage) -> its image_url, signed
+ * the same way getSignedNotesPageUrl() signs notes-pages objects.
+ * Shared by both the student fetch route and the admin review route
+ * so there's one resolution path, not two.
+ *
+ * default_book_id lets a chapter override the module's book for
+ * cases where a module hosts multiple subjects that don't share one
+ * reference book (module_subjects is many-per-module; modules.book_id
+ * is one-per-module). It was added by 015_b2c_pivot_rebuild.sql and
+ * is already read/written by the admin chapters API
+ * (app/api/admin/content/chapters/[id]/route.ts) but was never
+ * consulted here — every chapter has it NULL today, so this change
+ * is inert until an admin sets one.
  *
  * ASSUMPTION (flagged, unconfirmed): image_url is treated as a
  * private storage path inside the `notes-pages` bucket — the only
@@ -37,7 +47,7 @@ function serviceRoleClient() {
  * image_url turns out to already be a full/public URL instead.
  *
  * Returns null for any "no reference to show" case (no reference_page,
- * module has no book, no matching reference_pages row) — only throws
+ * no book resolved, no matching reference_pages row) — only throws
  * on missing env config, same contract as getSignedNotesPageUrl().
  */
 export async function getSignedBookPageUrl(
@@ -50,22 +60,30 @@ export async function getSignedBookPageUrl(
 
   const { data: chapter } = await untypedFrom(supabase)
     .from('chapters')
-    .select('module_code')
+    .select('module_code, default_book_id')
     .eq('id', chapterId)
     .single();
-  if (!chapter?.module_code) return null;
+  if (!chapter) return null;
 
-  const { data: mod } = await untypedFrom(supabase)
-    .from('modules')
-    .select('book_id')
-    .eq('code', chapter.module_code)
-    .single();
-  if (!mod?.book_id) return null;
+  let bookId: string | null = chapter.default_book_id ?? null;
+
+  if (!bookId) {
+    if (!chapter.module_code) return null;
+
+    const { data: mod } = await untypedFrom(supabase)
+      .from('modules')
+      .select('book_id')
+      .eq('code', chapter.module_code)
+      .single();
+    if (!mod?.book_id) return null;
+
+    bookId = mod.book_id;
+  }
 
   const { data: page } = await untypedFrom(supabase)
     .from('reference_pages')
     .select('image_url')
-    .eq('book_id', mod.book_id)
+    .eq('book_id', bookId)
     .eq('page_number', referencePage)
     .single();
   if (!page?.image_url) return null;
