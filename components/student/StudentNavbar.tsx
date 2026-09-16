@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Loader2, LogOut, Moon } from 'lucide-react';
+import { Loader2, LogOut, Moon, Sun } from 'lucide-react';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { NavToast, useNavToast } from '@/components/ui/NavToast';
 import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabase';
 import { useDisplayName } from '@/lib/use-display-name';
 import { useScrollShadow } from '@/lib/use-scroll-shadow';
+import { useStudentTheme } from '@/lib/use-student-theme';
 
 // Single source of truth for the student top bar. Every /student
 // page renders this so the header stays identical.
@@ -29,6 +30,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
 
   const displayName = useDisplayName();
   const [signingOut, setSigningOut] = useState(false);
+  const { theme, toggleTheme } = useStudentTheme();
 
   // Sticky header with a subtle background/shadow that fades in once the
   // page has scrolled — same treatment as dashboard's inline Navbar.
@@ -144,6 +146,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
 
           <button
             type="button"
+            onClick={toggleTheme}
             aria-label="Toggle theme"
             style={{
               width: 34,
@@ -158,7 +161,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               cursor: 'pointer',
             }}
           >
-            <Moon style={{ width: 15, height: 15 }} />
+            {theme === 'light' ? <Moon style={{ width: 15, height: 15 }} /> : <Sun style={{ width: 15, height: 15 }} />}
           </button>
 
           <Link

@@ -54,13 +54,23 @@ export default function RootLayout({
             "must run before hydration" case — a raw <script> in JSX
             hits a real, verified-during-testing React dev warning
             ("Scripts inside React components are never executed
-            when rendering on the client"); beforeInteractive doesn't. */}
+            when rendering on the client"); beforeInteractive doesn't.
+
+            Falls back to medz.studentPrefs.theme (the profile page's
+            old, pre-StudentThemeProvider preference blob) when
+            mz-theme hasn't been set yet — same fallback order as the
+            one-time migration in lib/use-student-theme.tsx's mount
+            effect, just replicated here so a student who'd already
+            flipped that old switch doesn't see a dark-then-light
+            flash on their first load after this change. This script
+            only reads the legacy value for this one paint; writing
+            mz-theme from it is still the provider's job on mount. */}
         <Script
           id="mz-theme-init"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var t=localStorage.getItem('mz-theme');document.documentElement.dataset.mzTheme=(t==='light'||t==='dark')?t:'dark';}catch(e){document.documentElement.dataset.mzTheme='dark';}})();",
+              "(function(){try{var t=localStorage.getItem('mz-theme');if(t!=='light'&&t!=='dark'){var raw=localStorage.getItem('medz.studentPrefs');if(raw){var legacy=JSON.parse(raw).theme;if(legacy==='light'||legacy==='dark')t=legacy;}}document.documentElement.dataset.mzTheme=(t==='light'||t==='dark')?t:'dark';}catch(e){document.documentElement.dataset.mzTheme='dark';}})();",
           }}
         />
       </head>

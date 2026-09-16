@@ -11,6 +11,7 @@ import {
   readDemoProfile,
   type Profile,
 } from '@/lib/supabase';
+import { useStudentTheme } from '@/lib/use-student-theme';
 
 const PREF_KEY = 'medz.studentPrefs';
 
@@ -33,6 +34,7 @@ export default function ProfileSettingsPage() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const { theme, setTheme } = useStudentTheme();
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
@@ -192,11 +194,11 @@ export default function ProfileSettingsPage() {
             onChange={(v) => updatePrefs({ reminderNotifications: v })}
           />
           <Toggle
-            icon={prefs.theme === 'dark' ? <Moon style={{ width: 14, height: 14 }} /> : <Sun style={{ width: 14, height: 14 }} />}
+            icon={theme === 'dark' ? <Moon style={{ width: 14, height: 14 }} /> : <Sun style={{ width: 14, height: 14 }} />}
             label="Dark theme"
-            hint="Light theme is coming soon."
-            value={prefs.theme === 'dark'}
-            onChange={(v) => updatePrefs({ theme: v ? 'dark' : 'light' })}
+            hint="Applies everywhere — dashboard, catalogue, and quizzes."
+            value={theme === 'dark'}
+            onChange={(v) => setTheme(v ? 'dark' : 'light')}
           />
         </Card>
 
