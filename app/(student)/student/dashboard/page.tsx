@@ -4,11 +4,10 @@ import { Suspense, useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, LogOut, Moon } from 'lucide-react';
-import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
-import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabase';
+import { Loader2 } from 'lucide-react';
+import { StudentNavbar } from '@/components/student/StudentNavbar';
+import { isDemoMode } from '@/lib/supabase';
 import { useDisplayName } from '@/lib/use-display-name';
-import { useScrollShadow } from '@/lib/use-scroll-shadow';
 import {
   getEmptyStudentStats,
   type ChallengeResult,
@@ -16,7 +15,6 @@ import {
   type StudentStats,
 } from '@/lib/dashboard-data';
 import { useQuizStore } from '@/lib/store';
-import { NavToast, useNavToast } from '@/components/ui/NavToast';
 import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
 import { fetchModulesByYear, type ModulesByYear } from '@/lib/catalogue-api';
 
@@ -33,17 +31,28 @@ export default function StudentDashboardPage() {
 }
 
 function StudentDashboardInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createBrowserClient();
 
   const initialView = searchParams.get('view') === 'analytics' ? 'analytics' : 'home';
   const [view, setView] = useState<'home' | 'analytics'>(initialView);
   const displayName = useDisplayName();
   const firstName = displayName.split(/\s+/)[0] ?? displayName;
-  const [signingOut, setSigningOut] = useState(false);
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+
+  // StudentNavbar's "My Progress" / "Home" links navigate to this same
+  // route with a different ?view= query param rather than flipping
+  // local state directly (that's what the private Navbar this
+  // replaced used to do). Since it's the same route, Next keeps this
+  // component mounted across that navigation — useState's initialView
+  // only applies on the first render — so without this, clicking
+  // those links while already on the dashboard wouldn't change what's
+  // shown. This keeps view in sync with the URL on every navigation;
+  // the in-page onViewAnalytics/onBackToSubjects callbacks below still
+  // flip it directly without touching the URL, same as before.
+  useEffect(() => {
+    setView(searchParams.get('view') === 'analytics' ? 'analytics' : 'home');
+  }, [searchParams]);
 
   // Fetch per-student stats from /api/student/stats. In demo mode
   // the API needs a real Supabase session, so we short-circuit to
@@ -80,17 +89,6 @@ function StudentDashboardInner() {
     return () => { cancelled = true; };
   }, []);
 
-  async function handleLogout() {
-    if (signingOut) return;
-    setSigningOut(true);
-    clearDemoProfile();
-    if (!isDemoMode()) await supabase.auth.signOut().catch(() => {});
-    router.push('/login');
-    router.refresh();
-  }
-
-  const toggleView = () => setView((v) => (v === 'home' ? 'analytics' : 'home'));
-
   // Canvas background — design's radial gradients + dotted texture.
   const canvasBg: CSSProperties = {
     width: 1280,
@@ -117,13 +115,7 @@ function StudentDashboardInner() {
       <div style={canvasBg}>
         <div aria-hidden style={dotTexture} />
 
-        <Navbar
-          view={view}
-          onToggleView={toggleView}
-          userLabel={displayName}
-          signingOut={signingOut}
-          onLogout={handleLogout}
-        />
+        <StudentNavbar activeLabel={view === 'home' ? 'Home' : undefined} />
 
         {view === 'home' ? (
           <HomeView
@@ -140,208 +132,6 @@ function StudentDashboardInner() {
         )}
       </div>
     </main>
-  );
-}
-
-// =============================================================
-// Navbar
-// =============================================================
-
-const NAV_LINKS: { label: string; href?: string; active?: boolean; toast?: string }[] = [
-  { label: 'Home',           active: true },
-  { label: 'Catalogue',      href: '/student/catalogue' },
-  { label: 'Custom Exam',    href: '/student/exam' },
-  { label: 'Leaderboard' },
-];
-
-function Navbar({
-  view,
-  onToggleView,
-  userLabel,
-  signingOut,
-  onLogout,
-}: {
-  view: 'home' | 'analytics';
-  onToggleView: () => void;
-  userLabel: string;
-  signingOut: boolean;
-  onLogout: () => void;
-}) {
-  const initials = userLabel
-    .split(/\s+/)
-    .map((n) => n[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  const { message, showToast } = useNavToast();
-
-  // Sticky header with a subtle background/shadow that fades in once the
-  // page has scrolled — same treatment as StudentNavbar.
-  const scrolled = useScrollShadow();
-
-  return (
-    <>
-    <nav
-      className={`mz-nav-scroll${scrolled ? ' is-scrolled' : ''}`}
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '20px 34px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-      }}
-    >
-      <MediZeeLogo size="sm" />
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 13.5, fontWeight: 500 }}>
-        {NAV_LINKS.map((link) => {
-          if (link.href) {
-            return (
-              <Link
-                key={link.label}
-                href={link.href}
-                style={{ color: '#8B98A6', textDecoration: 'none' }}
-              >
-                {link.label}
-              </Link>
-            );
-          }
-          if (link.toast) {
-            return (
-              <button
-                key={link.label}
-                type="button"
-                onClick={() => showToast(link.toast!)}
-                style={{
-                  color: '#8B98A6',
-                  fontWeight: 500,
-                  fontSize: 13.5,
-                  background: 'transparent',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                {link.label}
-              </button>
-            );
-          }
-          return (
-            <span
-              key={link.label}
-              style={{
-                color: link.active ? '#F7F9FA' : '#8B98A6',
-                fontWeight: link.active ? 600 : 500,
-              }}
-            >
-              {link.label}
-            </span>
-          );
-        })}
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <button
-          type="button"
-          onClick={onToggleView}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            fontSize: 13,
-            fontWeight: 700,
-            color: '#F7F9FA',
-            background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
-            padding: '9px 16px',
-            borderRadius: 10,
-            boxShadow: '0 0 18px rgba(0,166,166,0.4)',
-            cursor: 'pointer',
-            border: 'none',
-          }}
-        >
-          {view === 'home' ? 'My Progress' : '← Home'}
-        </button>
-
-        <button
-          type="button"
-          aria-label="Toggle theme"
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 9,
-            border: '1px solid rgba(255,255,255,0.12)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#8B98A6',
-            background: 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          <Moon style={{ width: 15, height: 15 }} />
-        </button>
-
-        {/* Profile pill → /student/profile (profile & settings). */}
-        <Link
-          href="/student/profile"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            fontSize: 13.5,
-            fontWeight: 600,
-            color: '#8B98A6',
-            textDecoration: 'none',
-          }}
-        >
-          <span
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: '50%',
-              display: 'grid',
-              placeItems: 'center',
-              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
-              color: '#F7F9FA',
-              fontSize: 11,
-              fontWeight: 700,
-            }}
-          >
-            {initials || 'ME'}
-          </span>
-          {userLabel || 'Guest'}
-        </Link>
-
-        <button
-          type="button"
-          onClick={onLogout}
-          disabled={signingOut}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 13.5,
-            fontWeight: 600,
-            color: '#8B98A6',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          {signingOut ? <Loader2 style={{ width: 13, height: 13 }} className="animate-spin" /> : <LogOut style={{ width: 13, height: 13 }} />}
-          Log out
-        </button>
-      </div>
-    </nav>
-    <NavToast message={message} />
-    </>
   );
 }
 

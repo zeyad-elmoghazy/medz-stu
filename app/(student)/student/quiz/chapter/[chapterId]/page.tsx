@@ -15,6 +15,7 @@ import {
   removeBookmark,
   fetchNote,
   saveNote,
+  submitChapterQuiz,
   type ChapterQuiz,
 } from '@/lib/chapter-quiz-api';
 
@@ -40,6 +41,8 @@ export default function ChapterQuizPage() {
   const [submitted, setSubmitted] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [xpEarned, setXpEarned] = useState<number | null>(null);
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
   const [referenceImageLoading, setReferenceImageLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'explanation' | 'reference'>('explanation');
@@ -169,6 +172,7 @@ export default function ChapterQuizPage() {
   function submit() {
     if (!selectedChoice || submitted || !question) return;
     setSubmitted(true);
+    setAnswers((a) => ({ ...a, [String(question.id)]: selectedChoice }));
     if (isCorrect) setCorrectCount((n) => n + 1);
     exitFullscreen();
 
@@ -192,6 +196,13 @@ export default function ChapterQuizPage() {
     if (!data) return;
     if (index + 1 >= data.questions.length) {
       setFinished(true);
+      // Best-effort — a failed XP write shouldn't block the student
+      // from seeing their results, same principle as the proctored
+      // submit route. Not awaited: the "Quiz complete" screen paints
+      // immediately, XP fills in when the request resolves.
+      submitChapterQuiz(chapterId, answers)
+        .then((result) => setXpEarned(result.xpEarned))
+        .catch((err) => console.error('[chapter-quiz] submit failed:', err));
       return;
     }
     setIndex((i) => i + 1);
@@ -222,9 +233,10 @@ export default function ChapterQuizPage() {
             { label: data?.chapterName ?? 'Quiz' },
           ]}
         />
-        {/* Nothing on this route persists (no DB write, no
-            localStorage) — a plain exit, not a save-and-exit modal,
-            since there's nothing to save. */}
+        {/* Exiting mid-quiz still doesn't persist anything (a plain
+            exit, not a save-and-exit modal) — only finishing all
+            questions does, via submit()/next() below, which POSTs
+            to /api/student/chapters/[chapterId]/submit for XP. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {!isFullscreen && fullscreenSupported && !submitted && (
             <button
@@ -584,7 +596,10 @@ export default function ChapterQuizPage() {
           <h1 style={{ margin: '14px 0 0', fontSize: 34, fontWeight: 900, color: '#F7F9FA' }}>
             {correctCount} / {data.questions.length}
           </h1>
-          <p style={{ margin: '10px 0 26px', fontSize: 13, color: '#8B98A6' }}>{data.chapterName}</p>
+          <p style={{ margin: '10px 0 4px', fontSize: 13, color: '#8B98A6' }}>{data.chapterName}</p>
+          <p style={{ margin: '0 0 26px', fontSize: 12, fontWeight: 700, color: '#33BFBF' }}>
+            {xpEarned === null ? 'Recording…' : `+${xpEarned} XP`}
+          </p>
           <Link
             href="/student/catalogue"
             style={{

@@ -24,6 +24,11 @@ export const CACHE_KEYS = {
   subjectList: () => `subjects:all`,
   questionBank: (subjectId: string) => `questions:${subjectId}`,
   leaderboard: (subjectId: string) => `leaderboard:${subjectId}`,
+  // Global cross-subject leaderboard (Part 2.3 of the master doc —
+  // "one global leaderboard across all students, not scoped per
+  // module"). Distinct from `leaderboard(subjectId)` above, which
+  // was scaffolded but is unused by this feature.
+  leaderboardGlobal: () => `leaderboard:global`,
 };
 
 // TTL constants in seconds.
