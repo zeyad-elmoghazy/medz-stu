@@ -433,6 +433,7 @@ export default function QuizEnginePage() {
           answers: stringKeyedAnswers,
           questionIds: questions.map((q) => q.id),
           startedAt,
+          violationsCount,
         }),
       });
 
