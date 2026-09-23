@@ -20,7 +20,7 @@ const DEFAULT_LINKS: NavLink[] = [
   { label: 'Home',         href: '/student/dashboard' },
   { label: 'Catalogue',    href: '/student/catalogue' },
   { label: 'Custom Exam',  href: '/student/exam' },
-  { label: 'Leaderboard' },
+  { label: 'Leaderboard',  href: '/student/leaderboard' },
 ];
 
 export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] }) {

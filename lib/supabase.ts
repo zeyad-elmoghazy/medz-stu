@@ -77,6 +77,11 @@ export type Profile = {
   email: string | null;
   role: UserRole;
   created_at: string;
+  username: string | null;
+  total_xp: number;
+  total_correct_answers: number;
+  total_questions_answered: number;
+  last_active_at: string | null;
 };
 
 type QuizSessionRow = {
@@ -96,6 +101,19 @@ type DailyStreakRow = {
   student_id: string;
   streak_date: string;
   challenges_completed: number;
+  xp_correct_count: number;
+};
+
+export type LeaderboardRow = {
+  rank: number;
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  total_xp: number;
+  total_correct_answers: number;
+  total_questions_answered: number;
+  last_active_at: string | null;
+  highest_badge: string | null;
 };
 
 type BookmarkRow = {
@@ -184,6 +202,25 @@ export type Database = {
       get_student_streak: {
         Args: { p_student_id: string };
         Returns: number;
+      };
+      record_quiz_result: {
+        Args: {
+          p_student_id: string;
+          p_xp_delta: number;
+          p_correct_count: number;
+          p_eligible_correct_count: number;
+          p_total_count: number;
+          p_streak_date: string;
+        };
+        Returns: void;
+      };
+      get_leaderboard_top: {
+        Args: { p_limit?: number };
+        Returns: LeaderboardRow[];
+      };
+      get_student_rank: {
+        Args: { p_student_id: string };
+        Returns: LeaderboardRow[];
       };
     };
   };

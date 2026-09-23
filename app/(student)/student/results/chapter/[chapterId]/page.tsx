@@ -13,6 +13,7 @@ import {
   Crosshair,
   Target,
   X,
+  Zap,
 } from 'lucide-react';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchChapterQuiz, type ChapterQuiz } from '@/lib/chapter-quiz-api';
@@ -24,8 +25,10 @@ import { cn } from '@/lib/utils';
  * never imported/edited), adapted to re-fetch the chapter's question
  * list (chapter questions aren't a static importable module like
  * histologyQuestions) and to drop the "Continue to Analytics" CTA,
- * since analytics is built from `quiz_sessions`, which this
- * deliberately doesn't write to (see 025_chapter_quiz_sessions.sql).
+ * since analytics is built from `quiz_sessions`, which this endpoint
+ * deliberately doesn't write to — see
+ * app/api/student/chapters/[chapterId]/submit/route.ts for why (it
+ * earns XP/leaderboard credit instead of a session-history row).
  */
 export default function ChapterResultsPage() {
   const params = useParams<{ chapterId: string }>();
@@ -157,13 +160,20 @@ export default function ChapterResultsPage() {
         </FadeUp>
 
         <FadeUp className="mt-8">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <ScoreCard
               icon={<Target className="h-4 w-4" />}
               label="Score"
               value={`${correct} / ${accuracyTotal}`}
               accent="#33BFBF"
               footnote={`${attempted - correct} incorrect · ${accuracyTotal - attempted} skipped`}
+            />
+            <ScoreCard
+              icon={<Zap className="h-4 w-4" />}
+              label="XP earned"
+              value={lastResult ? `+${lastResult.xpEarned}` : '—'}
+              accent="#F59E0B"
+              footnote="Toward the leaderboard"
             />
             <ScoreCard
               icon={<BarChart3 className="h-4 w-4" />}

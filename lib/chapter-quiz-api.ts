@@ -106,6 +106,55 @@ export async function removeBookmark(questionId: number): Promise<boolean> {
   return res.ok;
 }
 
+export type ChapterQuizResult = {
+  score: number;
+  total: number;
+  accuracy: number;
+  xpEarned: number;
+  results: Array<{
+    questionId: number;
+    isCorrect: boolean;
+    chosen: string | null;
+    correct: string;
+  }>;
+};
+
+/**
+ * Records the completed practice quiz, earns XP toward the
+ * leaderboard, and returns the per-question breakdown the results
+ * screen renders from — /api/student/chapters/[chapterId]/submit.
+ * Recomputes score server-side from the canonical answer key;
+ * `answers` here is just the student's picks, keyed by question id.
+ * `questionIds`, when passed (e.g. a "Practice mistakes" subset),
+ * restricts scoring to just those questions.
+ */
+export async function submitChapterQuiz(
+  chapterId: string,
+  answers: Record<string, string>,
+  questionIds?: number[]
+): Promise<ChapterQuizResult> {
+  const res = await fetch(
+    `/api/student/chapters/${encodeURIComponent(chapterId)}/submit`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers, questionIds }),
+    }
+  );
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.error) msg = body.error;
+    } catch {
+      /* ignore — keep the generic HTTP status message */
+    }
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
 /** The signed-in student's saved note content for this question, or '' if none. */
 export async function fetchNote(questionId: number): Promise<string> {
   const res = await fetch(`/api/student/notes?questionId=${questionId}`, {

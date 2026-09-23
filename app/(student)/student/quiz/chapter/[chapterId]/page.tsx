@@ -40,6 +40,7 @@ import {
   removeBookmark,
   fetchNote,
   saveNote,
+  submitChapterQuiz,
   type ChapterQuiz,
   type ChapterQuizQuestion,
 } from '@/lib/chapter-quiz-api';
@@ -364,18 +365,19 @@ export default function ChapterQuizPage() {
   }
 
   /**
-   * Finalize the quiz: always POSTs to the chapter submit endpoint
-   * (real DB persistence — see 025_chapter_quiz_sessions.sql), then
-   * stashes the per-question result in the store for the results
-   * page and routes. Errors set `submitError` so the student can
-   * retry without losing their answers — same pattern as the
-   * reference page.
+   * Finalize the quiz: POSTs to the chapter submit endpoint (real
+   * XP-earning persistence, via lib/chapter-quiz-api.ts's
+   * submitChapterQuiz — see app/api/student/chapters/[chapterId]/
+   * submit/route.ts for why this earns XP/leaderboard credit rather
+   * than writing a session-history row), then stashes the
+   * per-question result in the store for the results page and
+   * routes. Errors set `submitError` so the student can retry
+   * without losing their answers — same pattern as the reference page.
    */
   async function handleQuizComplete() {
     if (submitting || !data) return;
     setSubmitError(null);
 
-    const startedAt = new Date(sessionStartedAt ?? Date.now()).toISOString();
     const stringKeyedAnswers: Record<string, string> = {};
     for (const [k, v] of Object.entries(answers)) {
       stringKeyedAnswers[String(k)] = v;
@@ -383,34 +385,11 @@ export default function ChapterQuizPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/student/chapters/${chapterId}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          answers: stringKeyedAnswers,
-          questionIds: questions.map((q) => q.id),
-          startedAt,
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `Submission failed (${res.status})`);
-      }
-
-      const resultData = (await res.json()) as {
-        sessionId: string;
-        score: number;
-        total: number;
-        accuracy: number;
-        results: Array<{
-          questionId: number;
-          isCorrect: boolean;
-          chosen: string | null;
-          correct: string;
-        }>;
-      };
+      const resultData = await submitChapterQuiz(
+        chapterId,
+        stringKeyedAnswers,
+        questions.map((q) => q.id)
+      );
 
       setLastResult(resultData);
       const wrongIds = resultData.results

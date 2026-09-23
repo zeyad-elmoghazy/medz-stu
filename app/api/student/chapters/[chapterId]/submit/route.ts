@@ -1,57 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database, UserRole } from '@/lib/supabase';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { quizLimiter } from '@/lib/rate-limit';
+import { invalidateCache } from '@/lib/cache';
+import { CACHE_KEYS } from '@/lib/redis';
+import { calculateSessionXp } from '@/lib/xp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Chapter id comes from the route param, not the body — otherwise
-// identical in shape to /api/quiz/submit's SubmitBodySchema.
 const SubmitBodySchema = z.object({
   answers: z
     .record(z.string(), z.string())
     .refine((o) => Object.keys(o).length > 0, {
       message: 'answers must contain at least one entry',
     }),
-  // Ids the client actually rendered in this session — scoring is
-  // restricted to just these when present, same reasoning as the
-  // static quiz's submit route.
+  // Ids the client actually rendered in this session — when present,
+  // scoring (and the returned per-question results) are restricted
+  // to just these, same reasoning as /api/quiz/submit.
   questionIds: z.array(z.number().int()).optional(),
-  startedAt: z
-    .string()
-    .refine((s) => !Number.isNaN(new Date(s).getTime()), {
-      message: 'startedAt must be a valid ISO date string',
-    }),
 });
-
-type UntypedClient = ReturnType<typeof untypedFrom>;
 
 /**
  * POST /api/student/chapters/[chapterId]/submit
  *
- * Chapter-scoped counterpart to /api/quiz/submit (that route is
- * left untouched — this is a parallel path, not a replacement).
- * Same trust-nothing-from-the-client approach: recomputes the score
- * server-side from the canonical published question bank, then
- * writes one row to `chapter_quiz_sessions` (see
- * 025_chapter_quiz_sessions.sql for why this isn't `quiz_sessions`)
- * and bumps the shared daily-streak counter. No subject-scoped
- * leaderboard/analytics cache to invalidate here — chapters don't
- * have one.
+ * XP-earning counterpart to the read-only
+ * /api/student/chapters/[chapterId]/questions endpoint, for the
+ * chapter-scoped practice quiz (app/(student)/student/quiz/chapter/
+ * [chapterId]/page.tsx). That route is intentionally unproctored
+ * (no fullscreen enforcement, no anti-cheat violation tracking —
+ * see its own header comment), so this earns XP via the exact same
+ * formula and DAILY CAP POOL as the proctored /api/quiz/submit path
+ * (deliberate: the cap already bounds the benefit of an unproctored
+ * attempt, so a second, separate cap isn't needed).
+ *
+ * Deliberately does NOT insert into `quiz_sessions` — that table
+ * backs the student's "recent challenges" / accuracy history shown
+ * on the dashboard, which should stay scoped to the proctored
+ * challenge flow. This endpoint only updates the running XP/stat
+ * counters on `profiles` and the leaderboard, via the same
+ * `record_quiz_result` RPC the proctored path uses (see
+ * supabase/migrations/025_leaderboard_xp.sql). Also returns a
+ * per-question `results` breakdown (chosen/correct/isCorrect) — the
+ * chapter quiz page's results screen renders entirely from this
+ * response, the same way the proctored results page renders from
+ * /api/quiz/submit's response, with no separate history table to
+ * read back from.
  */
 export async function POST(
   request: NextRequest,
   props: { params: Promise<{ chapterId: string }> }
 ) {
-  const { chapterId } = await props.params;
+  const params = await props.params;
+  const chapterId = params.chapterId;
+
   const supabase = await createRouteHandlerClient<Database>({ cookies });
 
-  // 1) Verify session.
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -65,17 +73,13 @@ export async function POST(
     .eq('id', user.id)
     .single();
   const profile = profileQuery.data as { role: UserRole } | null;
-
   if (profile?.role !== 'student') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // 2) Rate limit by user id — same limiter/budget as the static
-  // quiz's submit route (30/hour comfortably covers real usage).
   const limited = await applyRateLimit(request, quizLimiter, user.id);
   if (limited) return limited;
 
-  // 3) Validate input with Zod.
   let body: unknown;
   try {
     body = await request.json();
@@ -90,50 +94,36 @@ export async function POST(
       { status: 400 }
     );
   }
-  const { answers, startedAt, questionIds } = parsed.data;
+  const { answers, questionIds } = parsed.data;
 
-  // 4) Score server-side from the canonical bank. Service-role
-  // client — same reasoning as the static quiz's submit route: the
-  // scoring path stays authoritative even if the `questions` SELECT
-  // policy is retightened later.
-  const service = untypedFrom(serviceRoleClient());
+  const service = serviceRoleClient();
 
-  const chapterRes = await service
-    .from('chapters')
-    .select('id')
-    .eq('id', chapterId)
-    .single();
-  if (chapterRes.error || !chapterRes.data) {
-    return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
-  }
-
+  // Never trust client-supplied correctness — recompute from the
+  // canonical bank, same principle as /api/quiz/submit, even though
+  // this chapter's GET endpoint already reveals correct answers to
+  // the client (a pre-existing, separate design choice in that
+  // route, not something this endpoint should compound by also
+  // trusting a client-claimed score).
   const questionsRes = await service
     .from('questions')
     .select('id, correct_answer')
     .eq('chapter_id', chapterId)
-    .eq('status', 'published')
-    .order('id', { ascending: true });
+    .eq('status', 'published');
 
   if (questionsRes.error) {
     return NextResponse.json({ error: questionsRes.error.message }, { status: 500 });
   }
-
-  type QuestionRow = { id: number; correct_answer: string };
-  const allQuestions = (questionsRes.data ?? []) as QuestionRow[];
+  const allQuestions = (questionsRes.data as { id: number; correct_answer: string }[] | null) ?? [];
   if (allQuestions.length === 0) {
-    return NextResponse.json(
-      { error: 'This chapter has no published questions yet.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Chapter has no published questions.' }, { status: 400 });
   }
 
-  // If the client told us which questions were in this session,
-  // score only those — same reasoning as the static quiz route.
+  // If the client told us which questions were in this session
+  // (e.g. a "Practice mistakes" subset), score only those.
   const questions =
     questionIds && questionIds.length > 0
       ? allQuestions.filter((q) => questionIds.includes(q.id))
       : allQuestions;
-
   if (questions.length === 0) {
     return NextResponse.json(
       { error: 'None of the submitted questionIds belong to this chapter.' },
@@ -152,46 +142,56 @@ export async function POST(
   const total = questions.length;
   const accuracy = Number(((score / total) * 100).toFixed(2));
 
-  // 5) Persist the attempt.
-  const insertRes = await service
-    .from('chapter_quiz_sessions')
-    .insert({
-      student_id: user.id,
-      chapter_id: chapterId,
-      answers,
-      score,
-      total_questions: total,
-      accuracy,
-    })
-    .select('id')
-    .single();
+  const today = todayISODate();
+  const alreadyCountedToday = await getTodayXpCorrectCount(service, user.id, today);
+  const { xpEarned, eligibleCorrectCount } = calculateSessionXp({
+    correctCount: score,
+    accuracy,
+    violationsCount: 0,
+    alreadyCountedToday,
+  });
 
-  if (insertRes.error || !insertRes.data) {
-    return NextResponse.json(
-      { error: insertRes.error?.message ?? 'Failed to record session.' },
-      { status: 500 }
-    );
+  const rpcRes = await service.rpc('record_quiz_result', {
+    p_student_id: user.id,
+    p_xp_delta: xpEarned,
+    p_correct_count: score,
+    p_eligible_correct_count: eligibleCorrectCount,
+    p_total_count: total,
+    p_streak_date: today,
+  });
+
+  if (rpcRes.error) {
+    console.error('[chapters/submit] record_quiz_result failed:', rpcRes.error.message);
   }
 
-  const sessionId = insertRes.data.id as string;
+  try {
+    await invalidateCache(CACHE_KEYS.leaderboardGlobal());
+  } catch {
+    // non-fatal
+  }
 
-  // 6) Bump today's daily-streak counter — shared, subject-agnostic.
-  await bumpDailyStreak(service, user.id);
-
-  // 7) Response with full per-question results, same shape as
-  // /api/quiz/submit so the results page can render without a
-  // follow-up fetch.
-  return NextResponse.json({
-    sessionId,
-    score,
-    total,
-    accuracy,
-    startedAt,
-    results,
-  });
+  return NextResponse.json({ score, total, accuracy, xpEarned, results });
 }
 
-function serviceRoleClient() {
+// ============== Service-role client typing ==============
+// Same minimum-surface rationale as app/api/quiz/submit/route.ts.
+type ErrorShape = { message: string } | null;
+
+type ServiceClient = {
+  from: (table: string) => {
+    select: (cols: string) => {
+      eq: (col: string, val: unknown) => {
+        eq: (col: string, val: unknown) => Promise<{
+          data: unknown;
+          error: ErrorShape;
+        }>;
+      };
+    };
+  };
+  rpc: (name: string, args: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
+};
+
+function serviceRoleClient(): ServiceClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
@@ -201,34 +201,21 @@ function serviceRoleClient() {
   }
   return createClient<Database>(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
-  });
+  }) as unknown as ServiceClient;
 }
 
-async function bumpDailyStreak(service: UntypedClient, studentId: string) {
-  const today = todayISODate();
-  const { data: existingRow } = await service
+async function getTodayXpCorrectCount(
+  service: ServiceClient,
+  studentId: string,
+  today: string
+): Promise<number> {
+  const res = await service
     .from('daily_streaks')
-    .select('challenges_completed')
+    .select('xp_correct_count')
     .eq('student_id', studentId)
-    .eq('streak_date', today)
-    .maybeSingle();
-
-  if (existingRow) {
-    await service
-      .from('daily_streaks')
-      .update({
-        challenges_completed: (existingRow.challenges_completed ?? 0) + 1,
-      })
-      .eq('student_id', studentId)
-      .eq('streak_date', today);
-    return;
-  }
-
-  await service.from('daily_streaks').insert({
-    student_id: studentId,
-    streak_date: today,
-    challenges_completed: 1,
-  });
+    .eq('streak_date', today);
+  const rows = (res.data as { xp_correct_count: number }[] | null) ?? [];
+  return rows[0]?.xp_correct_count ?? 0;
 }
 
 function todayISODate(): string {

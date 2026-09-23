@@ -17,10 +17,10 @@ import { persist, createJSONStorage } from 'zustand/middleware';
  */
 
 export type ChapterSubmissionResult = {
-  sessionId: string;
   score: number;
   total: number;
   accuracy: number;
+  xpEarned: number;
   results: Array<{
     questionId: number;
     isCorrect: boolean;
