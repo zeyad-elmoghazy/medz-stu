@@ -10,6 +10,7 @@ import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { quizLimiter } from '@/lib/rate-limit';
 import { invalidateCache } from '@/lib/cache';
 import { CACHE_KEYS } from '@/lib/redis';
+import { calculateSessionXp } from '@/lib/xp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,6 +36,10 @@ const SubmitBodySchema = z.object({
     .refine((s) => !Number.isNaN(new Date(s).getTime()), {
       message: 'startedAt must be a valid ISO date string',
     }),
+  // Anti-cheat violation count from the quiz UI's fullscreen/
+  // tab-switch tracker. Optional + defaulted for backward
+  // compatibility with any not-yet-updated client build.
+  violationsCount: z.number().int().min(0).max(3).optional().default(0),
 });
 
 // ============== POST ==============
@@ -93,7 +98,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-  const { subjectId, answers, startedAt, questionIds } = parsed.data;
+  const { subjectId, answers, startedAt, questionIds, violationsCount } = parsed.data;
 
   // 4) Score server-side from the canonical bank (Supabase in
   // real mode, bundled TS module in demo mode). Answers keys must
@@ -139,6 +144,7 @@ export async function POST(request: NextRequest) {
       score,
       total_questions: total,
       accuracy,
+      violations_count: violationsCount,
       // Persist the startedAt as completed_at minus duration?
       // The schema only stores completed_at; we leave that to
       // the DEFAULT NOW(). startedAt is kept in the payload for
@@ -157,18 +163,42 @@ export async function POST(request: NextRequest) {
 
   const sessionId = insertRes.data.id;
 
-  // 6) Update the daily_streaks row for today.
-  // Supabase JS can't express SET col = col + 1 in upsert, so we
-  // do a scoped select-then-update. A single student can't race
-  // themselves through the UI fast enough for this to clash.
-  await bumpDailyStreak(service, user.id);
+  // 6) Compute this session's XP (lib/xp.ts) and persist it, the
+  // daily streak bump, and the running personal-stat counters in
+  // one atomic RPC — replaces the old select-then-update
+  // bumpDailyStreak() helper (its own comment flagged the race:
+  // "Supabase JS can't express SET col = col + 1 in upsert").
+  const today = todayISODate();
+  const alreadyCountedToday = await getTodayXpCorrectCount(service, user.id, today);
+  const { xpEarned, eligibleCorrectCount } = calculateSessionXp({
+    correctCount: score,
+    accuracy,
+    violationsCount,
+    alreadyCountedToday,
+  });
+
+  const rpcRes = await service.rpc('record_quiz_result', {
+    p_student_id: user.id,
+    p_xp_delta: xpEarned,
+    p_correct_count: score,
+    p_eligible_correct_count: eligibleCorrectCount,
+    p_total_count: total,
+    p_streak_date: today,
+  });
+
+  if (rpcRes.error) {
+    // The session row is already persisted; a failed XP/streak
+    // write shouldn't fail the whole submission for the student.
+    console.error('[quiz/submit] record_quiz_result failed:', rpcRes.error.message);
+  }
 
   // 7) Cache invalidation — best-effort. A stale cache is better
   // than a failed submission, so swallow errors here.
   try {
     await invalidateCache(
       CACHE_KEYS.studentAnalytics(user.id),
-      CACHE_KEYS.leaderboard(subjectId)
+      CACHE_KEYS.leaderboard(subjectId),
+      CACHE_KEYS.leaderboardGlobal()
     );
   } catch {
     // non-fatal
@@ -208,18 +238,14 @@ type ServiceClient = {
       eq: (col: string, val: unknown) => {
         eq: (col: string, val: unknown) => {
           maybeSingle: () => Promise<{
-            data: { challenges_completed: number } | null;
+            data: { xp_correct_count: number } | null;
             error: ErrorShape;
           }>;
         };
       };
     };
-    update: (patch: Record<string, unknown>) => {
-      eq: (col: string, val: unknown) => {
-        eq: (col: string, val: unknown) => Promise<{ error: ErrorShape }>;
-      };
-    };
   };
+  rpc: (name: string, args: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
 };
 
 // ============== Helpers ==============
@@ -294,31 +320,23 @@ function serviceRoleClient() {
   });
 }
 
-async function bumpDailyStreak(service: ServiceClient, studentId: string) {
-  const today = todayISODate();
-  const { data: existingRow } = await service
+// Read-only lookup for the daily XP cap (lib/xp.ts) — how many
+// correct answers have already earned XP today. The actual
+// increment happens atomically inside record_quiz_result() so
+// this never races with itself the way the old select-then-update
+// bumpDailyStreak() helper could.
+async function getTodayXpCorrectCount(
+  service: ServiceClient,
+  studentId: string,
+  today: string
+): Promise<number> {
+  const { data } = await service
     .from('daily_streaks')
-    .select('challenges_completed')
+    .select('xp_correct_count')
     .eq('student_id', studentId)
     .eq('streak_date', today)
     .maybeSingle();
-
-  if (existingRow) {
-    await service
-      .from('daily_streaks')
-      .update({
-        challenges_completed: (existingRow.challenges_completed ?? 0) + 1,
-      })
-      .eq('student_id', studentId)
-      .eq('streak_date', today);
-    return;
-  }
-
-  await service.from('daily_streaks').insert({
-    student_id: studentId,
-    streak_date: today,
-    challenges_completed: 1,
-  });
+  return data?.xp_correct_count ?? 0;
 }
 
 function todayISODate(): string {
