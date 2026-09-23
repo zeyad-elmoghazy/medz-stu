@@ -111,17 +111,27 @@ export type ChapterQuizResult = {
   total: number;
   accuracy: number;
   xpEarned: number;
+  results: Array<{
+    questionId: number;
+    isCorrect: boolean;
+    chosen: string | null;
+    correct: string;
+  }>;
 };
 
 /**
- * Records the completed practice quiz and earns XP toward the
- * leaderboard — /api/student/chapters/[chapterId]/submit. Recomputes
- * score server-side from the canonical answer key; `answers` here is
- * just the student's picks, keyed by question id.
+ * Records the completed practice quiz, earns XP toward the
+ * leaderboard, and returns the per-question breakdown the results
+ * screen renders from — /api/student/chapters/[chapterId]/submit.
+ * Recomputes score server-side from the canonical answer key;
+ * `answers` here is just the student's picks, keyed by question id.
+ * `questionIds`, when passed (e.g. a "Practice mistakes" subset),
+ * restricts scoring to just those questions.
  */
 export async function submitChapterQuiz(
   chapterId: string,
-  answers: Record<string, string>
+  answers: Record<string, string>,
+  questionIds?: number[]
 ): Promise<ChapterQuizResult> {
   const res = await fetch(
     `/api/student/chapters/${encodeURIComponent(chapterId)}/submit`,
@@ -129,7 +139,7 @@ export async function submitChapterQuiz(
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers }),
+      body: JSON.stringify({ answers, questionIds }),
     }
   );
   if (!res.ok) {

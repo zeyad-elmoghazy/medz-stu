@@ -19,6 +19,10 @@ const SubmitBodySchema = z.object({
     .refine((o) => Object.keys(o).length > 0, {
       message: 'answers must contain at least one entry',
     }),
+  // Ids the client actually rendered in this session — when present,
+  // scoring (and the returned per-question results) are restricted
+  // to just these, same reasoning as /api/quiz/submit.
+  questionIds: z.array(z.number().int()).optional(),
 });
 
 /**
@@ -40,7 +44,12 @@ const SubmitBodySchema = z.object({
  * challenge flow. This endpoint only updates the running XP/stat
  * counters on `profiles` and the leaderboard, via the same
  * `record_quiz_result` RPC the proctored path uses (see
- * supabase/migrations/025_leaderboard_xp.sql).
+ * supabase/migrations/025_leaderboard_xp.sql). Also returns a
+ * per-question `results` breakdown (chosen/correct/isCorrect) — the
+ * chapter quiz page's results screen renders entirely from this
+ * response, the same way the proctored results page renders from
+ * /api/quiz/submit's response, with no separate history table to
+ * read back from.
  */
 export async function POST(
   request: NextRequest,
@@ -85,7 +94,7 @@ export async function POST(
       { status: 400 }
     );
   }
-  const { answers } = parsed.data;
+  const { answers, questionIds } = parsed.data;
 
   const service = serviceRoleClient();
 
@@ -104,12 +113,32 @@ export async function POST(
   if (questionsRes.error) {
     return NextResponse.json({ error: questionsRes.error.message }, { status: 500 });
   }
-  const questions = (questionsRes.data as { id: number; correct_answer: string }[] | null) ?? [];
-  if (questions.length === 0) {
+  const allQuestions = (questionsRes.data as { id: number; correct_answer: string }[] | null) ?? [];
+  if (allQuestions.length === 0) {
     return NextResponse.json({ error: 'Chapter has no published questions.' }, { status: 400 });
   }
 
-  const score = questions.filter((q) => answers[String(q.id)] === q.correct_answer).length;
+  // If the client told us which questions were in this session
+  // (e.g. a "Practice mistakes" subset), score only those.
+  const questions =
+    questionIds && questionIds.length > 0
+      ? allQuestions.filter((q) => questionIds.includes(q.id))
+      : allQuestions;
+  if (questions.length === 0) {
+    return NextResponse.json(
+      { error: 'None of the submitted questionIds belong to this chapter.' },
+      { status: 400 }
+    );
+  }
+
+  const results = questions.map((q) => ({
+    questionId: q.id,
+    chosen: answers[String(q.id)] ?? null,
+    correct: q.correct_answer,
+    isCorrect: answers[String(q.id)] === q.correct_answer,
+  }));
+
+  const score = results.filter((r) => r.isCorrect).length;
   const total = questions.length;
   const accuracy = Number(((score / total) * 100).toFixed(2));
 
@@ -141,7 +170,7 @@ export async function POST(
     // non-fatal
   }
 
-  return NextResponse.json({ score, total, accuracy, xpEarned });
+  return NextResponse.json({ score, total, accuracy, xpEarned, results });
 }
 
 // ============== Service-role client typing ==============
