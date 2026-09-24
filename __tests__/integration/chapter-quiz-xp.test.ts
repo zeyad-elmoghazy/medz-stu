@@ -165,4 +165,91 @@ describeIfSupabase('chapter-quiz XP + leaderboard', () => {
     const { data: profile } = await admin.from('profiles').select('total_xp').eq('id', student.id).single();
     expect((profile as { total_xp: number }).total_xp).toBe(0);
   });
+
+  /**
+   * Regression test for the read-then-write race fixed in
+   * supabase/migrations/029_fix_record_quiz_result_race.sql. Before
+   * that fix, two concurrent submissions both read the same
+   * daily_streaks.xp_correct_count snapshot before either wrote
+   * back, so each could independently believe it had the full
+   * DAILY_XP_CORRECT_CAP (150) remaining — letting the cap be
+   * exceeded. This chapter has 100 questions (well over the shared
+   * 10-question fixture) so two fully-correct concurrent
+   * submissions (100 + 100 = 200 potential eligible) actually
+   * exercise the cap, not just approach it.
+   */
+  test('concurrent submissions from the same student never exceed the daily XP cap', async () => {
+    const bigChapterSlug = uniqueSlug('big-chapter');
+    const { data: bigChapter, error: bigChapterErr } = await admin
+      .from('chapters')
+      .insert({ module_code: moduleCode, subject_id: subjectId, slug: bigChapterSlug, name: bigChapterSlug })
+      .select('id')
+      .single();
+    if (bigChapterErr || !bigChapter) throw new Error(`big chapter fixture failed: ${bigChapterErr?.message}`);
+    const bigChapterId = (bigChapter as { id: string }).id;
+
+    const bigRows = Array.from({ length: 100 }, (_, i) => ({
+      chapter_id: bigChapterId,
+      subject_id: subjectSlug,
+      subject_bundle_id: 1000 + i,
+      question: `Big fixture question ${i + 1}`,
+      choices: [
+        { id: 'a', text: 'Correct' },
+        { id: 'b', text: 'Wrong' },
+      ],
+      correct_answer: 'a',
+      status: 'published',
+    }));
+    const { data: bigQs, error: bigQsErr } = await admin.from('questions').insert(bigRows).select('id');
+    if (bigQsErr || !bigQs) throw new Error(`big questions fixture failed: ${bigQsErr?.message}`);
+    const bigQuestionIds = (bigQs as { id: number }[]).map((q) => q.id);
+
+    try {
+      const client = await signInTestUser(student.email, student.password);
+      mockCreateRouteHandlerClient.mockResolvedValue(client as unknown as Awaited<ReturnType<typeof createRouteHandlerClient>>);
+
+      const answers = Object.fromEntries(bigQuestionIds.map((id) => [String(id), 'a']));
+      function bigSubmitRequest(): NextRequest {
+        return new NextRequest(`http://localhost/api/student/chapters/${bigChapterId}/submit`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ answers }),
+        });
+      }
+
+      const [res1, res2] = await Promise.all([
+        chapterSubmitPost(bigSubmitRequest(), { params: Promise.resolve({ chapterId: bigChapterId }) }),
+        chapterSubmitPost(bigSubmitRequest(), { params: Promise.resolve({ chapterId: bigChapterId }) }),
+      ]);
+      expect(res1.status).toBe(200);
+      expect(res2.status).toBe(200);
+      const body1 = await res1.json();
+      const body2 = await res2.json();
+
+      // Combined eligible-for-XP correct count must be clamped to
+      // the 150/day cap, however the two requests interleaved.
+      const totalXpEarned = body1.xpEarned + body2.xpEarned;
+      expect(totalXpEarned).toBe(150 * 10 * 1.5); // 150 eligible, all at the 100%-accuracy bonus rate
+
+      const { data: streak } = await admin
+        .from('daily_streaks')
+        .select('xp_correct_count')
+        .eq('student_id', student.id)
+        .single();
+      expect((streak as { xp_correct_count: number }).xp_correct_count).toBe(150);
+
+      // Personal stats still reflect the REAL total answered/correct
+      // (200), independent of the XP cap — only XP eligibility is capped.
+      const { data: profile } = await admin
+        .from('profiles')
+        .select('total_correct_answers, total_questions_answered')
+        .eq('id', student.id)
+        .single();
+      expect((profile as { total_correct_answers: number }).total_correct_answers).toBe(200);
+      expect((profile as { total_questions_answered: number }).total_questions_answered).toBe(200);
+    } finally {
+      await admin.from('questions').delete().in('id', bigQuestionIds);
+      await admin.from('chapters').delete().eq('id', bigChapterId);
+    }
+  });
 });

@@ -10,7 +10,6 @@ import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { quizLimiter } from '@/lib/rate-limit';
 import { invalidateCache } from '@/lib/cache';
 import { CACHE_KEYS } from '@/lib/redis';
-import { calculateSessionXp } from '@/lib/xp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -163,26 +162,19 @@ export async function POST(request: NextRequest) {
 
   const sessionId = insertRes.data.id;
 
-  // 6) Compute this session's XP (lib/xp.ts) and persist it, the
-  // daily streak bump, and the running personal-stat counters in
-  // one atomic RPC — replaces the old select-then-update
-  // bumpDailyStreak() helper (its own comment flagged the race:
-  // "Supabase JS can't express SET col = col + 1 in upsert").
+  // 6) Persist XP/streak/personal-stat counters in one atomic RPC —
+  // record_quiz_result() computes the XP formula (lib/xp.ts) and
+  // enforces the daily cap itself, under a row lock, so concurrent
+  // submissions from the same student can't race past the cap the
+  // way a separate app-layer read-then-write could (see
+  // supabase/migrations/029_fix_record_quiz_result_race.sql).
   const today = todayISODate();
-  const alreadyCountedToday = await getTodayXpCorrectCount(service, user.id, today);
-  const { xpEarned, eligibleCorrectCount } = calculateSessionXp({
-    correctCount: score,
-    accuracy,
-    violationsCount,
-    alreadyCountedToday,
-  });
-
   const rpcRes = await service.rpc('record_quiz_result', {
     p_student_id: user.id,
-    p_xp_delta: xpEarned,
     p_correct_count: score,
-    p_eligible_correct_count: eligibleCorrectCount,
     p_total_count: total,
+    p_accuracy: accuracy,
+    p_violations_count: violationsCount,
     p_streak_date: today,
   });
 
@@ -234,18 +226,14 @@ type ServiceClient = {
         }>;
       };
     } & Promise<{ error: ErrorShape }>;
-    select: (cols: string) => {
-      eq: (col: string, val: unknown) => {
-        eq: (col: string, val: unknown) => {
-          maybeSingle: () => Promise<{
-            data: { xp_correct_count: number } | null;
-            error: ErrorShape;
-          }>;
-        };
-      };
-    };
   };
-  rpc: (name: string, args: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
+  rpc: (
+    name: string,
+    args: Record<string, unknown>
+  ) => Promise<{
+    data: { xp_earned: number; eligible_correct_count: number }[] | null;
+    error: ErrorShape;
+  }>;
 };
 
 // ============== Helpers ==============
@@ -318,25 +306,6 @@ function serviceRoleClient() {
   return createClient<Database>(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-}
-
-// Read-only lookup for the daily XP cap (lib/xp.ts) — how many
-// correct answers have already earned XP today. The actual
-// increment happens atomically inside record_quiz_result() so
-// this never races with itself the way the old select-then-update
-// bumpDailyStreak() helper could.
-async function getTodayXpCorrectCount(
-  service: ServiceClient,
-  studentId: string,
-  today: string
-): Promise<number> {
-  const { data } = await service
-    .from('daily_streaks')
-    .select('xp_correct_count')
-    .eq('student_id', studentId)
-    .eq('streak_date', today)
-    .maybeSingle();
-  return data?.xp_correct_count ?? 0;
 }
 
 function todayISODate(): string {

@@ -8,7 +8,6 @@ import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { quizLimiter } from '@/lib/rate-limit';
 import { invalidateCache } from '@/lib/cache';
 import { CACHE_KEYS } from '@/lib/redis';
-import { calculateSessionXp } from '@/lib/xp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,13 +45,15 @@ const SubmitBodySchema = z.object({
  * does. That insert is best-effort (logged, non-fatal) since this
  * route's response doesn't depend on a session id the way
  * /api/quiz/submit's does. Also updates the running XP/stat
- * counters on `profiles` and the leaderboard, via the same
- * `record_quiz_result` RPC the proctored path uses (see
- * supabase/migrations/025_leaderboard_xp.sql). Also returns a
- * per-question `results` breakdown (chosen/correct/isCorrect) — the
- * chapter quiz page's results screen renders entirely from this
- * response, the same way the proctored results page renders from
- * /api/quiz/submit's response.
+ * counters on `profiles` and the leaderboard — and enforces the
+ * daily XP cap — atomically inside the `record_quiz_result` RPC
+ * (see supabase/migrations/029_fix_record_quiz_result_race.sql;
+ * the cap used to be computed here in the app layer as a separate
+ * read-then-write step, which raced under concurrent submissions).
+ * Also returns a per-question `results` breakdown (chosen/correct/
+ * isCorrect) — the chapter quiz page's results screen renders
+ * entirely from this response, the same way the proctored results
+ * page renders from /api/quiz/submit's response.
  */
 export async function POST(
   request: NextRequest,
@@ -166,26 +167,19 @@ export async function POST(
   }
 
   const today = todayISODate();
-  const alreadyCountedToday = await getTodayXpCorrectCount(service, user.id, today);
-  const { xpEarned, eligibleCorrectCount } = calculateSessionXp({
-    correctCount: score,
-    accuracy,
-    violationsCount: 0,
-    alreadyCountedToday,
-  });
-
   const rpcRes = await service.rpc('record_quiz_result', {
     p_student_id: user.id,
-    p_xp_delta: xpEarned,
     p_correct_count: score,
-    p_eligible_correct_count: eligibleCorrectCount,
     p_total_count: total,
+    p_accuracy: accuracy,
+    p_violations_count: 0,
     p_streak_date: today,
   });
 
   if (rpcRes.error) {
     console.error('[chapters/submit] record_quiz_result failed:', rpcRes.error.message);
   }
+  const xpEarned = rpcRes.data?.[0]?.xp_earned ?? 0;
 
   try {
     await invalidateCache(CACHE_KEYS.leaderboardGlobal());
@@ -212,7 +206,13 @@ type ServiceClient = {
     };
     insert: (row: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
   };
-  rpc: (name: string, args: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
+  rpc: (
+    name: string,
+    args: Record<string, unknown>
+  ) => Promise<{
+    data: { xp_earned: number; eligible_correct_count: number }[] | null;
+    error: ErrorShape;
+  }>;
 };
 
 function serviceRoleClient(): ServiceClient {
@@ -226,20 +226,6 @@ function serviceRoleClient(): ServiceClient {
   return createClient<Database>(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   }) as unknown as ServiceClient;
-}
-
-async function getTodayXpCorrectCount(
-  service: ServiceClient,
-  studentId: string,
-  today: string
-): Promise<number> {
-  const res = await service
-    .from('daily_streaks')
-    .select('xp_correct_count')
-    .eq('student_id', studentId)
-    .eq('streak_date', today);
-  const rows = (res.data as { xp_correct_count: number }[] | null) ?? [];
-  return rows[0]?.xp_correct_count ?? 0;
 }
 
 function todayISODate(): string {
