@@ -1,11 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
 import { isDemoMode } from '@/lib/supabase';
 import { removeBookmark } from '@/lib/chapter-quiz-api';
 
-type BookmarkItem = {
+type Choice = { id: string; text: string };
+
+type QuestionDetailFields = {
+  choices: Choice[];
+  correctAnswer: string | null;
+  explanation: string;
+  choiceRationales: Record<string, string> | null;
+};
+
+type BookmarkItem = QuestionDetailFields & {
   id: string;
   questionId: number;
   question: string;
@@ -15,7 +25,7 @@ type BookmarkItem = {
   createdAt: string;
 };
 
-type NoteItem = {
+type NoteItem = QuestionDetailFields & {
   id: string;
   questionId: number;
   question: string;
@@ -34,12 +44,19 @@ type NoteItem = {
  * are pure localStorage state against questions that don't exist in
  * the `questions` table, so there is nothing real to show for them
  * (see the plan's investigation of data/histology-questions.ts).
+ *
+ * Each row can be opened to reveal the question's choices, the
+ * correct answer, and its explanation — a read-only review, not a
+ * retry (retrying happens via the chapter itself), since these
+ * items span potentially many different chapters/subjects.
  */
 export default function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState<BookmarkItem[] | null>(null);
   const [notes, setNotes] = useState<NoteItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [openBookmarkId, setOpenBookmarkId] = useState<string | null>(null);
+  const [openNoteId, setOpenNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,7 +116,8 @@ export default function BookmarksPage() {
           Bookmarks &amp; Notes
         </h1>
         <p style={{ fontSize: 13, color: '#8B98A6', margin: 0 }}>
-          Questions you&apos;ve saved and notes you&apos;ve written while practicing chapters.
+          Questions you&apos;ve saved and notes you&apos;ve written while practicing chapters. Tap a
+          question to open it.
           {isDemoMode() ? ' (demo mode has no saved items)' : ''}
         </p>
 
@@ -113,23 +131,32 @@ export default function BookmarksPage() {
           loading={loading}
           emptyLabel="No bookmarked questions yet — tap the bookmark icon while taking a chapter quiz to save one here."
         >
-          {(bookmarks ?? []).map((b) => (
-            <Row key={b.id}>
-              <RowBody
-                topic={b.topic}
-                question={b.question}
-                chapterName={b.chapterName}
-                moduleCode={b.moduleCode}
-              />
-              <button
-                type="button"
-                onClick={() => handleRemoveBookmark(b.questionId)}
-                style={removeButtonStyle}
-              >
-                Remove
-              </button>
-            </Row>
-          ))}
+          {(bookmarks ?? []).map((b) => {
+            const open = openBookmarkId === b.id;
+            return (
+              <Row key={b.id}>
+                <RowHeader open={open} onToggle={() => setOpenBookmarkId(open ? null : b.id)}>
+                  <RowBody
+                    topic={b.topic}
+                    question={b.question}
+                    chapterName={b.chapterName}
+                    moduleCode={b.moduleCode}
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveBookmark(b.questionId);
+                    }}
+                    style={removeButtonStyle}
+                  >
+                    Remove
+                  </button>
+                </RowHeader>
+                {open && <QuestionDetail {...b} />}
+              </Row>
+            );
+          })}
         </Section>
 
         <Section
@@ -138,19 +165,25 @@ export default function BookmarksPage() {
           loading={loading}
           emptyLabel="No notes yet — open the notes panel while taking a chapter quiz to write one."
         >
-          {(notes ?? []).map((n) => (
-            <Row key={n.id}>
-              <RowBody
-                topic={n.topic}
-                question={n.question}
-                chapterName={n.chapterName}
-                moduleCode={n.moduleCode}
-              />
-              <p style={{ fontSize: 12.5, color: '#F7F9FA', marginTop: 8, lineHeight: 1.5 }}>
-                {n.content.length > 220 ? `${n.content.slice(0, 220)}…` : n.content}
-              </p>
-            </Row>
-          ))}
+          {(notes ?? []).map((n) => {
+            const open = openNoteId === n.id;
+            return (
+              <Row key={n.id}>
+                <RowHeader open={open} onToggle={() => setOpenNoteId(open ? null : n.id)}>
+                  <RowBody
+                    topic={n.topic}
+                    question={n.question}
+                    chapterName={n.chapterName}
+                    moduleCode={n.moduleCode}
+                  />
+                </RowHeader>
+                <p style={{ fontSize: 12.5, color: '#F7F9FA', margin: '8px 0 0', lineHeight: 1.5 }}>
+                  {n.content.length > 220 ? `${n.content.slice(0, 220)}…` : n.content}
+                </p>
+                {open && <QuestionDetail {...n} />}
+              </Row>
+            );
+          })}
         </Section>
       </div>
     </main>
@@ -167,6 +200,7 @@ const removeButtonStyle = {
   padding: '6px 12px',
   cursor: 'pointer',
   whiteSpace: 'nowrap' as const,
+  flex: 'none' as const,
 };
 
 function Section({
@@ -211,17 +245,41 @@ function Section({
 
 function Row({ children }: { children: React.ReactNode }) {
   return (
+    <div style={{ padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      {children}
+    </div>
+  );
+}
+
+function RowHeader({
+  open,
+  onToggle,
+  children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
     <div
+      onClick={onToggle}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onToggle();
+      }}
       style={{
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
         gap: 16,
-        padding: '16px 0',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        cursor: 'pointer',
       }}
     >
       {children}
+      <span style={{ flex: 'none', color: '#8B98A6', marginTop: 2 }}>
+        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      </span>
     </div>
   );
 }
@@ -250,6 +308,62 @@ function RowBody({
         )}
       </div>
       <p style={{ fontSize: 13.5, color: '#F7F9FA', margin: '4px 0 0', lineHeight: 1.5 }}>{question}</p>
+    </div>
+  );
+}
+
+/** Read-only choices + correct answer + explanation for one question — opened from either section. */
+function QuestionDetail({ choices, correctAnswer, explanation, choiceRationales }: QuestionDetailFields) {
+  if (choices.length === 0) {
+    return (
+      <div style={{ marginTop: 12, fontSize: 12, color: '#8B98A6' }}>
+        This question is no longer available.
+      </div>
+    );
+  }
+  return (
+    <div
+      style={{
+        marginTop: 12,
+        padding: 14,
+        borderRadius: 10,
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {choices.map((c) => {
+          const isCorrect = c.id === correctAnswer;
+          return (
+            <div
+              key={c.id}
+              style={{
+                display: 'flex',
+                gap: 10,
+                fontSize: 12.5,
+                padding: '8px 10px',
+                borderRadius: 8,
+                background: isCorrect ? 'rgba(16,185,129,0.1)' : 'transparent',
+                border: isCorrect ? '1px solid rgba(16,185,129,0.4)' : '1px solid transparent',
+                color: isCorrect ? '#6EE7B7' : '#F7F9FA',
+              }}
+            >
+              <span style={{ fontWeight: 700, textTransform: 'uppercase' }}>{c.id}</span>
+              <span style={{ flex: 1 }}>
+                {c.text}
+                {choiceRationales?.[c.id] && (
+                  <span style={{ display: 'block', color: '#8B98A6', marginTop: 2 }}>
+                    {choiceRationales[c.id]}
+                  </span>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {explanation && (
+        <p style={{ fontSize: 12, color: '#8B98A6', marginTop: 12, lineHeight: 1.6 }}>{explanation}</p>
+      )}
     </div>
   );
 }

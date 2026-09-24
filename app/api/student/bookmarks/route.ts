@@ -51,14 +51,20 @@ export async function GET(request: NextRequest) {
     const questionIds = bookmarkRows.map((b) => b.question_id);
     const { data: questionRows } = await client
       .from('questions')
-      .select('id, question, topic, chapter_id')
+      .select('id, question, topic, chapter_id, choices, correct_answer, explanation, choice_rationales')
       .in('id', questionIds);
+    type QuestionRow = {
+      id: number;
+      question: string;
+      topic: string;
+      chapter_id: string | null;
+      choices: { id: string; text: string }[];
+      correct_answer: string;
+      explanation: string;
+      choice_rationales: Record<string, string> | null;
+    };
     const questionById = new Map(
-      (
-        (questionRows as
-          | { id: number; question: string; topic: string; chapter_id: string | null }[]
-          | null) ?? []
-      ).map((q) => [q.id, q])
+      ((questionRows as QuestionRow[] | null) ?? []).map((q) => [q.id, q])
     );
 
     const chapterIds = Array.from(
@@ -91,6 +97,10 @@ export async function GET(request: NextRequest) {
         chapterName: chapter?.name ?? null,
         moduleCode: chapter?.module_code ?? null,
         createdAt: b.created_at,
+        choices: q?.choices ?? [],
+        correctAnswer: q?.correct_answer ?? null,
+        explanation: q?.explanation ?? '',
+        choiceRationales: q?.choice_rationales ?? null,
       };
     });
 
