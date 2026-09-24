@@ -11,10 +11,11 @@ import { useDisplayName } from '@/lib/use-display-name';
 import {
   getEmptyStudentStats,
   type ChallengeResult,
+  type FocusArea,
   type ProgressDataPoint,
   type StudentStats,
 } from '@/lib/dashboard-data';
-import { useQuizStore } from '@/lib/store';
+import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
 import { fetchModulesByYear, type ModulesByYear } from '@/lib/catalogue-api';
 
@@ -466,15 +467,15 @@ function AnalyticsView({
   onBackToSubjects: () => void;
 }) {
   const router = useRouter();
-  const mistakeQuestionIds = useQuizStore((s) => s.mistakeQuestionIds);
-  const startMistakeSession = useQuizStore((s) => s.startMistakeSession);
   const empty = getEmptyStudentStats();
   const s = stats ?? empty;
 
-  function practiceMistakes() {
-    if (mistakeQuestionIds.length === 0) return;
-    startMistakeSession(mistakeQuestionIds);
-    router.push('/student/quiz/histology?mode=mistakes');
+  const totalMistakes = s.mistakes.reduce((sum, m) => sum + m.questionIds.length, 0);
+
+  function practiceChapterMistakes(chapterId: string, questionIds: number[]) {
+    if (questionIds.length === 0) return;
+    useChapterQuizStore.getState().startMistakeSession(chapterId, questionIds);
+    router.push(`/student/quiz/chapter/${chapterId}`);
   }
 
   // Compose KPI tiles from real per-student numbers. Formatting is
@@ -512,6 +513,12 @@ function AnalyticsView({
       suffix: loading ? '' : ' 🔥',
       hint: 'Consecutive days',
       color: '#F97316',
+    },
+    {
+      label: 'Bookmarked Questions',
+      value: loading ? '—' : s.bookmarksCount.toLocaleString(),
+      hint: 'View saved questions & notes',
+      color: '#33BFBF',
     },
   ];
 
@@ -557,15 +564,15 @@ function AnalyticsView({
         </button>
       </div>
 
-      {/* Practice mistakes CTA — appears once the student has any
-          question in their mistakes pool. */}
-      {mistakeQuestionIds.length > 0 && (
+      {/* Practice mistakes — real, chapter-quiz-backed mistake pool
+          (lib/server/chapter-mistakes.ts). Appears once the student
+          has any outstanding wrong answer in any chapter. */}
+      {totalMistakes > 0 && (
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
+            flexDirection: 'column',
+            gap: 14,
             padding: '16px 20px',
             background: 'linear-gradient(135deg, rgba(0,166,166,0.16), rgba(0,166,166,0.06))',
             border: '1px solid rgba(0,166,166,0.45)',
@@ -574,70 +581,93 @@ function AnalyticsView({
         >
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#F7F9FA' }}>
-              You have {mistakeQuestionIds.length} question{mistakeQuestionIds.length === 1 ? '' : 's'} to review
+              You have {totalMistakes} question{totalMistakes === 1 ? '' : 's'} to review across{' '}
+              {s.mistakes.length} chapter{s.mistakes.length === 1 ? '' : 's'}
             </div>
             <div style={{ fontSize: 12, color: '#8B98A6', marginTop: 3 }}>
               Practice the ones you got wrong — spaced review sticks longest.
             </div>
           </div>
-          <button
-            type="button"
-            onClick={practiceMistakes}
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: '#F7F9FA',
-              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
-              padding: '11px 18px',
-              borderRadius: 10,
-              boxShadow: '0 0 18px rgba(0,166,166,0.4)',
-              border: 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              fontFamily: 'inherit',
-            }}
-          >
-            Practice mistakes
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {s.mistakes.map((m) => (
+              <div
+                key={m.chapterId}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                }}
+              >
+                <div style={{ fontSize: 12, color: '#F7F9FA' }}>
+                  {m.chapterName}
+                  {m.moduleCode && <span style={{ color: '#8B98A6' }}> · {m.moduleCode}</span>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => practiceChapterMistakes(m.chapterId, m.questionIds)}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: '#F7F9FA',
+                    background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                    padding: '8px 14px',
+                    borderRadius: 8,
+                    border: 'none',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Practice {m.questionIds.length}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* KPI grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
-        {kpis.map((k) => (
-          <div
-            key={k.label}
-            style={{
-              background: '#132B45',
-              border: '1px solid rgba(255,255,255,0.07)',
-              borderRadius: 16,
-              padding: 20,
-            }}
-          >
-            <div style={{ fontSize: 11, color: '#8B98A6' }}>{k.label}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16 }}>
+        {kpis.map((k) => {
+          const clickable = k.label === 'Bookmarked Questions';
+          return (
             <div
+              key={k.label}
+              onClick={clickable ? () => router.push('/student/bookmarks') : undefined}
               style={{
-                fontSize: 30,
-                fontWeight: 800,
-                marginTop: 8,
-                letterSpacing: '-0.02em',
-                color: k.color,
+                background: '#132B45',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 16,
+                padding: 20,
+                cursor: clickable ? 'pointer' : undefined,
               }}
             >
-              {k.value}
-              {k.suffix && (
-                <span style={{ fontSize: 16, color: '#8B98A6', fontWeight: 700 }}>{k.suffix}</span>
-              )}
+              <div style={{ fontSize: 11, color: '#8B98A6' }}>{k.label}</div>
+              <div
+                style={{
+                  fontSize: 30,
+                  fontWeight: 800,
+                  marginTop: 8,
+                  letterSpacing: '-0.02em',
+                  color: k.color,
+                }}
+              >
+                {k.value}
+                {k.suffix && (
+                  <span style={{ fontSize: 16, color: '#8B98A6', fontWeight: 700 }}>{k.suffix}</span>
+                )}
+              </div>
+              <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 6 }}>{k.hint}</div>
             </div>
-            <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 6 }}>{k.hint}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Trend + Focus areas */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 22, alignItems: 'start' }}>
         <AccuracyTrend history={s.progressHistory} loading={loading} />
-        <FocusAreas />
+        <FocusAreas focusAreas={s.focusAreas} loading={loading} />
       </div>
 
       {/* Recent challenges */}
@@ -752,30 +782,55 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
   );
 }
 
-function FocusAreas() {
-  // Per-topic accuracy isn't in the /api/student/stats response
-  // yet — it needs question-level rollups that aren't materialized.
-  // Show an honest empty state instead of fabricated weak topics.
+function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading: boolean }) {
   return (
     <div style={{ background: '#132B45', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
       <div style={{ fontSize: 15, fontWeight: 600, color: '#F7F9FA' }}>Focus Areas</div>
       <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3, marginBottom: 16 }}>
         Weakest topics — review before exam
       </div>
-      <div
-        style={{
-          minHeight: 148,
-          display: 'grid',
-          placeItems: 'center',
-          fontSize: 12,
-          color: '#8B98A6',
-          textAlign: 'center',
-          padding: '0 8px',
-          lineHeight: 1.5,
-        }}
-      >
-        Topic-level breakdown will appear here once per-topic accuracy is tracked.
-      </div>
+      {focusAreas.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {focusAreas.map((f) => (
+            <div key={f.topic}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                <span style={{ color: '#F7F9FA', fontWeight: 600 }}>{f.topic}</span>
+                <span style={{ color: f.accuracy < 60 ? '#EF4444' : '#F97316' }}>{f.accuracy.toFixed(0)}%</span>
+              </div>
+              <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.06)', marginTop: 6 }}>
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${Math.max(4, f.accuracy)}%`,
+                    borderRadius: 3,
+                    background: f.accuracy < 60 ? '#EF4444' : '#F97316',
+                  }}
+                />
+              </div>
+              <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 4 }}>
+                {f.attempted} question{f.attempted === 1 ? '' : 's'} attempted
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            minHeight: 148,
+            display: 'grid',
+            placeItems: 'center',
+            fontSize: 12,
+            color: '#8B98A6',
+            textAlign: 'center',
+            padding: '0 8px',
+            lineHeight: 1.5,
+          }}
+        >
+          {loading
+            ? 'Loading your focus areas…'
+            : 'Answer at least 3 questions in a topic to see it here.'}
+        </div>
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ const DEFAULT_LINKS: NavLink[] = [
   { label: 'Catalogue',    href: '/student/catalogue' },
   { label: 'Custom Exam',  href: '/student/exam' },
   { label: 'Leaderboard',  href: '/student/leaderboard' },
+  { label: 'Bookmarks',    href: '/student/bookmarks' },
 ];
 
 export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] }) {

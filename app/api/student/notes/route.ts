@@ -8,11 +8,16 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/student/notes?questionId=N
+ * GET /api/student/notes              (list mode — no questionId)
  *
- * The signed-in student's note content for this question, or ''
- * if none exists yet. Same auth pattern as the rest of this route
- * family — RLS (students_own_notes: student_id = auth.uid()) does
- * the actual scoping via the cookie-bound client.
+ * With `questionId`: the signed-in student's note content for that
+ * question, or '' if none exists yet. Without it: every note the
+ * student has saved, joined to its question/chapter for display on
+ * /student/bookmarks — same manual-batch-join approach as
+ * app/api/student/bookmarks/route.ts (notes.question_id has no FK
+ * to questions.id either). Same auth pattern as the rest of this
+ * route family — RLS (students_own_notes: student_id = auth.uid())
+ * does the actual scoping via the cookie-bound client.
  */
 export async function GET(request: NextRequest) {
   const supabase = await createRouteHandlerClient<Database>({ cookies });
@@ -23,12 +28,78 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const questionId = Number(request.nextUrl.searchParams.get('questionId'));
+  const client = untypedFrom(supabase);
+  const questionIdParam = request.nextUrl.searchParams.get('questionId');
+
+  if (questionIdParam === null) {
+    const { data: rows } = await client
+      .from('notes')
+      .select('id, question_id, content, updated_at')
+      .eq('student_id', user.id)
+      .order('updated_at', { ascending: false });
+
+    const noteRows =
+      (rows as { id: string; question_id: number; content: string; updated_at: string }[] | null) ??
+      [];
+    if (noteRows.length === 0) {
+      return NextResponse.json({ notes: [] });
+    }
+
+    const questionIds = noteRows.map((n) => n.question_id);
+    const { data: questionRows } = await client
+      .from('questions')
+      .select('id, question, topic, chapter_id')
+      .in('id', questionIds);
+    const questionById = new Map(
+      (
+        (questionRows as
+          | { id: number; question: string; topic: string; chapter_id: string | null }[]
+          | null) ?? []
+      ).map((q) => [q.id, q])
+    );
+
+    const chapterIds = Array.from(
+      new Set(
+        Array.from(questionById.values())
+          .map((q) => q.chapter_id)
+          .filter((id): id is string => !!id)
+      )
+    );
+    const chapterById = new Map<string, { name: string; module_code: string }>();
+    if (chapterIds.length > 0) {
+      const { data: chapterRows } = await client
+        .from('chapters')
+        .select('id, name, module_code')
+        .in('id', chapterIds);
+      for (const c of (chapterRows as { id: string; name: string; module_code: string }[] | null) ??
+        []) {
+        chapterById.set(c.id, c);
+      }
+    }
+
+    const notes = noteRows.map((n) => {
+      const q = questionById.get(n.question_id);
+      const chapter = q?.chapter_id ? chapterById.get(q.chapter_id) : undefined;
+      return {
+        id: n.id,
+        questionId: n.question_id,
+        question: q?.question ?? '(question no longer available)',
+        topic: q?.topic ?? '',
+        chapterName: chapter?.name ?? null,
+        moduleCode: chapter?.module_code ?? null,
+        content: n.content,
+        updatedAt: n.updated_at,
+      };
+    });
+
+    return NextResponse.json({ notes });
+  }
+
+  const questionId = Number(questionIdParam);
   if (!Number.isInteger(questionId)) {
     return NextResponse.json({ error: 'Invalid questionId' }, { status: 400 });
   }
 
-  const client = untypedFrom(supabase);
   const { data } = await client
     .from('notes')
     .select('content')

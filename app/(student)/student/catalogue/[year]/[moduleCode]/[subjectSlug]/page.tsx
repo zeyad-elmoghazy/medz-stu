@@ -7,6 +7,7 @@ import { Loader2, Search } from 'lucide-react';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchChaptersBySubject, type ChaptersBySubject } from '@/lib/catalogue-api';
+import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 
 export default function CatalogueChaptersPage() {
   const params = useParams<{ year: string; moduleCode: string; subjectSlug: string }>();
@@ -331,9 +332,10 @@ export default function CatalogueChaptersPage() {
                               ? `${c.publishedCount} published question${c.publishedCount === 1 ? '' : 's'}`
                               : '0 questions'}
                           </span>
-                          {published && (
+                          {published && !c.attempted && (
                             <Link
                               href={`/student/quiz/chapter/${c.id}`}
+                              onClick={() => useChapterQuizStore.getState().startSession()}
                               style={{
                                 flex: 'none',
                                 fontSize: 11,
@@ -348,6 +350,50 @@ export default function CatalogueChaptersPage() {
                             >
                               Start Quiz
                             </Link>
+                          )}
+                          {published && c.attempted && (
+                            <>
+                              <Link
+                                href={`/student/quiz/chapter/${c.id}`}
+                                onClick={() => useChapterQuizStore.getState().startSession()}
+                                style={{
+                                  flex: 'none',
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  whiteSpace: 'nowrap',
+                                  padding: '7px 12px',
+                                  borderRadius: 7,
+                                  color: '#F7F9FA',
+                                  background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                                  textDecoration: 'none',
+                                }}
+                              >
+                                Solve Again
+                              </Link>
+                              {c.mistakeQuestionIds.length > 0 && (
+                                <Link
+                                  href={`/student/quiz/chapter/${c.id}`}
+                                  onClick={() =>
+                                    useChapterQuizStore
+                                      .getState()
+                                      .startMistakeSession(c.id, c.mistakeQuestionIds)
+                                  }
+                                  style={{
+                                    flex: 'none',
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    whiteSpace: 'nowrap',
+                                    padding: '7px 12px',
+                                    borderRadius: 7,
+                                    color: '#F7F9FA',
+                                    background: '#33BFBF',
+                                    textDecoration: 'none',
+                                  }}
+                                >
+                                  Practice mistakes ({c.mistakeQuestionIds.length})
+                                </Link>
+                              )}
+                            </>
                           )}
                         </div>
                       );

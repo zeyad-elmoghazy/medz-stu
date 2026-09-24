@@ -38,18 +38,21 @@ const SubmitBodySchema = z.object({
  * (deliberate: the cap already bounds the benefit of an unproctored
  * attempt, so a second, separate cap isn't needed).
  *
- * Deliberately does NOT insert into `quiz_sessions` — that table
- * backs the student's "recent challenges" / accuracy history shown
- * on the dashboard, which should stay scoped to the proctored
- * challenge flow. This endpoint only updates the running XP/stat
+ * Also inserts one row into `quiz_sessions` (chapter_id set — see
+ * supabase/migrations/026_quiz_sessions_chapter_id.sql) so this,
+ * the app's real/primary quiz flow, feeds the student Analytics
+ * view's "Recent Challenges", "Accuracy Trend", and per-subject
+ * numbers the same way the old proctored flow's /api/quiz/submit
+ * does. That insert is best-effort (logged, non-fatal) since this
+ * route's response doesn't depend on a session id the way
+ * /api/quiz/submit's does. Also updates the running XP/stat
  * counters on `profiles` and the leaderboard, via the same
  * `record_quiz_result` RPC the proctored path uses (see
  * supabase/migrations/025_leaderboard_xp.sql). Also returns a
  * per-question `results` breakdown (chosen/correct/isCorrect) — the
  * chapter quiz page's results screen renders entirely from this
  * response, the same way the proctored results page renders from
- * /api/quiz/submit's response, with no separate history table to
- * read back from.
+ * /api/quiz/submit's response.
  */
 export async function POST(
   request: NextRequest,
@@ -106,14 +109,15 @@ export async function POST(
   // trusting a client-claimed score).
   const questionsRes = await service
     .from('questions')
-    .select('id, correct_answer')
+    .select('id, correct_answer, subject_id')
     .eq('chapter_id', chapterId)
     .eq('status', 'published');
 
   if (questionsRes.error) {
     return NextResponse.json({ error: questionsRes.error.message }, { status: 500 });
   }
-  const allQuestions = (questionsRes.data as { id: number; correct_answer: string }[] | null) ?? [];
+  const allQuestions =
+    (questionsRes.data as { id: number; correct_answer: string; subject_id: string }[] | null) ?? [];
   if (allQuestions.length === 0) {
     return NextResponse.json({ error: 'Chapter has no published questions.' }, { status: 400 });
   }
@@ -141,6 +145,25 @@ export async function POST(
   const score = results.filter((r) => r.isCorrect).length;
   const total = questions.length;
   const accuracy = Number(((score / total) * 100).toFixed(2));
+
+  // Best-effort: record this attempt in quiz_sessions so it feeds the
+  // Analytics view (Recent Challenges / Accuracy Trend / per-subject
+  // numbers). Non-fatal — a failed insert here shouldn't block XP/
+  // streak credit or the results screen, same principle as the
+  // record_quiz_result RPC error handling below.
+  const sessionInsertRes = await service.from('quiz_sessions').insert({
+    student_id: user.id,
+    subject_id: questions[0].subject_id,
+    chapter_id: chapterId,
+    answers,
+    score,
+    total_questions: total,
+    accuracy,
+    violations_count: 0,
+  });
+  if (sessionInsertRes.error) {
+    console.error('[chapters/submit] quiz_sessions insert failed:', sessionInsertRes.error.message);
+  }
 
   const today = todayISODate();
   const alreadyCountedToday = await getTodayXpCorrectCount(service, user.id, today);
@@ -187,6 +210,7 @@ type ServiceClient = {
         }>;
       };
     };
+    insert: (row: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
   };
   rpc: (name: string, args: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
 };

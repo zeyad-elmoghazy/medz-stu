@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
+import { deriveChapterMistakes, fetchChapterQuizAttempts } from '@/lib/server/chapter-mistakes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,6 +71,31 @@ export async function GET(request: NextRequest) {
   const chapterTotal = chapters.length;
   const publishedTotal = chapters.reduce((sum, c) => sum + (Number(c.published_count) || 0), 0);
 
+  // Whether each chapter has ever been attempted (any quiz_sessions
+  // row — real, DB-backed, unlike the client-only mistakes store),
+  // and its current mistake pool via the shared helper also used by
+  // /api/student/stats (lib/server/chapter-mistakes.ts) so the two
+  // surfaces can never disagree.
+  const chapterIds = chapters.map((c) => c.id);
+  const attemptedChapterIds = new Set<string>();
+  let mistakesByChapter = new Map<string, number[]>();
+
+  if (chapterIds.length > 0) {
+    const sessionsRes = await client
+      .from('quiz_sessions')
+      .select('chapter_id')
+      .eq('student_id', user.id)
+      .in('chapter_id', chapterIds);
+    for (const row of (sessionsRes.data as { chapter_id: string }[] | null) ?? []) {
+      attemptedChapterIds.add(row.chapter_id);
+    }
+
+    const attempts = await fetchChapterQuizAttempts(supabase, user.id, { chapterIds });
+    mistakesByChapter = new Map(
+      deriveChapterMistakes(attempts).map((cm) => [cm.chapterId, cm.questionIds])
+    );
+  }
+
   return NextResponse.json(
     {
       moduleCode,
@@ -84,6 +110,8 @@ export async function GET(request: NextRequest) {
         name: c.name,
         ordinal: c.ordinal,
         publishedCount: Number(c.published_count) || 0,
+        attempted: attemptedChapterIds.has(c.id),
+        mistakeQuestionIds: mistakesByChapter.get(c.id) ?? [],
       })),
     },
     { headers: { 'Cache-Control': 'private, max-age=30' } }

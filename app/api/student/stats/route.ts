@@ -6,10 +6,13 @@ import type { Database, UserRole } from '@/lib/supabase';
 import {
   SUBJECTS_CONFIG,
   type ChallengeResult,
+  type ChapterMistake,
+  type FocusArea,
   type ProgressDataPoint,
   type StudentStats,
   type Subject,
 } from '@/lib/dashboard-data';
+import { deriveChapterMistakes, fetchChapterQuizAttempts } from '@/lib/server/chapter-mistakes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -286,9 +289,68 @@ export async function GET() {
   const lastActiveDate =
     recentSessions[0]?.completed_at ?? new Date().toISOString();
 
+  // Focus Areas (weakest topics) + the Analytics "Practice mistakes"
+  // banner both derive from the same chapter-quiz answer history —
+  // see lib/server/chapter-mistakes.ts for why this is shared with
+  // the catalogue route rather than reimplemented here.
+  const attempts = await fetchChapterQuizAttempts(service, user.id, {
+    limitSessions: 50,
+  });
+
+  const topicAgg = new Map<string, { attempted: number; correct: number }>();
+  for (const a of attempts) {
+    const bucket = topicAgg.get(a.topic) ?? { attempted: 0, correct: 0 };
+    bucket.attempted += 1;
+    if (a.chosen === a.correctAnswer) bucket.correct += 1;
+    topicAgg.set(a.topic, bucket);
+  }
+  const focusAreas: FocusArea[] = Array.from(topicAgg.entries())
+    .map(([topic, { attempted, correct }]) => ({
+      topic,
+      accuracy: Math.round((correct / attempted) * 1000) / 10,
+      attempted,
+    }))
+    // Avoid noisy single-question "weak spots" — require a minimum
+    // sample before a topic counts as a real signal.
+    .filter((t) => t.attempted >= 3)
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 3);
+
+  const chapterMistakes = deriveChapterMistakes(attempts);
+  let mistakes: ChapterMistake[] = [];
+  if (chapterMistakes.length > 0) {
+    const chapterIds = chapterMistakes.map((c) => c.chapterId);
+    const chaptersInfoRes = await (supabase as unknown as {
+      from: (t: string) => {
+        select: (c: string) => {
+          in: (
+            col: string,
+            vals: string[]
+          ) => Promise<{
+            data: Array<{ id: string; name: string; module_code: string }> | null;
+          }>;
+        };
+      };
+    })
+      .from('chapters')
+      .select('id, name, module_code')
+      .in('id', chapterIds);
+    const chapterInfoById = new Map(
+      (chaptersInfoRes.data ?? []).map((c) => [c.id, c])
+    );
+    mistakes = chapterMistakes.map((cm) => {
+      const info = chapterInfoById.get(cm.chapterId);
+      return {
+        chapterId: cm.chapterId,
+        chapterName: info?.name ?? 'Chapter',
+        moduleCode: info?.module_code ?? '',
+        questionIds: cm.questionIds,
+      };
+    });
+  }
+
   const stats: StudentStats & {
     profile: { id: string; full_name: string | null; email: string | null };
-    bookmarksCount: number;
   } = {
     profile: {
       id: roleRow.id,
@@ -304,6 +366,8 @@ export async function GET() {
     subjects,
     recentChallenges,
     progressHistory,
+    focusAreas,
+    mistakes,
   };
 
   return NextResponse.json(stats, {

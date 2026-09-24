@@ -11,6 +11,7 @@ import {
   Check,
   Clock,
   Crosshair,
+  RotateCcw,
   Target,
   X,
   Zap,
@@ -40,6 +41,7 @@ export default function ChapterResultsPage() {
   const sessionEndedAt = useChapterQuizStore((s) => s.sessionEndedAt);
   const mistakeQuestionIdsByChapter = useChapterQuizStore((s) => s.mistakeQuestionIdsByChapter);
   const startMistakeSession = useChapterQuizStore((s) => s.startMistakeSession);
+  const startSession = useChapterQuizStore((s) => s.startSession);
 
   const [data, setData] = useState<ChapterQuiz | null>(null);
 
@@ -109,6 +111,11 @@ export default function ChapterResultsPage() {
   function handleQuizMistakes() {
     if (practiceIds.length === 0) return;
     startMistakeSession(chapterId, practiceIds);
+    router.push(`/student/quiz/chapter/${chapterId}`);
+  }
+
+  function handleSolveAgain() {
+    startSession();
     router.push(`/student/quiz/chapter/${chapterId}`);
   }
 
@@ -200,10 +207,20 @@ export default function ChapterResultsPage() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
+              onClick={handleSolveAgain}
+              className="group inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition"
+              style={{ backgroundColor: '#00A6A6', boxShadow: '0 0 28px rgba(0,166,166,0.5)' }}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Solve Again
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </button>
+            <button
+              type="button"
               onClick={handleQuizMistakes}
               disabled={practiceIds.length === 0}
               className="group inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
-              style={{ backgroundColor: '#00A6A6', boxShadow: '0 0 28px rgba(0,166,166,0.5)' }}
+              style={{ backgroundColor: '#33BFBF', boxShadow: '0 0 28px rgba(51,191,191,0.5)' }}
             >
               <Crosshair className="h-4 w-4" />
               Practice mistakes

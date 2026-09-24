@@ -39,6 +39,19 @@ export type ProgressDataPoint = {
   accuracy: number;      // 0-100
 };
 
+export type FocusArea = {
+  topic: string;
+  accuracy: number;      // 0-100
+  attempted: number;     // question-attempts this topic is based on
+};
+
+export type ChapterMistake = {
+  chapterId: string;
+  chapterName: string;
+  moduleCode: string;
+  questionIds: number[];
+};
+
 export type StudentStats = {
   totalQuestionsAnswered: number;
   totalCorrectAnswers: number;
@@ -48,6 +61,11 @@ export type StudentStats = {
   subjects: Subject[];
   recentChallenges: ChallengeResult[];
   progressHistory: ProgressDataPoint[];
+  // Real, DB-backed numbers from chapter-quiz activity — see
+  // app/api/student/stats/route.ts and lib/server/chapter-mistakes.ts.
+  bookmarksCount: number;
+  focusAreas: FocusArea[];
+  mistakes: ChapterMistake[];
 };
 
 // Static catalog of subjects (icon, palette, availability). The
@@ -153,5 +171,8 @@ export function getEmptyStudentStats(): StudentStats {
     subjects: SUBJECTS_CONFIG,
     recentChallenges: [],
     progressHistory: [],
+    bookmarksCount: 0,
+    focusAreas: [],
+    mistakes: [],
   };
 }

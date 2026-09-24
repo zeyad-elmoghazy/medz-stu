@@ -47,6 +47,11 @@ export type CatalogueChapter = {
   ordinal: number;
   publishedCount: number;
   topic: string | null;
+  // Real, DB-backed (quiz_sessions.chapter_id) — not the client-only
+  // useChapterQuizStore, which can't tell a perfect-score attempt
+  // from never having attempted the chapter at all.
+  attempted: boolean;
+  mistakeQuestionIds: number[];
 };
 
 export type ChaptersBySubject = {
