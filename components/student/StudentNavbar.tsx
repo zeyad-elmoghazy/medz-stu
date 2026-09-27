@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Loader2, LogOut, Moon, Sun } from 'lucide-react';
+import { LogOutIcon, MoonIcon, SpinnerIcon, SunIcon } from '@/components/icons';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { NavToast, useNavToast } from '@/components/ui/NavToast';
 import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabase';
@@ -72,7 +72,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '20px 34px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--line)',
         }}
       >
         <MediZeeLogo size="sm" />
@@ -84,7 +84,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                 <Link
                   key={link.label}
                   href={link.href}
-                  style={{ color: '#8B98A6', textDecoration: 'none', cursor: 'pointer' }}
+                  style={{ color: 'var(--text3)', textDecoration: 'none', cursor: 'pointer' }}
                 >
                   {link.label}
                 </Link>
@@ -97,7 +97,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                   type="button"
                   onClick={() => showToast(link.toast!)}
                   style={{
-                    color: '#8B98A6',
+                    color: 'var(--text3)',
                     fontWeight: 500,
                     fontSize: 13.5,
                     background: 'transparent',
@@ -115,7 +115,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               <span
                 key={link.label}
                 style={{
-                  color: link.active ? '#F7F9FA' : '#8B98A6',
+                  color: link.active ? 'var(--text)' : 'var(--text3)',
                   fontWeight: link.active ? 600 : 500,
                 }}
               >
@@ -135,10 +135,9 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               fontSize: 13,
               fontWeight: 700,
               color: '#F7F9FA',
-              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+              background: 'var(--accent-text)',
               padding: '9px 16px',
               borderRadius: 10,
-              boxShadow: '0 0 18px rgba(0,166,166,0.4)',
               textDecoration: 'none',
             }}
           >
@@ -153,16 +152,16 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               width: 34,
               height: 34,
               borderRadius: 9,
-              border: '1px solid rgba(255,255,255,0.12)',
+              border: '1px solid var(--line2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#8B98A6',
+              color: 'var(--text3)',
               background: 'transparent',
               cursor: 'pointer',
             }}
           >
-            {theme === 'light' ? <Moon style={{ width: 15, height: 15 }} /> : <Sun style={{ width: 15, height: 15 }} />}
+            {theme === 'light' ? <MoonIcon size={15} /> : <SunIcon size={15} />}
           </button>
 
           <Link
@@ -173,7 +172,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               gap: 8,
               fontSize: 13.5,
               fontWeight: 600,
-              color: '#8B98A6',
+              color: 'var(--text3)',
               textDecoration: 'none',
             }}
           >
@@ -184,7 +183,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                 borderRadius: '50%',
                 display: 'grid',
                 placeItems: 'center',
-                background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                background: 'var(--accent-text)',
                 color: '#F7F9FA',
                 fontSize: 11,
                 fontWeight: 700,
@@ -205,7 +204,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               gap: 6,
               fontSize: 13.5,
               fontWeight: 600,
-              color: '#8B98A6',
+              color: 'var(--text3)',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -213,9 +212,9 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
             }}
           >
             {signingOut ? (
-              <Loader2 style={{ width: 13, height: 13 }} className="animate-spin" />
+              <SpinnerIcon size={13} className="animate-spin" />
             ) : (
-              <LogOut style={{ width: 13, height: 13 }} />
+              <LogOutIcon size={13} />
             )}
             Log out
           </button>

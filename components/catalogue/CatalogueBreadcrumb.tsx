@@ -12,7 +12,7 @@ export function CatalogueBreadcrumb({ crumbs }: { crumbs: Crumb[] }) {
         alignItems: 'center',
         gap: 8,
         fontSize: 12,
-        color: '#8B98A6',
+        color: 'var(--text3)',
         marginBottom: 24,
         flexWrap: 'wrap',
       }}
@@ -22,15 +22,15 @@ export function CatalogueBreadcrumb({ crumbs }: { crumbs: Crumb[] }) {
         return (
           <span key={`${c.label}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {c.href && !isLast ? (
-              <Link href={c.href} style={{ color: '#8B98A6', textDecoration: 'none' }}>
+              <Link href={c.href} style={{ color: 'var(--text3)', textDecoration: 'none' }}>
                 {c.label}
               </Link>
             ) : (
-              <span style={{ color: isLast ? '#33BFBF' : '#8B98A6', fontWeight: isLast ? 600 : 400 }}>
+              <span style={{ color: isLast ? 'var(--accent-text)' : 'var(--text3)', fontWeight: isLast ? 600 : 400 }}>
                 {c.label}
               </span>
             )}
-            {!isLast && <span style={{ color: '#4A5A6B' }}>›</span>}
+            {!isLast && <span style={{ color: 'var(--faint)' }}>›</span>}
           </span>
         );
       })}
