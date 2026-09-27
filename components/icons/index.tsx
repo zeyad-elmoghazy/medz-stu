@@ -1,11 +1,11 @@
-// Small hand-authored icon set, replacing lucide-react on the
-// redesigned surfaces (landing, dashboard, catalogue, auth). Each
-// icon is a plain stroke-based SVG so it inherits color/size via
-// normal CSS/props instead of a library dependency. Icons are added
-// here only as a page in scope for the redesign actually needs one —
-// see AGENTS notes in the redesign plan for which surfaces are in
-// scope; components/quiz/* and AITutor/NotesEditor keep lucide-react
-// for now (out of scope for this pass).
+// Small hand-authored icon set, replacing lucide-react across the
+// redesigned surfaces (landing, dashboard, catalogue, auth, quiz,
+// results, NotesEditor, AITutor). Each icon is a plain stroke-based
+// SVG so it inherits color/size via normal CSS/props instead of a
+// library dependency. Icons are added here only as a surface in
+// scope for the redesign actually needs one — purely decorative
+// lucide usages (icons that don't clarify an action) were dropped
+// outright rather than given an equivalent here.
 import type { SVGProps } from 'react';
 
 type IconProps = SVGProps<SVGSVGElement> & { size?: number };
@@ -152,10 +152,116 @@ export function CloseIcon(props: IconProps) {
   );
 }
 
-export function BookmarkIcon(props: IconProps) {
+export function BookmarkIcon({ filled, ...props }: IconProps & { filled?: boolean }) {
+  return (
+    <Base {...props} fill={filled ? 'currentColor' : 'none'}>
+      <path d="M6 4h12v17l-6-4-6 4z" />
+    </Base>
+  );
+}
+
+export function ArrowLeftIcon(props: IconProps) {
   return (
     <Base {...props}>
-      <path d="M6 4h12v17l-6-4-6 4z" />
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </Base>
+  );
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <polyline points="20 6 9 17 4 12" />
+    </Base>
+  );
+}
+
+export function CopyIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </Base>
+  );
+}
+
+export function ExpandIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+      <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+      <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+      <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+    </Base>
+  );
+}
+
+export function RotateCcwIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M3 12a9 9 0 1 0 2.6-6.4" />
+      <polyline points="3 4 3 10 9 10" />
+    </Base>
+  );
+}
+
+export function ShieldAlertIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z" />
+      <line x1="12" y1="8" x2="12" y2="13" />
+      <circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none" />
+    </Base>
+  );
+}
+
+export function StickyNoteIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M5 3h11l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M15 3v5h5" />
+    </Base>
+  );
+}
+
+export function SendIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </Base>
+  );
+}
+
+export function BoldIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M7 4h6a3.5 3.5 0 0 1 0 7H7z" />
+      <path d="M7 11h7a3.5 3.5 0 0 1 0 7H7z" />
+    </Base>
+  );
+}
+
+export function ItalicIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <line x1="19" y1="4" x2="10" y2="4" />
+      <line x1="14" y1="20" x2="5" y2="20" />
+      <line x1="15" y1="4" x2="9" y2="20" />
+    </Base>
+  );
+}
+
+export function ListIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <line x1="9" y1="6" x2="20" y2="6" />
+      <line x1="9" y1="12" x2="20" y2="12" />
+      <line x1="9" y1="18" x2="20" y2="18" />
+      <circle cx="4" cy="6" r="1" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="18" r="1" fill="currentColor" stroke="none" />
     </Base>
   );
 }
