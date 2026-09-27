@@ -53,7 +53,9 @@ function StudentDashboardInner() {
   // the in-page onViewAnalytics/onBackToSubjects callbacks below still
   // flip it directly without touching the URL, same as before.
   useEffect(() => {
-    setView(searchParams.get('view') === 'analytics' ? 'analytics' : 'home');
+    (() => {
+      setView(searchParams.get('view') === 'analytics' ? 'analytics' : 'home');
+    })();
   }, [searchParams]);
 
   // Fetch per-student stats from /api/student/stats. In demo mode
