@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MailCheck } from 'lucide-react';
+import { MailCheckIcon } from '@/components/icons';
 
 export function CheckInboxCard({
   email,
@@ -16,14 +16,8 @@ export function CheckInboxCard({
 }) {
   return (
     <div className="animate-fade-in-down text-center">
-      <span
-        className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: 'rgba(0,166,166,0.12)',
-          border: '1px solid rgba(51,191,191,0.35)',
-        }}
-      >
-        <MailCheck className="h-6 w-6 text-[#33BFBF]" />
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-accent/35 bg-accent/10">
+        <MailCheckIcon size={24} className="text-accent" />
       </span>
 
       <h1 className="mt-6 text-2xl font-semibold tracking-tight text-text-primary">
@@ -39,7 +33,7 @@ export function CheckInboxCard({
 
       <Link
         href={backHref}
-        className="mt-8 inline-flex text-sm font-medium text-[#33BFBF] underline-offset-2 transition hover:text-[#F7F9FA] hover:underline"
+        className="mt-8 inline-flex text-sm font-medium text-accent underline-offset-2 transition hover:text-text-primary hover:underline"
       >
         {backLabel}
       </Link>

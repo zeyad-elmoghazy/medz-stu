@@ -4,12 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowRight,
-  Loader2,
-  Lock,
-  Mail,
-  User,
-} from 'lucide-react';
+  ArrowRightIcon,
+  SpinnerIcon,
+  LockIcon,
+  MailIcon,
+  UserIcon,
+} from '@/components/icons';
 import {
   dashboardPathForRole,
   isDemoMode,
@@ -118,27 +118,15 @@ export default function SignupPage() {
 
   return (
     <main className="relative flex min-h-screen w-full items-center justify-center px-4 py-16">
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-1/3 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#33BFBF]/15 blur-[120px]" />
-        <div className="absolute bottom-10 left-10 h-72 w-72 rounded-full bg-emerald-500/10 blur-[100px]" />
-      </div>
-
       <div
-        style={{
-          backgroundColor: '#132B45',
-          border: '1px solid #132B45',
-          padding: '40px',
-        }}
-        className="animate-fade-in-up w-full max-w-md rounded-2xl shadow-[0_40px_120px_-30px_rgba(0,166,166,0.4)]"
+        style={{ padding: '40px' }}
+        className="animate-fade-in-up w-full max-w-md rounded-2xl border border-border bg-surface"
       >
         <Link
           href="/"
           className="mx-auto flex w-fit flex-col items-center gap-1.5"
         >
-          <span
-            className="text-2xl font-bold tracking-tight text-white"
-            style={{ textShadow: '0 0 20px rgba(0,166,166,0.7)' }}
-          >
+          <span className="text-2xl font-bold tracking-tight text-text-primary">
             MediZee
           </span>
           <span className="text-[10px] uppercase tracking-[0.28em] text-text-muted">
@@ -166,13 +154,7 @@ export default function SignupPage() {
                 Start drilling MCQs, generating exams, and tracking your streaks.
               </p>
               {isDemoMode() && (
-                <p
-                  className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]"
-                  style={{
-                    backgroundColor: 'rgba(0,166,166,0.15)',
-                    border: '1px solid rgba(51,191,191,0.35)',
-                  }}
-                >
+                <p className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full border border-accent/35 bg-accent/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-accent">
                   Demo mode · no real account required
                 </p>
               )}
@@ -182,7 +164,7 @@ export default function SignupPage() {
               <FormField
                 id="fullName"
                 label="Full name"
-                icon={<User className="h-4 w-4" />}
+                icon={<UserIcon size={16} />}
                 type="text"
                 autoComplete="name"
                 placeholder="Yusuf Khalil"
@@ -193,7 +175,7 @@ export default function SignupPage() {
               <FormField
                 id="email"
                 label="Email"
-                icon={<Mail className="h-4 w-4" />}
+                icon={<MailIcon size={16} />}
                 type="email"
                 autoComplete="email"
                 placeholder="you@university.edu"
@@ -204,7 +186,7 @@ export default function SignupPage() {
               <FormField
                 id="password"
                 label="Password"
-                icon={<Lock className="h-4 w-4" />}
+                icon={<LockIcon size={16} />}
                 type="password"
                 autoComplete="new-password"
                 placeholder="Minimum 8 characters"
@@ -224,14 +206,14 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00A6A6] px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(0,166,166,0.45)] transition hover:bg-[#33BFBF] hover:shadow-[0_0_36px_rgba(0,166,166,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#33BFBF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#132B45] disabled:cursor-not-allowed disabled:opacity-60"
+                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 text-sm font-semibold text-white transition hover:bg-accent-glow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <SpinnerIcon size={16} className="animate-spin" />
                 ) : (
                   <>
                     Create account
-                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                    <ArrowRightIcon size={16} className="transition group-hover:translate-x-0.5" />
                   </>
                 )}
               </button>
@@ -241,7 +223,7 @@ export default function SignupPage() {
               Already have an account?{' '}
               <Link
                 href="/login"
-                className="font-medium text-[#33BFBF] underline-offset-2 transition hover:text-[#F7F9FA] hover:underline"
+                className="font-medium text-accent underline-offset-2 transition hover:text-text-primary hover:underline"
               >
                 Log In
               </Link>
@@ -295,7 +277,7 @@ function FormField({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="block h-11 w-full rounded-lg border border-[#132B45] bg-[#0B1F33] pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-[#33BFBF] focus:outline-none focus:ring-2 focus:ring-[#33BFBF]/40"
+          className="block h-11 w-full rounded-lg border border-border bg-background pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
         />
       </div>
     </div>
