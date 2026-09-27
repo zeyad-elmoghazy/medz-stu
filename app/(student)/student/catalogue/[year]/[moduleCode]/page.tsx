@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { SpinnerIcon } from '@/components/icons';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchSubjectsByModule, type SubjectsByModule } from '@/lib/catalogue-api';
+import { getSubjectImage } from '@/lib/subject-images';
 
 function initialsOf(name: string): string {
   const words = name.replace(/&/g, ' ').split(/\s+/).filter(Boolean);
@@ -47,14 +49,14 @@ export default function CatalogueSubjectsPage() {
       />
 
       {error && (
-        <div role="alert" style={{ padding: '12px 16px', color: '#FCA5A5', fontSize: 13 }}>
+        <div role="alert" style={{ padding: '12px 16px', color: 'var(--error)', fontSize: 13 }}>
           {error}
         </div>
       )}
 
       {!data && !error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#8B98A6', fontSize: 13, padding: 40 }}>
-          <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text3)', fontSize: 13, padding: 40 }}>
+          <SpinnerIcon size={16} className="animate-spin" />
           Loading subjects…
         </div>
       )}
@@ -69,9 +71,8 @@ export default function CatalogueSubjectsPage() {
               gap: 24,
               borderRadius: 20,
               padding: '24px 26px',
-              background: 'linear-gradient(135deg,#132B45,#0B1F33)',
-              border: '1px solid rgba(0,166,166,0.4)',
-              boxShadow: '0 0 40px rgba(0,166,166,0.14)',
+              background: 'var(--surface)',
+              border: '1px solid var(--line2)',
               marginBottom: 30,
               flexWrap: 'wrap',
             }}
@@ -83,34 +84,34 @@ export default function CatalogueSubjectsPage() {
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: '0.08em',
-                  color: '#33BFBF',
-                  background: 'rgba(0,166,166,0.16)',
-                  border: '1px solid rgba(0,166,166,0.35)',
+                  color: 'var(--accent-text)',
+                  background: 'var(--line2)',
+                  border: '1px solid var(--line2)',
                   padding: '5px 10px',
                   borderRadius: 7,
                 }}
               >
                 MODULE {data.moduleCode}
               </span>
-              <h1 style={{ margin: '14px 0 0', fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: '#F7F9FA' }}>
+              <h1 style={{ margin: '14px 0 0', fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text)' }}>
                 {data.moduleName}
               </h1>
-              <div style={{ fontSize: 12.5, color: '#8B98A6', marginTop: 8 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--text3)', marginTop: 8 }}>
                 {data.subjects.length} subjects · {data.chapterTotal} chapters · {data.publishedTotal} published
                 question{data.publishedTotal === 1 ? '' : 's'}
               </div>
             </div>
             <div style={{ textAlign: 'center', flex: 'none' }}>
-              <div style={{ fontSize: 30, fontWeight: 900, color: '#8B98A6', letterSpacing: '-0.02em' }}>—</div>
-              <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 2 }}>Module progress</div>
+              <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--text3)', letterSpacing: '-0.02em' }}>—</div>
+              <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>Module progress</div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em', color: '#F7F9FA' }}>
+            <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text)' }}>
               Subjects in this module
             </h2>
-            <span style={{ fontSize: 12, color: '#8B98A6' }}>A subject can also appear in other modules</span>
+            <span style={{ fontSize: 12, color: 'var(--text3)' }}>A subject can also appear in other modules</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
@@ -124,36 +125,50 @@ export default function CatalogueSubjectsPage() {
                   flexDirection: 'column',
                   borderRadius: 16,
                   padding: 20,
-                  background: '#132B45',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--line)',
                   textDecoration: 'none',
                 }}
               >
                 <div
                   style={{
-                    width: 38,
-                    height: 38,
+                    width: '100%',
+                    height: 120,
                     borderRadius: 10,
-                    background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                    fontWeight: 800,
-                    color: '#F7F9FA',
+                    overflow: 'hidden',
+                    border: '1px solid var(--line)',
                     marginBottom: 14,
+                    position: 'relative',
+                    background: 'var(--fill)',
                   }}
                 >
-                  {initialsOf(s.name)}
+                  {getSubjectImage(s.slug) ? (
+                    <Image src={getSubjectImage(s.slug)!} alt="" fill sizes="360px" style={{ objectFit: 'cover' }} />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: 'var(--accent-text)',
+                      }}
+                    >
+                      {initialsOf(s.name)}
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', color: '#F7F9FA' }}>
+                <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text)' }}>
                   {s.name}
                 </div>
-                <div style={{ fontSize: 11.5, color: '#8B98A6', marginTop: 8 }}>
+                <div style={{ fontSize: 11.5, color: 'var(--text3)', marginTop: 8 }}>
                   {s.chapterCount} chapters in this module
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, fontSize: 11, color: '#8B98A6' }}>
-                  <span style={{ fontWeight: 700, color: '#33BFBF' }}>{s.publishedCount}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, fontSize: 11, color: 'var(--text3)' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--accent-text)' }}>{s.publishedCount}</span>
                   <span>published question{s.publishedCount === 1 ? '' : 's'}</span>
                 </div>
                 <div
@@ -163,10 +178,9 @@ export default function CatalogueSubjectsPage() {
                     fontSize: 12,
                     fontWeight: 700,
                     color: '#F7F9FA',
-                    background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                    background: 'var(--accent-text)',
                     padding: 10,
                     borderRadius: 10,
-                    boxShadow: '0 0 16px rgba(0,166,166,0.3)',
                   }}
                 >
                   View Chapters →

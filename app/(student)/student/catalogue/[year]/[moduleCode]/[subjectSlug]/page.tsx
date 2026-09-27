@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Search } from 'lucide-react';
+import { SearchIcon, SpinnerIcon } from '@/components/icons';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchChaptersBySubject, type ChaptersBySubject } from '@/lib/catalogue-api';
@@ -86,14 +86,14 @@ export default function CatalogueChaptersPage() {
       />
 
       {error && (
-        <div role="alert" style={{ padding: '12px 16px', color: '#FCA5A5', fontSize: 13 }}>
+        <div role="alert" style={{ padding: '12px 16px', color: 'var(--error)', fontSize: 13 }}>
           {error}
         </div>
       )}
 
       {!data && !error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#8B98A6', fontSize: 13, padding: 40 }}>
-          <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text3)', fontSize: 13, padding: 40 }}>
+          <SpinnerIcon size={16} className="animate-spin" />
           Loading chapters…
         </div>
       )}
@@ -108,9 +108,8 @@ export default function CatalogueChaptersPage() {
               gap: 24,
               borderRadius: 20,
               padding: '22px 26px',
-              background: 'linear-gradient(135deg,#132B45,#0B1F33)',
-              border: '1px solid rgba(0,166,166,0.4)',
-              boxShadow: '0 0 40px rgba(0,166,166,0.14)',
+              background: 'var(--surface)',
+              border: '1px solid var(--line2)',
               marginBottom: 26,
               flexWrap: 'wrap',
             }}
@@ -122,19 +121,19 @@ export default function CatalogueChaptersPage() {
                   fontSize: 11,
                   fontWeight: 700,
                   letterSpacing: '0.08em',
-                  color: '#33BFBF',
-                  background: 'rgba(0,166,166,0.16)',
-                  border: '1px solid rgba(0,166,166,0.35)',
+                  color: 'var(--accent-text)',
+                  background: 'var(--line2)',
+                  border: '1px solid var(--line2)',
                   padding: '5px 10px',
                   borderRadius: 7,
                 }}
               >
                 MODULE {data.moduleCode}
               </span>
-              <h1 style={{ margin: '14px 0 0', fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: '#F7F9FA' }}>
+              <h1 style={{ margin: '14px 0 0', fontSize: 30, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text)' }}>
                 {data.subjectName}
               </h1>
-              <div style={{ fontSize: 12.5, color: '#8B98A6', marginTop: 8 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--text3)', marginTop: 8 }}>
                 {data.chapterTotal} chapters · {data.publishedTotal} published question
                 {data.publishedTotal === 1 ? '' : 's'}
               </div>
@@ -149,15 +148,15 @@ export default function CatalogueChaptersPage() {
                   fontWeight: 700,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: '#8B98A6',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'var(--text3)',
+                  background: 'var(--fill)',
+                  border: '1px solid var(--line2)',
                   padding: '6px 11px',
                   borderRadius: 7,
                   flex: 'none',
                 }}
               >
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8B98A6" strokeWidth="2.5">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2.5">
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3.5 2" />
                 </svg>
@@ -168,8 +167,9 @@ export default function CatalogueChaptersPage() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <div style={{ position: 'relative', flex: 1, maxWidth: 340 }}>
-              <Search
-                style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: '#8B98A6' }}
+              <SearchIcon
+                size={14}
+                style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)' }}
               />
               <input
                 value={search}
@@ -179,16 +179,16 @@ export default function CatalogueChaptersPage() {
                   width: '100%',
                   boxSizing: 'border-box',
                   fontSize: 13,
-                  color: '#F7F9FA',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'var(--text)',
+                  background: 'var(--fill)',
+                  border: '1px solid var(--line2)',
                   borderRadius: 9,
                   padding: '9px 12px 9px 34px',
                   outline: 'none',
                 }}
               />
             </div>
-            <span style={{ fontSize: 12, color: '#8B98A6' }}>
+            <span style={{ fontSize: 12, color: 'var(--text3)' }}>
               {filtered.length} of {data.chapterTotal}
             </span>
           </div>
@@ -208,7 +208,7 @@ export default function CatalogueChaptersPage() {
                             fontSize: 12,
                             fontWeight: 700,
                             color: '#F7F9FA',
-                            background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                            background: 'var(--accent-text)',
                             padding: '7px 14px',
                             borderRadius: 8,
                           }
@@ -216,9 +216,9 @@ export default function CatalogueChaptersPage() {
                             cursor: 'pointer',
                             fontSize: 12,
                             fontWeight: 600,
-                            color: '#8B98A6',
-                            background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.09)',
+                            color: 'var(--text3)',
+                            background: 'var(--fill)',
+                            border: '1px solid var(--line)',
                             padding: '7px 14px',
                             borderRadius: 8,
                           }
@@ -238,8 +238,8 @@ export default function CatalogueChaptersPage() {
                 padding: 36,
                 textAlign: 'center',
                 fontSize: 13,
-                color: '#8B98A6',
-                border: '1px dashed rgba(255,255,255,0.09)',
+                color: 'var(--text3)',
+                border: '1px dashed var(--line)',
                 borderRadius: 16,
               }}
             >
@@ -257,12 +257,12 @@ export default function CatalogueChaptersPage() {
                           fontWeight: 800,
                           letterSpacing: '0.06em',
                           textTransform: 'uppercase',
-                          color: '#8B98A6',
+                          color: 'var(--text3)',
                         }}
                       >
                         {g.topicLabel}
                       </span>
-                      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                      <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
                     </div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -277,8 +277,8 @@ export default function CatalogueChaptersPage() {
                             gap: 16,
                             padding: '14px 18px',
                             borderRadius: 13,
-                            background: '#132B45',
-                            border: '1px solid rgba(255,255,255,0.07)',
+                            background: 'var(--surface)',
+                            border: '1px solid var(--line)',
                           }}
                         >
                           <div
@@ -287,15 +287,15 @@ export default function CatalogueChaptersPage() {
                               height: 34,
                               flex: 'none',
                               borderRadius: 9,
-                              background: 'rgba(0,166,166,0.12)',
-                              border: '1px solid rgba(0,166,166,0.3)',
+                              background: 'var(--line2)',
+                              border: '1px solid var(--line2)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               fontFamily: 'ui-monospace,Menlo,monospace',
                               fontSize: 12,
                               fontWeight: 700,
-                              color: '#33BFBF',
+                              color: 'var(--accent-text)',
                             }}
                           >
                             {String(c.ordinal).padStart(2, '0')}
@@ -307,7 +307,7 @@ export default function CatalogueChaptersPage() {
                               fontSize: 14,
                               fontWeight: 600,
                               letterSpacing: '-0.005em',
-                              color: '#F7F9FA',
+                              color: 'var(--text)',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
@@ -323,9 +323,9 @@ export default function CatalogueChaptersPage() {
                               whiteSpace: 'nowrap',
                               padding: '5px 10px',
                               borderRadius: 7,
-                              color: published ? '#33BFBF' : '#8B98A6',
-                              background: published ? 'rgba(0,166,166,0.14)' : 'rgba(255,255,255,0.05)',
-                              border: published ? '1px solid rgba(0,166,166,0.4)' : '1px solid rgba(255,255,255,0.09)',
+                              color: published ? 'var(--accent-text)' : 'var(--text3)',
+                              background: published ? 'var(--line2)' : 'var(--fill)',
+                              border: published ? '1px solid var(--line2)' : '1px solid var(--line)',
                             }}
                           >
                             {published
@@ -344,7 +344,7 @@ export default function CatalogueChaptersPage() {
                                 padding: '7px 12px',
                                 borderRadius: 7,
                                 color: '#F7F9FA',
-                                background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                                background: 'var(--accent-text)',
                                 textDecoration: 'none',
                               }}
                             >
@@ -364,7 +364,7 @@ export default function CatalogueChaptersPage() {
                                   padding: '7px 12px',
                                   borderRadius: 7,
                                   color: '#F7F9FA',
-                                  background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                                  background: 'var(--accent-text)',
                                   textDecoration: 'none',
                                 }}
                               >
@@ -386,7 +386,7 @@ export default function CatalogueChaptersPage() {
                                     padding: '7px 12px',
                                     borderRadius: 7,
                                     color: '#F7F9FA',
-                                    background: '#33BFBF',
+                                    background: 'var(--accent-text)',
                                     textDecoration: 'none',
                                   }}
                                 >

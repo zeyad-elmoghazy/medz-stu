@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, notFound } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { SpinnerIcon } from '@/components/icons';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchModulesByYear, type CatalogueYear } from '@/lib/catalogue-api';
@@ -63,17 +63,17 @@ export default function CatalogueModulesPage() {
               fontSize: 11,
               fontWeight: 700,
               letterSpacing: '0.14em',
-              color: '#00A6A6',
+              color: 'var(--accent-text)',
               textTransform: 'uppercase',
               marginBottom: 10,
             }}
           >
             {yearData?.label ?? ''}
           </div>
-          <h1 style={{ margin: 0, fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em', color: '#F7F9FA' }}>
+          <h1 style={{ margin: 0, fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text)' }}>
             Year {year} Modules
           </h1>
-          <p style={{ margin: '12px 0 0', fontSize: 13.5, color: '#8B98A6', maxWidth: 560, lineHeight: 1.6 }}>
+          <p style={{ margin: '12px 0 0', fontSize: 13.5, color: 'var(--text3)', maxWidth: 560, lineHeight: 1.6 }}>
             Each module bundles the subjects taught alongside it that term.
           </p>
         </div>
@@ -82,9 +82,9 @@ export default function CatalogueModulesPage() {
             style={{
               fontSize: 12,
               fontWeight: 700,
-              color: '#33BFBF',
-              background: 'rgba(0,166,166,0.14)',
-              border: '1px solid rgba(0,166,166,0.4)',
+              color: 'var(--accent-text)',
+              background: 'var(--line2)',
+              border: '1px solid var(--line2)',
               padding: '8px 14px',
               borderRadius: 10,
               flex: 'none',
@@ -96,14 +96,14 @@ export default function CatalogueModulesPage() {
       </div>
 
       {error && (
-        <div role="alert" style={{ padding: '12px 16px', color: '#FCA5A5', fontSize: 13 }}>
+        <div role="alert" style={{ padding: '12px 16px', color: 'var(--error)', fontSize: 13 }}>
           {error}
         </div>
       )}
 
       {!yearData && !error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#8B98A6', fontSize: 13, padding: 40 }}>
-          <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text3)', fontSize: 13, padding: 40 }}>
+          <SpinnerIcon size={16} className="animate-spin" />
           Loading modules…
         </div>
       )}
@@ -118,15 +118,15 @@ export default function CatalogueModulesPage() {
                 flexDirection: 'column',
                 borderRadius: 16,
                 overflow: 'hidden',
-                background: '#132B45',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: 'var(--surface)',
+                border: '1px solid var(--line)',
               }}
             >
               <div
                 style={{
                   padding: '16px 18px 14px',
-                  background: 'linear-gradient(135deg,rgba(0,166,166,0.12),rgba(0,166,166,0.03))',
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  background: 'var(--fill)',
+                  borderBottom: '1px solid var(--line)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -136,9 +136,9 @@ export default function CatalogueModulesPage() {
                       fontSize: 10.5,
                       fontWeight: 700,
                       letterSpacing: '0.08em',
-                      color: '#33BFBF',
-                      background: 'rgba(0,166,166,0.16)',
-                      border: '1px solid rgba(0,166,166,0.35)',
+                      color: 'var(--accent-text)',
+                      background: 'var(--line2)',
+                      border: '1px solid var(--line2)',
                       padding: '4px 8px',
                       borderRadius: 6,
                     }}
@@ -158,9 +158,9 @@ export default function CatalogueModulesPage() {
                         fontWeight: 700,
                         letterSpacing: '0.06em',
                         textTransform: 'uppercase',
-                        color: '#8B98A6',
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.12)',
+                        color: 'var(--text3)',
+                        background: 'var(--fill)',
+                        border: '1px solid var(--line2)',
                         padding: '4px 8px',
                         borderRadius: 6,
                         flex: 'none',
@@ -170,10 +170,10 @@ export default function CatalogueModulesPage() {
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 12, letterSpacing: '-0.01em', color: '#F7F9FA' }}>
+                <div style={{ fontSize: 15.5, fontWeight: 800, marginTop: 12, letterSpacing: '-0.01em', color: 'var(--text)' }}>
                   {m.name}
                 </div>
-                <div style={{ fontSize: 11.5, color: '#8B98A6', marginTop: 6 }}>
+                <div style={{ fontSize: 11.5, color: 'var(--text3)', marginTop: 6 }}>
                   {m.chapterCount} chapters · {m.publishedCount} published question{m.publishedCount === 1 ? '' : 's'}
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function CatalogueModulesPage() {
                     fontWeight: 700,
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
-                    color: '#8B98A6',
+                    color: 'var(--text3)',
                     marginBottom: 9,
                   }}
                 >
@@ -197,7 +197,7 @@ export default function CatalogueModulesPage() {
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: '#D9F3F0',
+                        color: 'var(--accent-text)',
                         background: 'rgba(217,243,240,0.06)',
                         border: '1px solid rgba(217,243,240,0.16)',
                         padding: '5px 10px',
@@ -215,8 +215,8 @@ export default function CatalogueModulesPage() {
                     textAlign: 'center',
                     fontSize: 12,
                     fontWeight: 700,
-                    color: '#33BFBF',
-                    border: '1px solid rgba(0,166,166,0.4)',
+                    color: 'var(--accent-text)',
+                    border: '1px solid var(--line2)',
                     padding: 9,
                     borderRadius: 9,
                     textDecoration: 'none',
