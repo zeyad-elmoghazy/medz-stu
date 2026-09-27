@@ -56,7 +56,7 @@ function PanelFrame({ height }: { height: string }) {
   return (
     <div
       className="rounded-2xl p-6"
-      style={{ backgroundColor: '#0F0F1A', border: '1px solid #1E1E2E' }}
+      style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
     >
       <div
         className="skeleton-shimmer"
