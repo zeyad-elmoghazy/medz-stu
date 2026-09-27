@@ -72,14 +72,15 @@ export function AdminUploadWizard({ onContentChanged }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!moduleCode) return;
-    setSubjectId('');
-    setChapters([]);
-    setChapterId('');
-    fetchModuleSubjects(moduleCode).then(({ subjects: s }) => {
+    (async () => {
+      if (!moduleCode) return;
+      setSubjectId('');
+      setChapters([]);
+      setChapterId('');
+      const { subjects: s } = await fetchModuleSubjects(moduleCode);
       setSubjects(s);
       if (s[0]) setSubjectId(s[0].id);
-    });
+    })();
   }, [moduleCode]);
 
   const loadChapters = useCallback(async () => {
@@ -90,7 +91,9 @@ export function AdminUploadWizard({ onContentChanged }: Props) {
   }, [moduleCode, subjectId]);
 
   useEffect(() => {
-    void loadChapters();
+    (async () => {
+      await loadChapters();
+    })();
   }, [loadChapters]);
 
   const currentModule = modules.find((m) => m.code === moduleCode) ?? null;

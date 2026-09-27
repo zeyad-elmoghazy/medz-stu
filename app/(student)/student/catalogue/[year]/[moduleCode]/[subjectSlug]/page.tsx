@@ -33,7 +33,9 @@ export default function CatalogueChaptersPage() {
   }, [moduleCode, subjectSlug]);
 
   useEffect(() => {
-    setTopicFilter('All');
+    (() => {
+      setTopicFilter('All');
+    })();
   }, [moduleCode, subjectSlug]);
 
   const hasTopics = useMemo(() => !!data && data.chapters.some((c) => !!c.topic), [data]);
