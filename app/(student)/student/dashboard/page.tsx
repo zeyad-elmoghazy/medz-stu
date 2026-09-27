@@ -92,7 +92,8 @@ function StudentDashboardInner() {
   }, []);
 
   const canvasBg: CSSProperties = {
-    width: 1280,
+    maxWidth: 1280,
+    width: '100%',
     margin: '0 auto',
     position: 'relative',
     background: 'var(--bg)',
@@ -101,6 +102,18 @@ function StudentDashboardInner() {
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media (max-width: 900px) {
+              .mz-dash-hero { grid-template-columns: 1fr !important; }
+              .mz-dash-kpis { grid-template-columns: repeat(2,1fr) !important; }
+              .mz-dash-trend { grid-template-columns: 1fr !important; }
+              .mz-dash-modules { grid-template-columns: repeat(auto-fit,minmax(200px,1fr)) !important; }
+            }
+          `,
+        }}
+      />
       <div style={canvasBg}>
         <StudentNavbar activeLabel={view === 'home' ? 'Home' : undefined} />
 
@@ -157,6 +170,7 @@ function HomeView({
     <>
       {/* ================= HERO ================= */}
       <section
+        className="mz-dash-hero"
         style={{
           position: 'relative',
           display: 'grid',
@@ -340,6 +354,7 @@ function HomeView({
 
         {modulesByYear ? (
           <div
+            className="mz-dash-modules"
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${modulesByYear.years.length || 1}, 1fr)`,
@@ -561,7 +576,7 @@ function AnalyticsView({
       )}
 
       {/* KPI grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16 }}>
+      <div className="mz-dash-kpis" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16 }}>
         {kpis.map((k) => {
           const clickable = k.label === 'Bookmarked Questions';
           return (
@@ -598,7 +613,7 @@ function AnalyticsView({
       </div>
 
       {/* Trend + Focus areas */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 22, alignItems: 'start' }}>
+      <div className="mz-dash-trend" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 22, alignItems: 'start' }}>
         <AccuracyTrend history={s.progressHistory} loading={loading} />
         <FocusAreas focusAreas={s.focusAreas} loading={loading} />
       </div>
