@@ -15,6 +15,7 @@ import {
   isDemoMode,
   writeDemoProfile,
 } from '@/lib/demo-profile';
+import { CheckInboxCard } from '@/components/auth/CheckInboxCard';
 
 type SelectableRole = 'student';
 
@@ -27,6 +28,7 @@ export default function SignupPage() {
   const role: SelectableRole = 'student';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<'form' | 'check-email'>('form');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -102,15 +104,12 @@ export default function SignupPage() {
     }
 
     if (!data.session) {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (signInError) {
-        setLoading(false);
-        setError('Account created. Please confirm your email, then log in.');
-        return;
-      }
+      // No session yet means email confirmation is required (the
+      // normal case in production) — this isn't an error, so show
+      // the check-inbox screen instead of routing to the dashboard.
+      setLoading(false);
+      setStep('check-email');
+      return;
     }
 
     router.push(dashboardPathForRole(role));
@@ -147,94 +146,108 @@ export default function SignupPage() {
           </span>
         </Link>
 
-        <div className="mt-8 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
-            Create your account
-          </h1>
-          <p className="mt-1.5 text-sm text-text-muted">
-            Start drilling MCQs, generating exams, and tracking your streaks.
-          </p>
-          {isDemoMode() && (
-            <p
-              className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]"
-              style={{
-                backgroundColor: 'rgba(0,166,166,0.15)',
-                border: '1px solid rgba(51,191,191,0.35)',
-              }}
-            >
-              Demo mode · no real account required
+        {step === 'check-email' ? (
+          <div className="mt-8">
+            <CheckInboxCard
+              email={email}
+              heading="Check your inbox"
+              body="Your account is created — you just need to confirm it."
+              backHref="/login"
+              backLabel="Back to log in"
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mt-8 text-center">
+              <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+                Create your account
+              </h1>
+              <p className="mt-1.5 text-sm text-text-muted">
+                Start drilling MCQs, generating exams, and tracking your streaks.
+              </p>
+              {isDemoMode() && (
+                <p
+                  className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]"
+                  style={{
+                    backgroundColor: 'rgba(0,166,166,0.15)',
+                    border: '1px solid rgba(51,191,191,0.35)',
+                  }}
+                >
+                  Demo mode · no real account required
+                </p>
+              )}
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              <FormField
+                id="fullName"
+                label="Full name"
+                icon={<User className="h-4 w-4" />}
+                type="text"
+                autoComplete="name"
+                placeholder="Yusuf Khalil"
+                value={fullName}
+                onChange={setFullName}
+              />
+
+              <FormField
+                id="email"
+                label="Email"
+                icon={<Mail className="h-4 w-4" />}
+                type="email"
+                autoComplete="email"
+                placeholder="you@university.edu"
+                value={email}
+                onChange={setEmail}
+              />
+
+              <FormField
+                id="password"
+                label="Password"
+                icon={<Lock className="h-4 w-4" />}
+                type="password"
+                autoComplete="new-password"
+                placeholder="Minimum 8 characters"
+                value={password}
+                onChange={setPassword}
+                minLength={8}
+              />
+
+              {error && (
+                <p
+                  className="animate-fade-in-down rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-xs text-error"
+                >
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00A6A6] px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(0,166,166,0.45)] transition hover:bg-[#33BFBF] hover:shadow-[0_0_36px_rgba(0,166,166,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#33BFBF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#132B45] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Create account
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="mt-8 text-center text-sm text-text-muted">
+              Already have an account?{' '}
+              <Link
+                href="/login"
+                className="font-medium text-[#33BFBF] underline-offset-2 transition hover:text-[#F7F9FA] hover:underline"
+              >
+                Log In
+              </Link>
             </p>
-          )}
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <FormField
-            id="fullName"
-            label="Full name"
-            icon={<User className="h-4 w-4" />}
-            type="text"
-            autoComplete="name"
-            placeholder="Yusuf Khalil"
-            value={fullName}
-            onChange={setFullName}
-          />
-
-          <FormField
-            id="email"
-            label="Email"
-            icon={<Mail className="h-4 w-4" />}
-            type="email"
-            autoComplete="email"
-            placeholder="you@university.edu"
-            value={email}
-            onChange={setEmail}
-          />
-
-          <FormField
-            id="password"
-            label="Password"
-            icon={<Lock className="h-4 w-4" />}
-            type="password"
-            autoComplete="new-password"
-            placeholder="Minimum 8 characters"
-            value={password}
-            onChange={setPassword}
-            minLength={8}
-          />
-
-          {error && (
-            <p
-              className="animate-fade-in-down rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-xs text-error"
-            >
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="group inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#00A6A6] px-6 text-sm font-semibold text-white shadow-[0_0_24px_rgba(0,166,166,0.45)] transition hover:bg-[#33BFBF] hover:shadow-[0_0_36px_rgba(0,166,166,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#33BFBF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#132B45] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                Create account
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-              </>
-            )}
-          </button>
-        </form>
-
-        <p className="mt-8 text-center text-sm text-text-muted">
-          Already have an account?{' '}
-          <Link
-            href="/login"
-            className="font-medium text-[#33BFBF] underline-offset-2 transition hover:text-[#F7F9FA] hover:underline"
-          >
-            Log In
-          </Link>
-        </p>
+          </>
+        )}
       </div>
     </main>
   );

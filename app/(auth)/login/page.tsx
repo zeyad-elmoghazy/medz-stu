@@ -40,6 +40,11 @@ function LoginPageInner() {
       ? 'Your profile could not be loaded. Please sign up again or contact support.'
       : null
   );
+  const [info] = useState<string | null>(() =>
+    searchParams.get('reset') === 'success'
+      ? 'Password updated. Log in with your new password.'
+      : null
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -144,6 +149,11 @@ function LoginPageInner() {
           <p className="mt-1.5 text-sm text-text-muted">
             Sign in to continue your block.
           </p>
+          {info && (
+            <p className="animate-fade-in-down mt-3 rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-xs text-success">
+              {info}
+            </p>
+          )}
           {isDemoMode() && (
             <p
               className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]"
@@ -189,7 +199,7 @@ function LoginPageInner() {
                 Password
               </label>
               <Link
-                href="#"
+                href="/forgot-password"
                 className="text-xs text-text-muted underline-offset-2 transition hover:text-[#33BFBF] hover:underline"
               >
                 Forgot?
