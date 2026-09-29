@@ -349,7 +349,7 @@ function HomeView({
           </h2>
           <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
             {catalogueStats
-              ? `${catalogueStats.moduleCount} modules · ${catalogueStats.chapterCount} chapters across your curriculum. Spinal Cord (Anatomy) is the only chapter published so far; the rest are publishing over time.`
+              ? `${catalogueStats.moduleCount} modules · ${catalogueStats.chapterCount} chapters across your curriculum.`
               : 'Loading…'}
           </div>
         </div>
@@ -725,7 +725,7 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
         >
           {loading
             ? 'Loading your accuracy trend…'
-            : 'Take at least two histology quizzes to see your accuracy trend.'}
+            : 'Take at least two quizzes to see your accuracy trend.'}
         </div>
       )}
     </div>
@@ -792,7 +792,7 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
   if (challenges.length === 0) {
     return (
       <div style={{ fontSize: 12, color: 'var(--text3)' }}>
-        No completed challenges yet — take a histology quiz to see it here.
+        No completed challenges yet — take a quiz to see it here.
       </div>
     );
   }

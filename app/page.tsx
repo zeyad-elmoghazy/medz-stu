@@ -23,7 +23,7 @@ const FEATURES = [
   },
   {
     title: 'Generate your own exams',
-    body: 'Pick subjects, chapters, and length. MediZee builds a fresh mock exam, timed and graded, from the full MCQ bank.',
+    body: 'Pick a subject, chapters, and length. MediZee builds a fresh mock exam, timed and graded, from the question bank.',
     icon: (<><rect x="4" y="3" width="16" height="18" rx="2" /><line x1="8" y1="8" x2="16" y2="8" /><line x1="8" y1="12" x2="16" y2="12" /><line x1="8" y1="16" x2="12" y2="16" /></>),
   },
   {
@@ -49,7 +49,7 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { title: 'Pick your subject', body: 'Choose an unlocked module, Histology is live now. Creating a free account takes seconds and saves your progress.' },
+  { title: 'Pick your subject', body: 'Choose an unlocked module — published chapters are ready to study. Creating a free account takes seconds and saves your progress.' },
   { title: 'Take the challenge', body: 'A timed, fullscreen run of high-yield MCQs with a live progress bar. Bookmark and take notes as you go.' },
   { title: 'Learn and track', body: 'Review split-view explanations, re-quiz your mistakes, and watch your accuracy and streak climb on your dashboard.' },
 ];
@@ -275,12 +275,14 @@ export default function MediZeeHome() {
               <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text)', background: 'var(--nav-bg)', border: '1px solid var(--line2)', padding: '5px 10px', borderRadius: 8, zIndex: 1 }}>Live now</span>
             </div>
             <div style={{ marginTop: 18 }}>
-              <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)', lineHeight: 1 }}>Spinal Cord</div>
+              <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)', lineHeight: 1 }}>
+                {landingModules?.find((m) => m.code === '205')?.name ?? 'Module 205'}
+              </div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
-                Anatomy, Module 205{catalogueStats ? `, ${catalogueStats.publishedQuestionCount} published questions` : ''}
+                Module 205{catalogueStats ? `, ${catalogueStats.publishedQuestionCount} published questions` : ''}
               </div>
             </div>
-            <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--text3)', flex: 1 }}>High-yield questions, detailed explanations, and visual references from Module 205&apos;s Spinal Cord chapter, live and ready to study.</p>
+            <p style={{ margin: '16px 0 0', fontSize: 13, lineHeight: 1.6, color: 'var(--text3)', flex: 1 }}>High-yield questions, detailed explanations, and visual references from every published chapter, live and ready to study.</p>
             <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 18, fontSize: 14, fontWeight: 700, color: '#F7F9FA', background: 'var(--accent-text)', padding: 13, borderRadius: 10 }}>Start learning</div>
           </Link>
           {(landingModules ?? []).map(m => (
@@ -340,7 +342,7 @@ export default function MediZeeHome() {
       <section style={{ position: 'relative', padding: '96px 44px', textAlign: 'center' }}>
         <div style={{ position: 'relative', maxWidth: 640, margin: '0 auto' }}>
           <h2 className="mz-final-h2" style={{ margin: 0, fontSize: 44, lineHeight: 1.08, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)' }}>Your next lecture deserves better revision.</h2>
-          <p style={{ margin: '20px 0 0', fontSize: 17, color: 'var(--muted)' }}>Sign up free and take a Histology challenge tonight.</p>
+          <p style={{ margin: '20px 0 0', fontSize: 17, color: 'var(--muted)' }}>Sign up free and take a challenge tonight.</p>
           <div style={{ display: 'flex', gap: 15, justifyContent: 'center', marginTop: 34, flexWrap: 'wrap' }}>
             <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 700, color: '#F7F9FA', background: 'var(--accent-text)', padding: '16px 32px', borderRadius: 12 }}>Start learning free</Link>
             <Link href="/login" className="mz-ghost" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', background: 'transparent', border: '1px solid var(--line2)', padding: '16px 30px', borderRadius: 12 }}>Log in</Link>

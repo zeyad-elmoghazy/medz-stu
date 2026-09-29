@@ -126,7 +126,7 @@ function LoginPageInner() {
             MediZee
           </span>
           <span className="text-[10px] uppercase tracking-[0.28em] text-text-muted">
-            Adaptive learning
+            Exam prep, structured.
           </span>
         </Link>
 

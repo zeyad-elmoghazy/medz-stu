@@ -16,9 +16,9 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: 'MediZee — Adaptive medical learning',
+  title: 'MediZee — Medical exam prep',
   description:
-    'MediZee is an adaptive MCQ bank with instant split-view feedback, built by and for medical students.',
+    'MediZee is a full MCQ bank with instant split-view feedback, analytics, and streaks, built by and for medical students.',
   icons: {
     icon: '/favicon.png',
   },
