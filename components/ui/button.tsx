@@ -11,17 +11,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-accent text-white shadow-glow hover:bg-accent-glow hover:shadow-glow-lg',
+          'bg-accent text-accent-foreground hover:bg-accent-glow',
         destructive:
           'bg-error/90 text-white hover:bg-error',
         outline:
-          'border border-white/10 bg-white/5 text-text-primary hover:border-accent/40 hover:bg-white/10',
+          'border border-border bg-transparent text-text-primary hover:border-accent/40 hover:bg-input',
         secondary:
-          'bg-surface text-text-primary hover:bg-white/10',
+          'bg-surface text-text-primary border border-border hover:bg-input',
         ghost:
-          'text-text-muted hover:bg-white/5 hover:text-text-primary',
+          'text-text-muted hover:bg-input hover:text-text-primary',
         link:
-          'text-accent-glow underline-offset-4 hover:underline',
+          'text-accent underline-offset-4 hover:underline',
         success:
           'bg-success/90 text-white hover:bg-success',
       },

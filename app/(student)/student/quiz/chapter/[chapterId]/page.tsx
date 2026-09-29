@@ -13,24 +13,16 @@ import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight,
-  Bookmark,
-  BookmarkCheck,
-  BookOpen,
-  Brain,
-  Check,
-  Copy,
-  FileText,
-  Lightbulb,
-  ListChecks,
-  Loader2,
-  LogOut,
-  Maximize2,
-  RotateCcw,
-  Sparkles,
-  StickyNote,
-  X,
-} from 'lucide-react';
+  ArrowRightIcon,
+  BookmarkIcon,
+  CheckIcon,
+  CloseIcon,
+  CopyIcon,
+  ExpandIcon,
+  LogOutIcon,
+  SpinnerIcon,
+  StickyNoteIcon,
+} from '@/components/icons';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import {
   fetchChapterQuiz,
@@ -66,7 +58,7 @@ const RichTextEditor = dynamic(() => import('@/components/quiz/NotesEditor'), {
   loading: () => (
     <div
       className="fixed right-0 top-0 z-50 h-full w-full max-w-md p-5 text-sm text-text-muted"
-      style={{ backgroundColor: '#132B45', borderLeft: '1px solid #132B45' }}
+      style={{ backgroundColor: 'var(--surface)', borderLeft: '1px solid var(--line)' }}
     >
       Loading editor...
     </div>
@@ -437,9 +429,9 @@ export default function ChapterQuizPage() {
     return (
       <main
         className="flex min-h-screen w-full items-center justify-center px-6 text-center"
-        style={{ backgroundColor: '#0B1F33' }}
+        style={{ backgroundColor: 'var(--bg)' }}
       >
-        <p className="text-sm text-rose-300">{loadError}</p>
+        <p className="text-sm text-error">{loadError}</p>
       </main>
     );
   }
@@ -448,9 +440,9 @@ export default function ChapterQuizPage() {
     return (
       <main
         className="flex min-h-screen w-full items-center justify-center gap-2 text-sm text-text-muted"
-        style={{ backgroundColor: '#0B1F33' }}
+        style={{ backgroundColor: 'var(--bg)' }}
       >
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <SpinnerIcon size={16} className="animate-spin" />
         Loading quiz…
       </main>
     );
@@ -460,7 +452,7 @@ export default function ChapterQuizPage() {
     return (
       <main
         className="flex min-h-screen w-full items-center justify-center px-6 text-center"
-        style={{ backgroundColor: '#0B1F33' }}
+        style={{ backgroundColor: 'var(--bg)' }}
       >
         <p className="text-sm text-text-muted">No published questions in this chapter yet.</p>
       </main>
@@ -472,7 +464,7 @@ export default function ChapterQuizPage() {
   }
 
   return (
-    <main className="relative min-h-screen w-full" style={{ backgroundColor: '#0B1F33' }}>
+    <main className="relative min-h-screen w-full" style={{ backgroundColor: 'var(--bg)' }}>
       <TopBar
         currentIndex={safeIndex}
         total={totalQuestions}
@@ -497,14 +489,12 @@ export default function ChapterQuizPage() {
             className="pointer-events-none fixed left-1/2 top-20 z-30 -translate-x-1/2"
           >
             <span
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-[#33BFBF]"
+              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-accent"
               style={{
-                backgroundColor: 'rgba(0,166,166,0.2)',
-                border: '1px solid rgba(0,166,166,0.3)',
-                boxShadow: '0 0 18px rgba(0,166,166,0.25)',
+                backgroundColor: 'rgb(var(--accent-text-rgb) / 0.2)',
+                border: '1px solid rgb(var(--accent-text-rgb) / 0.3)',
               }}
             >
-              <RotateCcw className="h-3 w-3" />
               Resuming your session...
             </span>
           </motion.div>
@@ -521,9 +511,9 @@ export default function ChapterQuizPage() {
             transition={{ duration: 0.25 }}
             className="mx-auto mt-4 flex w-full max-w-3xl items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm"
             style={{
-              backgroundColor: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.35)',
-              color: '#FCA5A5',
+              backgroundColor: 'rgb(var(--error-rgb) / 0.08)',
+              border: '1px solid rgb(var(--error-rgb) / 0.35)',
+              color: 'var(--error)',
             }}
           >
             <span>{submitError}</span>
@@ -536,8 +526,7 @@ export default function ChapterQuizPage() {
               disabled={submitting}
               className="inline-flex h-8 items-center rounded-md px-3 text-xs font-semibold text-white disabled:opacity-60"
               style={{
-                backgroundColor: '#EF4444',
-                boxShadow: '0 0 14px rgba(239,68,68,0.4)',
+                backgroundColor: 'var(--error)',
               }}
             >
               {submitting ? 'Retrying…' : 'Try again'}
@@ -679,8 +668,8 @@ function TopBar({
     <header
       className="sticky top-0 z-20 backdrop-blur-xl"
       style={{
-        backgroundColor: 'rgba(9, 9, 14, 0.88)',
-        borderBottom: '1px solid #132B45',
+        backgroundColor: 'var(--nav-bg)',
+        borderBottom: '1px solid var(--line)',
       }}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center gap-6 px-6 py-4">
@@ -688,16 +677,15 @@ function TopBar({
           <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
             Active chapter
           </span>
-          <span className="text-sm font-semibold text-white">{chapterName}</span>
+          <span className="text-sm font-semibold text-text-primary">{chapterName}</span>
         </div>
 
         <div className="flex flex-1 items-center gap-4">
-          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-input">
             <motion.div
               className="h-full rounded-full"
               style={{
-                background: 'linear-gradient(90deg, #00A6A6 0%, #33BFBF 100%)',
-                boxShadow: '0 0 16px rgba(0,166,166,0.55)',
+                background: 'var(--accent-text)',
               }}
               initial={{ width: 0 }}
               animate={{ width: `${progressPct}%` }}
@@ -705,7 +693,7 @@ function TopBar({
             />
           </div>
           <span className="shrink-0 text-xs font-medium text-text-muted">
-            Question <span className="text-white">{currentIndex + 1}</span> of {total}
+            Question <span className="text-text-primary">{currentIndex + 1}</span> of {total}
           </span>
         </div>
 
@@ -714,22 +702,22 @@ function TopBar({
             <IconButton
               label="Enter focus mode"
               onClick={onRequestFullscreen}
-              icon={<Maximize2 className="h-4 w-4" />}
+              icon={<ExpandIcon size={16} />}
             />
           )}
           <button
             type="button"
             onClick={onExit}
             title="Exit the quiz"
-            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-slate-300 transition-all duration-200 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
+            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 hover:border-error/30 hover:bg-error/10 hover:text-error"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOutIcon size={14} />
             Exit
           </button>
           <span
             aria-hidden
             className="mx-1 h-5 w-px"
-            style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+            style={{ backgroundColor: 'var(--line)' }}
           />
           <IconButton
             label={isBookmarked ? 'Remove bookmark' : 'Bookmark this question'}
@@ -738,18 +726,16 @@ function TopBar({
             disabled={bookmarkLoading}
             icon={
               bookmarkLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isBookmarked ? (
-                <BookmarkCheck className="h-4 w-4" />
+                <SpinnerIcon size={16} className="animate-spin" />
               ) : (
-                <Bookmark className="h-4 w-4" />
+                <BookmarkIcon size={16} filled={isBookmarked} />
               )
             }
           />
           <IconButton
             label="Open notes"
             onClick={onNotesOpen}
-            icon={<StickyNote className="h-4 w-4" />}
+            icon={<StickyNoteIcon size={16} />}
           />
         </div>
       </div>
@@ -779,12 +765,11 @@ function IconButton({
       title={label}
       className={cn(
         'grid h-10 w-10 place-items-center rounded-lg transition disabled:cursor-default',
-        active ? 'text-[#33BFBF]' : 'text-text-muted hover:text-white'
+        active ? 'text-accent' : 'text-text-muted hover:text-text-primary'
       )}
       style={{
-        border: '1px solid #132B45',
-        backgroundColor: active ? 'rgba(0,166,166,0.18)' : '#132B45',
-        boxShadow: active ? '0 0 14px rgba(0,166,166,0.35)' : undefined,
+        border: '1px solid var(--line)',
+        backgroundColor: active ? 'rgb(var(--accent-text-rgb) / 0.18)' : 'var(--surface)',
       }}
     >
       {icon}
@@ -807,17 +792,17 @@ function PhaseOne({
     <div className="space-y-8">
       <div className="flex items-center gap-2">
         <span
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#33BFBF]"
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent"
           style={{
-            backgroundColor: 'rgba(0,166,166, 0.18)',
-            border: '1px solid rgba(51,191,191, 0.4)',
+            backgroundColor: 'rgb(var(--accent-text-rgb) / 0.18)',
+            border: '1px solid rgb(var(--accent-text-rgb) / 0.4)',
           }}
         >
-          <Sparkles className="h-3 w-3" /> {question.topic}
+          {question.topic}
         </span>
       </div>
 
-      <h1 className="text-2xl font-semibold leading-relaxed text-white md:text-[28px] md:leading-snug">
+      <h1 className="text-2xl font-semibold leading-relaxed text-text-primary md:text-[28px] md:leading-snug">
         {question.question}
       </h1>
 
@@ -835,26 +820,25 @@ function PhaseOne({
                 'p-4'
               )}
               style={{
-                backgroundColor: isSelected ? 'rgba(0,166,166, 0.12)' : '#132B45',
-                border: `1px solid ${isSelected ? '#00A6A6' : '#132B45'}`,
-                boxShadow: isSelected ? '0 0 24px rgba(0,166,166,0.35)' : undefined,
+                backgroundColor: isSelected ? 'rgb(var(--accent-text-rgb) / 0.12)' : 'var(--surface)',
+                border: `1px solid ${isSelected ? 'var(--accent-text)' : 'var(--line)'}`,
               }}
               onMouseEnter={(e) => {
-                if (!isSelected) e.currentTarget.style.borderColor = '#00A6A6';
+                if (!isSelected) e.currentTarget.style.borderColor = 'var(--accent-text)';
               }}
               onMouseLeave={(e) => {
-                if (!isSelected) e.currentTarget.style.borderColor = '#132B45';
+                if (!isSelected) e.currentTarget.style.borderColor = 'var(--line)';
               }}
             >
               <span
                 className={cn(
                   'mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sm font-semibold transition',
-                  isSelected ? 'bg-[#00A6A6] text-white' : 'bg-white/5 text-text-muted'
+                  isSelected ? 'bg-accent text-white' : 'bg-input text-text-muted'
                 )}
               >
                 {letterFor(idx)}
               </span>
-              <span className="pt-1 text-sm leading-relaxed text-white md:text-base">
+              <span className="pt-1 text-sm leading-relaxed text-text-primary md:text-base">
                 {choice.text}
               </span>
             </motion.button>
@@ -868,12 +852,11 @@ function PhaseOne({
         disabled={!selectedChoice}
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
         style={{
-          backgroundColor: '#00A6A6',
-          boxShadow: selectedChoice ? '0 0 28px rgba(0,166,166,0.55)' : 'none',
+          backgroundColor: 'var(--accent-text)',
         }}
       >
         Submit Answer
-        <ArrowRight className="h-4 w-4" />
+        <ArrowRightIcon size={16} />
       </button>
     </div>
   );
@@ -907,11 +890,11 @@ function PhaseTwoLeft({
   return (
     <div
       className="flex h-full flex-col gap-6 rounded-2xl p-6 lg:p-8"
-      style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}
+      style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
     >
       <ResultBadge isCorrect={isCorrect} />
 
-      <h2 className="text-xl font-semibold leading-relaxed text-white md:text-2xl md:leading-snug">
+      <h2 className="text-xl font-semibold leading-relaxed text-text-primary md:text-2xl md:leading-snug">
         {question.question}
       </h2>
 
@@ -921,24 +904,24 @@ function PhaseTwoLeft({
           const isUserChoice = selectedChoice === choice.id;
           const isWrongUserChoice = isUserChoice && !isCorrectChoice;
 
-          let bg = '#0B1F33';
-          let border = '#132B45';
-          let badgeBg = 'rgba(255,255,255,0.05)';
+          let bg = 'var(--bg)';
+          let border = 'var(--line)';
+          let badgeBg = 'var(--fill)';
           let badgeText = 'text-text-muted';
           let icon: React.ReactNode = letterFor(idx);
 
           if (isCorrectChoice) {
-            bg = 'rgba(16, 185, 129, 0.08)';
-            border = '#10B981';
-            badgeBg = '#10B981';
+            bg = 'rgb(var(--success-rgb) / 0.08)';
+            border = 'var(--success)';
+            badgeBg = 'var(--success)';
             badgeText = 'text-white';
-            icon = <Check className="h-4 w-4" />;
+            icon = <CheckIcon size={16} />;
           } else if (isWrongUserChoice) {
-            bg = 'rgba(239, 68, 68, 0.08)';
-            border = '#EF4444';
-            badgeBg = '#EF4444';
+            bg = 'rgb(var(--error-rgb) / 0.08)';
+            border = 'var(--error)';
+            badgeBg = 'var(--error)';
             badgeText = 'text-white';
-            icon = <X className="h-4 w-4" />;
+            icon = <CloseIcon size={16} />;
           }
 
           return (
@@ -962,9 +945,9 @@ function PhaseTwoLeft({
                     className={cn(
                       'text-sm leading-relaxed md:text-base',
                       isCorrectChoice
-                        ? 'text-emerald-100'
+                        ? 'text-success'
                         : isWrongUserChoice
-                          ? 'text-rose-100'
+                          ? 'text-error'
                           : 'text-text-primary'
                     )}
                   >
@@ -986,34 +969,28 @@ function PhaseTwoLeft({
 
       <div
         className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-5"
-        style={{ borderColor: '#132B45' }}
+        style={{ borderColor: 'var(--line)' }}
       >
         <div className="flex flex-wrap items-center gap-2">
           <ToolbarButton
             label={isBookmarked ? 'Bookmarked' : 'Bookmark'}
             onClick={onBookmarkToggle}
             active={isBookmarked}
-            icon={
-              isBookmarked ? (
-                <BookmarkCheck className="h-3.5 w-3.5" />
-              ) : (
-                <Bookmark className="h-3.5 w-3.5" />
-              )
-            }
+            icon={<BookmarkIcon size={14} filled={isBookmarked} />}
           />
           <ToolbarButton
             label="Notes"
             onClick={onNotesOpen}
-            icon={<StickyNote className="h-3.5 w-3.5" />}
+            icon={<StickyNoteIcon size={14} />}
           />
           <ToolbarButton
             label={copied ? 'Copied!' : 'Copy'}
             onClick={onCopy}
             icon={
               copied ? (
-                <Check className="h-3.5 w-3.5 text-emerald-300" />
+                <CheckIcon size={14} className="text-success" />
               ) : (
-                <Copy className="h-3.5 w-3.5" />
+                <CopyIcon size={14} />
               )
             }
           />
@@ -1025,19 +1002,18 @@ function PhaseTwoLeft({
           disabled={submitting}
           className="group inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
           style={{
-            backgroundColor: '#00A6A6',
-            boxShadow: '0 0 24px rgba(0,166,166,0.45)',
+            backgroundColor: 'var(--accent-text)',
           }}
         >
           {submitting ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <SpinnerIcon size={16} className="animate-spin" />
               Saving…
             </>
           ) : (
             <>
               {isLastQuestion ? 'See Results' : 'Next Question'}
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              <ArrowRightIcon size={16} className="transition group-hover:translate-x-0.5" />
             </>
           )}
         </button>
@@ -1056,26 +1032,24 @@ function ResultBadge({ isCorrect }: { isCorrect: boolean }) {
       style={
         isCorrect
           ? {
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              color: '#6EE7B7',
-              border: '1px solid rgba(16, 185, 129, 0.45)',
-              boxShadow: '0 0 18px rgba(16, 185, 129, 0.35)',
+              backgroundColor: 'rgb(var(--success-rgb) / 0.15)',
+              color: 'var(--success)',
+              border: '1px solid rgb(var(--success-rgb) / 0.45)',
             }
           : {
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              color: '#FCA5A5',
-              border: '1px solid rgba(239, 68, 68, 0.45)',
-              boxShadow: '0 0 18px rgba(239, 68, 68, 0.35)',
+              backgroundColor: 'rgb(var(--error-rgb) / 0.15)',
+              color: 'var(--error)',
+              border: '1px solid rgb(var(--error-rgb) / 0.45)',
             }
       }
     >
       {isCorrect ? (
         <>
-          <Check className="h-3.5 w-3.5" /> Correct
+          <CheckIcon size={14} /> Correct
         </>
       ) : (
         <>
-          <X className="h-3.5 w-3.5" /> Incorrect
+          <CloseIcon size={14} /> Incorrect
         </>
       )}
     </motion.div>
@@ -1099,11 +1073,11 @@ function ToolbarButton({
       onClick={onClick}
       className={cn(
         'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition',
-        active ? 'text-[#33BFBF]' : 'text-text-muted hover:text-white'
+        active ? 'text-accent' : 'text-text-muted hover:text-text-primary'
       )}
       style={{
-        border: '1px solid #132B45',
-        backgroundColor: active ? 'rgba(0,166,166,0.15)' : '#0B1F33',
+        border: '1px solid var(--line)',
+        backgroundColor: active ? 'rgb(var(--accent-text-rgb) / 0.15)' : 'var(--bg)',
       }}
     >
       {icon}
@@ -1128,19 +1102,17 @@ function PhaseTwoRight({
   return (
     <div
       className="flex h-full flex-col rounded-2xl"
-      style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}
+      style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
     >
-      <div className="flex items-center gap-1 p-2" style={{ borderBottom: '1px solid #132B45' }}>
+      <div className="flex items-center gap-1 p-2" style={{ borderBottom: '1px solid var(--line)' }}>
         <TabButton
           active={activeTab === 'explanation'}
           onClick={() => setActiveTab('explanation')}
-          icon={<Brain className="h-3.5 w-3.5" />}
           label="Explanation"
         />
         <TabButton
           active={activeTab === 'reference'}
           onClick={() => setActiveTab('reference')}
-          icon={<FileText className="h-3.5 w-3.5" />}
           label="Reference"
         />
       </div>
@@ -1167,7 +1139,7 @@ function PhaseTwoRight({
             >
               {referenceImageLoading ? (
                 <div className="flex items-center gap-2 text-xs text-text-muted">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <SpinnerIcon size={14} className="animate-spin" />
                   Loading reference image…
                 </div>
               ) : (
@@ -1184,12 +1156,10 @@ function PhaseTwoRight({
 function TabButton({
   active,
   onClick,
-  icon,
   label,
 }: {
   active: boolean;
   onClick: () => void;
-  icon: React.ReactNode;
   label: string;
 }) {
   return (
@@ -1198,14 +1168,12 @@ function TabButton({
       onClick={onClick}
       className={cn(
         'flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.16em] transition',
-        active ? 'text-white' : 'text-text-muted hover:text-white'
+        active ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
       )}
       style={{
-        backgroundColor: active ? 'rgba(0,166,166,0.18)' : 'transparent',
-        boxShadow: active ? '0 0 14px rgba(0,166,166,0.3)' : 'none',
+        backgroundColor: active ? 'rgb(var(--accent-text-rgb) / 0.18)' : 'transparent',
       }}
     >
-      {icon}
       {label}
     </button>
   );
@@ -1228,19 +1196,17 @@ function StructuredExplanation({ question }: { question: ChapterQuizQuestion }) 
   return (
     <div className="space-y-6">
       <section>
-        <SectionHeader icon={<Lightbulb className="h-3.5 w-3.5" />}>Key concept</SectionHeader>
-        <p className="mt-2.5 text-sm leading-relaxed text-white">{summary}</p>
+        <SectionHeader>Key concept</SectionHeader>
+        <p className="mt-2.5 text-sm leading-relaxed text-text-primary">{summary}</p>
       </section>
 
       {details.length > 0 && (
         <section>
-          <SectionHeader icon={<ListChecks className="h-3.5 w-3.5" />}>
-            Why this answer
-          </SectionHeader>
+          <SectionHeader>Why this answer</SectionHeader>
           <ul className="mt-2.5 space-y-2.5">
             {details.map((s, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed text-text-primary">
-                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#33BFBF]" />
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                 <span>{s}</span>
               </li>
             ))}
@@ -1250,9 +1216,7 @@ function StructuredExplanation({ question }: { question: ChapterQuizQuestion }) 
 
       {question.choiceRationales && (
         <section>
-          <SectionHeader icon={<ListChecks className="h-3.5 w-3.5" />}>
-            Choice-by-choice
-          </SectionHeader>
+          <SectionHeader>Choice-by-choice</SectionHeader>
           <ul className="mt-2.5 space-y-2">
             {question.choices.map((c) => {
               const raw = question.choiceRationales?.[c.id];
@@ -1264,14 +1228,14 @@ function StructuredExplanation({ question }: { question: ChapterQuizQuestion }) 
                   className="rounded-lg p-3"
                   style={{
                     backgroundColor: isCorrectChoice
-                      ? 'rgba(16,185,129,0.08)'
-                      : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${isCorrectChoice ? 'rgba(16,185,129,0.35)' : '#132B45'}`,
+                      ? 'rgb(var(--success-rgb) / 0.08)'
+                      : 'var(--fill)',
+                    border: `1px solid ${isCorrectChoice ? 'rgb(var(--success-rgb) / 0.35)' : 'var(--line)'}`,
                   }}
                 >
                   <p
                     className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                    style={{ color: isCorrectChoice ? '#6EE7B7' : '#FCA5A5' }}
+                    style={{ color: isCorrectChoice ? 'var(--success)' : 'var(--error)' }}
                   >
                     {c.id.toUpperCase()} · {isCorrectChoice ? 'Correct' : 'Wrong'}
                   </p>
@@ -1286,20 +1250,20 @@ function StructuredExplanation({ question }: { question: ChapterQuizQuestion }) 
       )}
 
       <section>
-        <SectionHeader icon={<Sparkles className="h-3.5 w-3.5" />}>Take-away</SectionHeader>
+        <SectionHeader>Take-away</SectionHeader>
         <div
           className="mt-2.5 rounded-xl p-4"
           style={{
-            backgroundColor: 'rgba(0,166,166, 0.08)',
-            border: '1px solid rgba(51,191,191, 0.25)',
+            backgroundColor: 'rgb(var(--accent-text-rgb) / 0.08)',
+            border: '1px solid rgb(var(--accent-text-rgb) / 0.25)',
           }}
         >
-          <p className="text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-accent">
             Topic · {question.topic}
           </p>
           {correctChoice && (
-            <p className="mt-2 text-sm leading-relaxed text-white">
-              <span className="font-semibold text-[#33BFBF]">Correct answer:</span>{' '}
+            <p className="mt-2 text-sm leading-relaxed text-text-primary">
+              <span className="font-semibold text-accent">Correct answer:</span>{' '}
               {correctChoice.text}
             </p>
           )}
@@ -1309,12 +1273,9 @@ function StructuredExplanation({ question }: { question: ChapterQuizQuestion }) 
   );
 }
 
-function SectionHeader({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <header className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#33BFBF]">
-      <span className="grid h-6 w-6 place-items-center rounded-md bg-[#33BFBF]/15 text-[#33BFBF]">
-        {icon}
-      </span>
+    <header className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
       {children}
     </header>
   );
@@ -1331,31 +1292,23 @@ function ReferenceCard({
     <div
       className="relative overflow-hidden rounded-xl p-6"
       style={{
-        backgroundColor: '#1A1505',
-        color: '#FAFAF5',
-        border: '1px solid rgba(230, 217, 168, 0.18)',
-        backgroundImage:
-          'repeating-linear-gradient(transparent 0px, transparent 31px, rgba(230,217,168,0.07) 31px, rgba(230,217,168,0.07) 32px)',
+        backgroundColor: 'var(--reference-bg)',
+        color: 'var(--reference-text)',
+        border: '1px solid var(--reference-border)',
       }}
     >
       <div
         className="flex items-center gap-2 pb-4"
-        style={{ borderBottom: '1px dashed rgba(230, 217, 168, 0.25)' }}
+        style={{ borderBottom: '1px dashed var(--reference-border)' }}
       >
-        <span
-          className="grid h-8 w-8 place-items-center rounded-full"
-          style={{ backgroundColor: 'rgba(230, 217, 168, 0.12)', color: '#E6D9A8' }}
-        >
-          <BookOpen className="h-4 w-4" />
-        </span>
         <div className="flex flex-col leading-tight">
           <span
             className="text-[10px] uppercase tracking-[0.22em]"
-            style={{ color: 'rgba(230, 217, 168, 0.7)' }}
+            style={{ color: 'var(--reference-accent)' }}
           >
             Reference
           </span>
-          <span className="text-sm font-semibold" style={{ color: '#E6D9A8' }}>
+          <span className="text-sm font-semibold" style={{ color: 'var(--reference-accent)' }}>
             From the Module Reference Book
           </span>
         </div>
@@ -1364,7 +1317,7 @@ function ReferenceCard({
       {imageUrl && (
         <div
           className="mt-5 overflow-hidden rounded-lg"
-          style={{ border: '1px solid rgba(230, 217, 168, 0.25)', backgroundColor: '#FAFAF5' }}
+          style={{ border: '1px solid var(--reference-border)', backgroundColor: 'var(--reference-bg)' }}
         >
           {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1382,12 +1335,12 @@ function ReferenceCard({
         </div>
       )}
 
-      <p className="mt-5 font-handwritten leading-relaxed" style={{ fontSize: '1.4rem', color: '#FAFAF5' }}>
+      <p className="mt-5 font-handwritten leading-relaxed" style={{ fontSize: '1.4rem', color: 'var(--reference-text)' }}>
         {reference}
       </p>
 
-      <p className="mt-6 text-right text-xs italic" style={{ color: 'rgba(230, 217, 168, 0.65)' }}>
-        — Module Reference Book
+      <p className="mt-6 text-right text-xs italic" style={{ color: 'var(--reference-accent)' }}>
+        Module Reference Book
       </p>
     </div>
   );
@@ -1427,30 +1380,30 @@ function ExitConfirmationModal({
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
         className="relative w-full max-w-md rounded-2xl p-8 shadow-2xl mx-4"
-        style={{ backgroundColor: '#132B45', border: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
       >
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-          <LogOut className="h-6 w-6 text-red-400" />
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-error/10">
+          <LogOutIcon size={24} className="text-error" />
         </div>
 
-        <h2 id="exit-confirmation-title" className="mb-2 text-center text-xl font-bold text-white">
+        <h2 id="exit-confirmation-title" className="mb-2 text-center text-xl font-bold text-text-primary">
           Exit Quiz?
         </h2>
-        <p className="mb-2 text-center text-sm text-slate-400">
+        <p className="mb-2 text-center text-sm text-text-muted">
           Your progress will be saved automatically.
         </p>
 
-        <div className="mb-6 mt-4 rounded-xl p-4" style={{ backgroundColor: '#132B45' }}>
+        <div className="mb-6 mt-4 rounded-xl p-4" style={{ backgroundColor: 'var(--fill)' }}>
           <ExitProgressRow label="Questions answered" value={`${answeredCount} of ${totalCount}`} />
           <ExitProgressRow
             label="Correct so far"
             value={String(correctCount)}
-            valueClass="text-emerald-400 font-semibold"
+            valueClass="text-success font-semibold"
           />
           <ExitProgressRow
             label="Resuming will continue from"
             value={`Question ${currentIndex + 1}`}
-            valueClass="text-[#33BFBF] font-semibold"
+            valueClass="text-accent font-semibold"
             last
           />
         </div>
@@ -1460,9 +1413,9 @@ function ExitConfirmationModal({
             type="button"
             onClick={onSaveAndExit}
             className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
-            style={{ backgroundColor: '#DC2626' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#B91C1C')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#DC2626')}
+            style={{ backgroundColor: 'var(--error)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--error)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--error)')}
           >
             Save &amp; Exit
           </button>
@@ -1470,9 +1423,9 @@ function ExitConfirmationModal({
             type="button"
             onClick={onContinue}
             className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
-            style={{ backgroundColor: '#33BFBF' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#33BFBF')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#33BFBF')}
+            style={{ backgroundColor: 'var(--accent-text)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-text)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-text)')}
           >
             Continue Quiz
           </button>
@@ -1495,11 +1448,11 @@ function ExitProgressRow({
 }) {
   return (
     <div
-      className="flex items-center justify-between py-2 text-sm text-slate-400"
-      style={last ? undefined : { borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      className="flex items-center justify-between py-2 text-sm text-text-muted"
+      style={last ? undefined : { borderBottom: '1px solid var(--line)' }}
     >
       <span>{label}</span>
-      <span className={valueClass ?? 'text-white font-semibold'}>{value}</span>
+      <span className={valueClass ?? 'text-text-primary font-semibold'}>{value}</span>
     </div>
   );
 }
@@ -1541,5 +1494,5 @@ function whyDistractorIsWrong(question: ChapterQuizQuestion, choiceId: string): 
     if (match && match.length < 220) return match;
   }
 
-  return `Common distractor for ${question.topic.toLowerCase()} — see Explanation for the discriminating mechanism.`;
+  return `Common distractor for ${question.topic.toLowerCase()}; see Explanation for the discriminating mechanism.`;
 }

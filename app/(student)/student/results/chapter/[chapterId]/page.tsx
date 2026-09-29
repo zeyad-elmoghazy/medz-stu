@@ -5,17 +5,13 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft,
-  ArrowRight,
-  BarChart3,
-  Check,
-  Clock,
-  Crosshair,
-  RotateCcw,
-  Target,
-  X,
-  Zap,
-} from 'lucide-react';
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  CloseIcon,
+  CrosshairIcon,
+  RotateCcwIcon,
+} from '@/components/icons';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchChapterQuiz, type ChapterQuiz } from '@/lib/chapter-quiz-api';
 import { cn } from '@/lib/utils';
@@ -119,11 +115,12 @@ export default function ChapterResultsPage() {
     router.push(`/student/quiz/chapter/${chapterId}`);
   }
 
-  const accentColor = accuracy >= 80 ? '#10B981' : accuracy >= 60 ? '#33BFBF' : '#EF4444';
+  const accentToken = accuracy >= 80 ? 'success' : accuracy >= 60 ? 'accent-text' : 'error';
+  const accentColor = `var(--${accentToken})`;
   const chapterName = data?.chapterName ?? 'Chapter';
 
   return (
-    <main className="min-h-screen w-full" style={{ backgroundColor: '#0B1F33' }}>
+    <main className="min-h-screen w-full" style={{ backgroundColor: 'var(--bg)' }}>
       <Header />
 
       <motion.div
@@ -137,18 +134,21 @@ export default function ChapterResultsPage() {
       >
         <FadeUp>
           <div className="flex flex-col gap-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#33BFBF]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">
               Session report · {chapterName}
             </p>
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <h1 className="text-3xl font-semibold tracking-tight text-white md:text-[38px]">
+              <h1 className="text-3xl font-semibold tracking-tight text-text-primary md:text-[38px]">
                 {correct}
                 <span className="text-text-muted"> / {accuracyTotal}</span>{' '}
                 <span className="text-lg font-normal text-text-muted">correct</span>
               </h1>
               <div
                 className="flex items-baseline gap-2 rounded-xl px-4 py-2"
-                style={{ backgroundColor: `${accentColor}18`, border: `1px solid ${accentColor}55` }}
+                style={{
+                  backgroundColor: `rgb(var(--${accentToken}-rgb) / 0.14)`,
+                  border: `1px solid rgb(var(--${accentToken}-rgb) / 0.4)`,
+                }}
               >
                 <span className="text-2xl font-semibold" style={{ color: accentColor }}>
                   {accuracy}%
@@ -169,31 +169,27 @@ export default function ChapterResultsPage() {
         <FadeUp className="mt-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <ScoreCard
-              icon={<Target className="h-4 w-4" />}
               label="Score"
               value={`${correct} / ${accuracyTotal}`}
-              accent="#33BFBF"
+              color="var(--accent-text)"
               footnote={`${attempted - correct} incorrect · ${accuracyTotal - attempted} skipped`}
             />
             <ScoreCard
-              icon={<Zap className="h-4 w-4" />}
               label="XP earned"
               value={lastResult ? `+${lastResult.xpEarned}` : '—'}
-              accent="#F59E0B"
+              color="#F59E0B"
               footnote="Toward the leaderboard"
             />
             <ScoreCard
-              icon={<BarChart3 className="h-4 w-4" />}
               label="Accuracy"
               value={`${accuracy}%`}
-              accent={accentColor}
+              color={accentColor}
               footnote={attempted === 0 ? 'No questions attempted' : 'Across attempted items'}
             />
             <ScoreCard
-              icon={<Clock className="h-4 w-4" />}
               label="Time"
               value={formatDuration(elapsedMs)}
-              accent="#33BFBF"
+              color="var(--accent-text)"
               footnote={
                 attempted > 0
                   ? `${formatDuration(elapsedMs / Math.max(1, attempted))} per attempt`
@@ -208,21 +204,21 @@ export default function ChapterResultsPage() {
             <button
               type="button"
               onClick={handleSolveAgain}
-              className="group inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition"
-              style={{ backgroundColor: '#00A6A6', boxShadow: '0 0 28px rgba(0,166,166,0.5)' }}
+              className="group inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition hover:bg-accent-glow"
+              style={{ backgroundColor: 'var(--accent-text)' }}
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcwIcon size={16} />
               Solve Again
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              <ArrowRightIcon size={16} className="transition group-hover:translate-x-0.5" />
             </button>
             <button
               type="button"
               onClick={handleQuizMistakes}
               disabled={practiceIds.length === 0}
               className="group inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
-              style={{ backgroundColor: '#33BFBF', boxShadow: '0 0 28px rgba(51,191,191,0.5)' }}
+              style={{ backgroundColor: 'var(--accent-glow)' }}
             >
-              <Crosshair className="h-4 w-4" />
+              <CrosshairIcon size={16} />
               Practice mistakes
               {practiceIds.length > 0 && (
                 <span
@@ -232,14 +228,14 @@ export default function ChapterResultsPage() {
                   {practiceIds.length}
                 </span>
               )}
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              <ArrowRightIcon size={16} className="transition group-hover:translate-x-0.5" />
             </button>
             <Link
               href="/student/catalogue"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-medium text-text-primary transition hover:text-white"
-              style={{ border: '1px solid #132B45', backgroundColor: '#132B45' }}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-medium text-text-primary transition"
+              style={{ border: '1px solid var(--line)', backgroundColor: 'var(--surface)' }}
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeftIcon size={16} />
               Back to Catalogue
             </Link>
           </div>
@@ -252,9 +248,9 @@ export default function ChapterResultsPage() {
               subtitle={`${accuracyTotal} questions, in order.`}
               accessory={
                 <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                  <LegendDot color="#10B981" label="Correct" />
-                  <LegendDot color="#EF4444" label="Incorrect" />
-                  <LegendDot color="#8B98A6" label="Skipped" />
+                  <LegendDot color="var(--success)" label="Correct" />
+                  <LegendDot color="var(--error)" label="Incorrect" />
+                  <LegendDot color="var(--text3)" label="Skipped" />
                 </div>
               }
             />
@@ -273,7 +269,7 @@ export default function ChapterResultsPage() {
         <FadeUp className="mt-6">
           <Card>
             <CardHeader title="Per-question detail" subtitle="Topic and outcome for each item." />
-            <ul className="mt-4 divide-y" style={{ borderColor: '#132B45' }}>
+            <ul className="mt-4 divide-y" style={{ borderColor: 'var(--line)' }}>
               {breakdown.map((b, i) => {
                 const state = b.correct ? 'correct' : b.attempted ? 'incorrect' : 'skipped';
                 return (
@@ -285,15 +281,15 @@ export default function ChapterResultsPage() {
                     <span
                       className={cn(
                         'mt-0.5 grid h-7 w-10 shrink-0 place-items-center rounded-md text-xs font-semibold',
-                        state === 'correct' && 'bg-emerald-500/15 text-emerald-300',
-                        state === 'incorrect' && 'bg-rose-500/15 text-rose-300',
-                        state === 'skipped' && 'bg-white/5 text-text-muted'
+                        state === 'correct' && 'bg-success/15 text-success',
+                        state === 'incorrect' && 'bg-error/15 text-error',
+                        state === 'skipped' && 'bg-input text-text-muted'
                       )}
                     >
                       Q{i + 1}
                     </span>
                     <div className="flex-1">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-[#33BFBF]/80">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-accent/80">
                         {b.topic}
                       </p>
                       <p className="mt-0.5 text-sm leading-snug text-text-primary">{b.preview}</p>
@@ -301,19 +297,19 @@ export default function ChapterResultsPage() {
                     <span
                       className={cn(
                         'shrink-0 self-center text-xs font-medium',
-                        state === 'correct' && 'text-emerald-300',
-                        state === 'incorrect' && 'text-rose-300',
+                        state === 'correct' && 'text-success',
+                        state === 'incorrect' && 'text-error',
                         state === 'skipped' && 'text-text-muted'
                       )}
                     >
                       {state === 'correct' && (
                         <span className="inline-flex items-center gap-1">
-                          <Check className="h-3.5 w-3.5" /> Correct
+                          <CheckIcon size={14} /> Correct
                         </span>
                       )}
                       {state === 'incorrect' && (
                         <span className="inline-flex items-center gap-1">
-                          <X className="h-3.5 w-3.5" /> Incorrect
+                          <CloseIcon size={14} /> Incorrect
                         </span>
                       )}
                       {state === 'skipped' && 'Skipped'}
@@ -333,14 +329,11 @@ function Header() {
   return (
     <header
       className="sticky top-0 z-20 backdrop-blur-xl"
-      style={{ backgroundColor: 'rgba(9, 9, 14, 0.85)', borderBottom: '1px solid #132B45' }}
+      style={{ backgroundColor: 'var(--nav-bg)', borderBottom: '1px solid var(--line)' }}
     >
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-6">
         <Link href="/student/catalogue" className="flex items-center gap-2">
-          <span
-            className="text-lg font-bold tracking-tight text-white"
-            style={{ textShadow: '0 0 14px rgba(0,166,166,0.5)' }}
-          >
+          <span className="text-lg font-bold tracking-tight text-text-primary">
             MediZee
           </span>
           <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
@@ -354,7 +347,7 @@ function Header() {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-6" style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}>
+    <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}>
       {children}
     </div>
   );
@@ -372,7 +365,7 @@ function CardHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 className="text-base font-semibold tracking-tight text-white">{title}</h2>
+        <h2 className="text-base font-semibold tracking-tight text-text-primary">{title}</h2>
         {subtitle && <p className="mt-0.5 text-xs text-text-muted">{subtitle}</p>}
       </div>
       {accessory}
@@ -381,35 +374,20 @@ function CardHeader({
 }
 
 function ScoreCard({
-  icon,
   label,
   value,
-  accent,
+  color,
   footnote,
 }: {
-  icon: React.ReactNode;
   label: string;
   value: string;
-  accent: string;
+  color: string;
   footnote: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl p-5" style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full"
-        style={{ background: `${accent}30`, filter: 'blur(36px)' }}
-      />
-      <div className="relative flex items-center justify-between">
-        <span
-          className="grid h-9 w-9 place-items-center rounded-lg"
-          style={{ backgroundColor: `${accent}25`, color: accent }}
-        >
-          {icon}
-        </span>
-        <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">{label}</span>
-      </div>
-      <p className="mt-5 text-3xl font-semibold tracking-tight" style={{ color: accent }}>
+    <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}>
+      <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">{label}</span>
+      <p className="mt-2 text-3xl font-semibold tracking-tight" style={{ color }}>
         {value}
       </p>
       <p className="mt-1.5 text-xs text-text-muted">{footnote}</p>
@@ -435,21 +413,21 @@ function BreakdownPill({
 }) {
   const palette = {
     correct: {
-      bg: 'rgba(16, 185, 129, 0.12)',
-      border: 'rgba(16, 185, 129, 0.45)',
-      color: '#6EE7B7',
-      icon: <Check className="h-3 w-3" />,
+      bg: 'rgb(var(--success-rgb) / 0.12)',
+      border: 'rgb(var(--success-rgb) / 0.45)',
+      color: 'var(--success)',
+      icon: <CheckIcon size={12} />,
     },
     incorrect: {
-      bg: 'rgba(239, 68, 68, 0.12)',
-      border: 'rgba(239, 68, 68, 0.45)',
-      color: '#FCA5A5',
-      icon: <X className="h-3 w-3" />,
+      bg: 'rgb(var(--error-rgb) / 0.12)',
+      border: 'rgb(var(--error-rgb) / 0.45)',
+      color: 'var(--error)',
+      icon: <CloseIcon size={12} />,
     },
     skipped: {
-      bg: 'rgba(255,255,255,0.04)',
-      border: '#132B45',
-      color: '#8B98A6',
+      bg: 'var(--fill)',
+      border: 'var(--line)',
+      color: 'var(--text3)',
       icon: null,
     },
   }[state];

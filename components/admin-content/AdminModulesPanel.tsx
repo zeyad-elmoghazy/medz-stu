@@ -42,23 +42,24 @@ export function AdminModulesPanel() {
   const [savedFlash, setSavedFlash] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [{ modules: m }, { books: b }] = await Promise.all([fetchAdminModules(), fetchReferenceBooks()]);
-      setModules(m);
-      setBooks(b);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ modules: m }, { books: b }] = await Promise.all([fetchAdminModules(), fetchReferenceBooks()]);
+        if (cancelled) return;
+        setModules(m);
+        setBooks(b);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const bookTitle = (id: string | null) => (id ? books.find((b) => b.id === id)?.title ?? 'Unknown book' : 'None');
 

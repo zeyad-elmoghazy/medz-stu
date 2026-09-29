@@ -7,13 +7,13 @@ export function AITutorSkeleton() {
   return (
     <div
       className="flex h-full flex-col rounded-2xl"
-      style={{ backgroundColor: '#0F0F1A', border: '1px solid #1E1E2E' }}
+      style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
       aria-busy="true"
       aria-live="polite"
     >
       <div
         className="flex items-center justify-between gap-2 p-4"
-        style={{ borderBottom: '1px solid #1E1E2E' }}
+        style={{ borderBottom: '1px solid var(--line)' }}
       >
         <div className="flex items-center gap-2">
           <span
@@ -56,7 +56,7 @@ export function AITutorSkeleton() {
 
       <div
         className="flex items-center gap-2 p-3"
-        style={{ borderTop: '1px solid #1E1E2E' }}
+        style={{ borderTop: '1px solid var(--line)' }}
       >
         <div
           className="skeleton-shimmer h-10 flex-1"

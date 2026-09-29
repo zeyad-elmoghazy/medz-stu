@@ -50,8 +50,8 @@ function ChoiceSkeleton({ widthPct }: { widthPct: number }) {
     <div
       className="flex items-start gap-4 rounded-xl p-4"
       style={{
-        backgroundColor: '#0F0F1A',
-        border: '1px solid #1E1E2E',
+        backgroundColor: 'var(--surface)',
+        border: '1px solid var(--line)',
       }}
     >
       <span

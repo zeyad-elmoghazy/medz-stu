@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, Sparkles, X } from 'lucide-react';
+import { CloseIcon, SendIcon, SpinnerIcon } from '@/components/icons';
 
 type Turn = { role: 'user' | 'assistant'; text: string };
 
@@ -29,7 +29,7 @@ export default function AITutorPanel({
   const [history, setHistory] = useState<Turn[]>([
     {
       role: 'assistant',
-      text: `Hi — ask anything about "${topic}". I have the stem in context.`,
+      text: `Hi, ask anything about "${topic}". I have the stem in context.`,
     },
   ]);
   const [draft, setDraft] = useState('');
@@ -63,21 +63,18 @@ export default function AITutorPanel({
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
       className="flex h-full flex-col rounded-2xl"
-      style={{ backgroundColor: '#132B45', border: '1px solid #132B45' }}
+      style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
     >
       <header
         className="flex items-center justify-between gap-2 p-4"
-        style={{ borderBottom: '1px solid #132B45' }}
+        style={{ borderBottom: '1px solid var(--line)' }}
       >
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#33BFBF]/15 text-[#33BFBF]">
-            <Bot className="h-4 w-4" />
-          </span>
           <div className="flex flex-col leading-tight">
             <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
               AI tutor
             </span>
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-text-primary">
               Ask about {topic}
             </span>
           </div>
@@ -86,16 +83,16 @@ export default function AITutorPanel({
           type="button"
           onClick={onClose}
           aria-label="Close tutor"
-          className="grid h-8 w-8 place-items-center rounded-lg text-text-muted transition hover:text-white"
-          style={{ border: '1px solid #132B45', backgroundColor: '#0B1F33' }}
+          className="grid h-8 w-8 place-items-center rounded-lg text-text-muted transition hover:text-text-primary"
+          style={{ border: '1px solid var(--line)', backgroundColor: 'var(--fill)' }}
         >
-          <X className="h-3.5 w-3.5" />
+          <CloseIcon size={14} />
         </button>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
         <p className="mb-3 rounded-md p-3 text-[11px] italic leading-relaxed text-text-muted"
-          style={{ backgroundColor: '#0B1F33', border: '1px solid #132B45' }}
+          style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--line)' }}
         >
           Stem in context: &ldquo;{questionStem.slice(0, 140)}{questionStem.length > 140 ? '…' : ''}&rdquo;
         </p>
@@ -115,14 +112,13 @@ export default function AITutorPanel({
                   style={
                     turn.role === 'user'
                       ? {
-                          backgroundColor: '#00A6A6',
-                          color: 'white',
-                          boxShadow: '0 0 14px rgba(0,166,166,0.35)',
+                          backgroundColor: 'var(--accent-text)',
+                          color: '#F7F9FA',
                         }
                       : {
-                          backgroundColor: '#0B1F33',
-                          color: '#F7F9FA',
-                          border: '1px solid #132B45',
+                          backgroundColor: 'var(--bg)',
+                          color: 'var(--text)',
+                          border: '1px solid var(--line)',
                         }
                   }
                 >
@@ -133,7 +129,7 @@ export default function AITutorPanel({
           </AnimatePresence>
           {thinking && (
             <li className="flex items-center gap-2 text-xs text-text-muted">
-              <Sparkles className="h-3.5 w-3.5 animate-pulse text-[#33BFBF]" />
+              <SpinnerIcon size={14} className="animate-spin" style={{ color: 'var(--accent-text)' }} />
               Thinking…
             </li>
           )}
@@ -146,28 +142,25 @@ export default function AITutorPanel({
           send();
         }}
         className="flex items-center gap-2 p-3"
-        style={{ borderTop: '1px solid #132B45' }}
+        style={{ borderTop: '1px solid var(--line)' }}
       >
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Ask a follow-up…"
-          className="h-10 flex-1 rounded-lg px-3 text-sm text-white placeholder:text-text-muted/60 focus:outline-none"
-          style={{ backgroundColor: '#0B1F33', border: '1px solid #132B45' }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = '#00A6A6')}
-          onBlur={(e) => (e.currentTarget.style.borderColor = '#132B45')}
+          className="h-10 flex-1 rounded-lg px-3 text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none"
+          style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--line)' }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-text)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--line)')}
         />
         <button
           type="submit"
           disabled={!draft.trim() || thinking}
           aria-label="Send"
-          className="grid h-10 w-10 place-items-center rounded-lg text-white disabled:cursor-not-allowed disabled:opacity-50"
-          style={{
-            backgroundColor: '#00A6A6',
-            boxShadow: '0 0 14px rgba(0,166,166,0.35)',
-          }}
+          className="grid h-10 w-10 place-items-center rounded-lg disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ backgroundColor: 'var(--accent-text)', color: '#F7F9FA' }}
         >
-          <Send className="h-4 w-4" />
+          <SendIcon size={16} />
         </button>
       </form>
     </motion.aside>

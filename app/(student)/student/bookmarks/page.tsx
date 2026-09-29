@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon } from '@/components/icons';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
 import { isDemoMode } from '@/lib/supabase';
 import { removeBookmark } from '@/lib/chapter-quiz-api';
@@ -105,31 +105,31 @@ export default function BookmarksPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
       <StudentNavbar activeLabel="Bookmarks" />
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '44px 34px 80px' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#33BFBF' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--accent-text)' }}>
           Saved
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#F7F9FA', margin: '6px 0 4px' }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', margin: '6px 0 4px' }}>
           Bookmarks &amp; Notes
         </h1>
-        <p style={{ fontSize: 13, color: '#8B98A6', margin: 0 }}>
+        <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>
           Questions you&apos;ve saved and notes you&apos;ve written while practicing chapters. Tap a
           question to open it.
           {isDemoMode() ? ' (demo mode has no saved items)' : ''}
         </p>
 
         {error && (
-          <div style={{ marginTop: 24, fontSize: 12, color: '#EF4444' }}>{error}</div>
+          <div style={{ marginTop: 24, fontSize: 12, color: 'var(--error)' }}>{error}</div>
         )}
 
         <Section
           title="Bookmarked Questions"
           count={bookmarks?.length ?? 0}
           loading={loading}
-          emptyLabel="No bookmarked questions yet — tap the bookmark icon while taking a chapter quiz to save one here."
+          emptyLabel="No bookmarked questions yet. Tap the bookmark icon while taking a chapter quiz to save one here."
         >
           {(bookmarks ?? []).map((b) => {
             const open = openBookmarkId === b.id;
@@ -163,7 +163,7 @@ export default function BookmarksPage() {
           title="My Notes"
           count={notes?.length ?? 0}
           loading={loading}
-          emptyLabel="No notes yet — open the notes panel while taking a chapter quiz to write one."
+          emptyLabel="No notes yet. Open the notes panel while taking a chapter quiz to write one."
         >
           {(notes ?? []).map((n) => {
             const open = openNoteId === n.id;
@@ -177,7 +177,7 @@ export default function BookmarksPage() {
                     moduleCode={n.moduleCode}
                   />
                 </RowHeader>
-                <p style={{ fontSize: 12.5, color: '#F7F9FA', margin: '8px 0 0', lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12.5, color: 'var(--text)', margin: '8px 0 0', lineHeight: 1.5 }}>
                   {n.content.length > 220 ? `${n.content.slice(0, 220)}…` : n.content}
                 </p>
                 {open && <QuestionDetail {...n} />}
@@ -193,9 +193,9 @@ export default function BookmarksPage() {
 const removeButtonStyle = {
   fontSize: 12,
   fontWeight: 600,
-  color: '#8B98A6',
+  color: 'var(--text3)',
   background: 'transparent',
-  border: '1px solid #132B45',
+  border: '1px solid var(--line)',
   borderRadius: 8,
   padding: '6px 12px',
   cursor: 'pointer',
@@ -219,22 +219,22 @@ function Section({
   return (
     <div style={{ marginTop: 28 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F7F9FA', margin: 0 }}>{title}</h2>
-        <span style={{ fontSize: 12, color: '#8B98A6' }}>{loading ? '' : count}</span>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', margin: 0 }}>{title}</h2>
+        <span style={{ fontSize: 12, color: 'var(--text3)' }}>{loading ? '' : count}</span>
       </div>
       <div
         style={{
           marginTop: 14,
-          background: '#132B45',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'var(--surface)',
+          border: '1px solid var(--line)',
           borderRadius: 16,
           padding: loading || count === 0 ? '24px' : '8px 20px',
         }}
       >
         {loading ? (
-          <div style={{ fontSize: 12, color: '#8B98A6' }}>Loading…</div>
+          <div style={{ fontSize: 12, color: 'var(--text3)' }}>Loading…</div>
         ) : count === 0 ? (
-          <div style={{ fontSize: 12, color: '#8B98A6', lineHeight: 1.5 }}>{emptyLabel}</div>
+          <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}>{emptyLabel}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>{children}</div>
         )}
@@ -245,7 +245,7 @@ function Section({
 
 function Row({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ padding: '16px 0', borderBottom: '1px solid var(--line)' }}>
       {children}
     </div>
   );
@@ -277,8 +277,8 @@ function RowHeader({
       }}
     >
       {children}
-      <span style={{ flex: 'none', color: '#8B98A6', marginTop: 2 }}>
-        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      <span style={{ flex: 'none', color: 'var(--text3)', marginTop: 2 }}>
+        {open ? <ChevronUpIcon size={16} /> : <ChevronDownIcon size={16} />}
       </span>
     </div>
   );
@@ -297,17 +297,17 @@ function RowBody({
 }) {
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ fontSize: 11, color: '#33BFBF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <div style={{ fontSize: 11, color: 'var(--accent-text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {topic}
         {chapterName && (
-          <span style={{ color: '#8B98A6' }}>
+          <span style={{ color: 'var(--text3)' }}>
             {' '}
             · {chapterName}
             {moduleCode ? ` (${moduleCode})` : ''}
           </span>
         )}
       </div>
-      <p style={{ fontSize: 13.5, color: '#F7F9FA', margin: '4px 0 0', lineHeight: 1.5 }}>{question}</p>
+      <p style={{ fontSize: 13.5, color: 'var(--text)', margin: '4px 0 0', lineHeight: 1.5 }}>{question}</p>
     </div>
   );
 }
@@ -316,7 +316,7 @@ function RowBody({
 function QuestionDetail({ choices, correctAnswer, explanation, choiceRationales }: QuestionDetailFields) {
   if (choices.length === 0) {
     return (
-      <div style={{ marginTop: 12, fontSize: 12, color: '#8B98A6' }}>
+      <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text3)' }}>
         This question is no longer available.
       </div>
     );
@@ -327,8 +327,8 @@ function QuestionDetail({ choices, correctAnswer, explanation, choiceRationales 
         marginTop: 12,
         padding: 14,
         borderRadius: 10,
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--fill)',
+        border: '1px solid var(--line)',
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -343,16 +343,16 @@ function QuestionDetail({ choices, correctAnswer, explanation, choiceRationales 
                 fontSize: 12.5,
                 padding: '8px 10px',
                 borderRadius: 8,
-                background: isCorrect ? 'rgba(16,185,129,0.1)' : 'transparent',
-                border: isCorrect ? '1px solid rgba(16,185,129,0.4)' : '1px solid transparent',
-                color: isCorrect ? '#6EE7B7' : '#F7F9FA',
+                background: isCorrect ? 'rgb(var(--success-rgb) / 0.1)' : 'transparent',
+                border: isCorrect ? '1px solid rgb(var(--success-rgb) / 0.4)' : '1px solid transparent',
+                color: isCorrect ? 'var(--success)' : 'var(--text)',
               }}
             >
               <span style={{ fontWeight: 700, textTransform: 'uppercase' }}>{c.id}</span>
               <span style={{ flex: 1 }}>
                 {c.text}
                 {choiceRationales?.[c.id] && (
-                  <span style={{ display: 'block', color: '#8B98A6', marginTop: 2 }}>
+                  <span style={{ display: 'block', color: 'var(--text3)', marginTop: 2 }}>
                     {choiceRationales[c.id]}
                   </span>
                 )}
@@ -362,7 +362,7 @@ function QuestionDetail({ choices, correctAnswer, explanation, choiceRationales 
         })}
       </div>
       {explanation && (
-        <p style={{ fontSize: 12, color: '#8B98A6', marginTop: 12, lineHeight: 1.6 }}>{explanation}</p>
+        <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 12, lineHeight: 1.6 }}>{explanation}</p>
       )}
     </div>
   );

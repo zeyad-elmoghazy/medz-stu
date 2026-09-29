@@ -16,39 +16,40 @@ module.exports = {
     },
     extend: {
       colors: {
-        background: '#0B1F33',
-        surface: '#132B45',
+        background: 'var(--bg)',
+        surface: 'var(--surface)',
         accent: {
-          DEFAULT: '#00A6A6',
-          glow: '#33BFBF',
+          DEFAULT: 'rgb(var(--accent-text-rgb) / <alpha-value>)',
+          glow: 'rgb(var(--accent-glow-rgb) / <alpha-value>)',
+          foreground: '#F7F9FA',
         },
-        success: '#10B981',
-        error: '#EF4444',
-        'text-primary': '#F7F9FA',
-        'text-muted': '#8B98A6',
-        border: 'rgba(255, 255, 255, 0.08)',
-        input: 'rgba(255, 255, 255, 0.05)',
-        ring: '#00A6A6',
-        foreground: '#F7F9FA',
+        success: 'rgb(var(--success-rgb) / <alpha-value>)',
+        error: 'rgb(var(--error-rgb) / <alpha-value>)',
+        'text-primary': 'var(--text)',
+        'text-muted': 'rgb(var(--text3-rgb) / <alpha-value>)',
+        border: 'var(--line)',
+        input: 'var(--fill)',
+        ring: 'rgb(var(--accent-text-rgb) / <alpha-value>)',
+        foreground: 'var(--text)',
         primary: {
-          DEFAULT: '#00A6A6',
+          DEFAULT: 'rgb(var(--accent-text-rgb) / <alpha-value>)',
           foreground: '#F7F9FA',
         },
         secondary: {
-          DEFAULT: '#132B45',
-          foreground: '#F7F9FA',
+          DEFAULT: 'var(--surface)',
+          foreground: 'var(--text)',
         },
         destructive: {
-          DEFAULT: '#EF4444',
+          DEFAULT: 'rgb(var(--error-rgb) / <alpha-value>)',
           foreground: '#F7F9FA',
         },
         muted: {
-          DEFAULT: '#132B45',
-          foreground: '#8B98A6',
+          DEFAULT: 'var(--surface)',
+          foreground: 'rgb(var(--text3-rgb) / <alpha-value>)',
         },
         card: {
-          DEFAULT: '#132B45',
-          foreground: '#F7F9FA',
+          DEFAULT: 'var(--surface)',
+          foreground: 'var(--text)',
         },
       },
       borderRadius: {
@@ -57,12 +58,8 @@ module.exports = {
         sm: '0.375rem',
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
         handwritten: ['var(--font-caveat)', 'cursive'],
-      },
-      boxShadow: {
-        glow: '0 0 24px rgba(0,166,166, 0.45)',
-        'glow-lg': '0 0 48px rgba(51,191,191, 0.35)',
       },
       keyframes: {
         'accordion-down': {
@@ -77,16 +74,11 @@ module.exports = {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
-        'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 16px rgba(0,166,166, 0.4)' },
-          '50%': { boxShadow: '0 0 32px rgba(51,191,191, 0.7)' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         shimmer: 'shimmer 2.5s linear infinite',
-        'pulse-glow': 'pulse-glow 2.4s ease-in-out infinite',
       },
     },
   },

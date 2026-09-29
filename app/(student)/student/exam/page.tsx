@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRightIcon } from '@/components/icons';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
 import { HISTOLOGY_ACADEMIC_YEARS } from '@/data/histology-catalog';
 import { useQuizStore } from '@/lib/store';
@@ -55,17 +55,17 @@ export default function CustomExamPage() {
   const canGenerate = subjectId === 'histology';
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
       <StudentNavbar activeLabel="Custom Exam" />
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 32px 80px' }}>
         <header style={{ marginTop: 4 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#00A6A6', textTransform: 'uppercase' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--accent-text)', textTransform: 'uppercase' }}>
             Custom Exam Generator
           </p>
-          <h1 style={{ margin: '10px 0 8px', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: '#F7F9FA' }}>
+          <h1 style={{ margin: '10px 0 8px', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
             Build your own practice exam
           </h1>
-          <p style={{ fontSize: 15, color: '#8B98A6', margin: 0, maxWidth: 640, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 15, color: 'var(--text3)', margin: 0, maxWidth: 640, lineHeight: 1.6 }}>
             Pick a subject, then narrow down by module and chapter. Choose how many questions
             you want and we&apos;ll assemble the exam for you.
           </p>
@@ -86,16 +86,16 @@ export default function CustomExamPage() {
                     textAlign: 'left',
                     padding: '14px 16px',
                     borderRadius: 12,
-                    background: selected ? 'rgba(0,166,166,0.14)' : '#132B45',
-                    border: selected ? '1px solid rgba(0,166,166,0.55)' : '1px solid rgba(255,255,255,0.07)',
-                    color: '#F7F9FA',
+                    background: selected ? 'var(--fill)' : 'var(--surface)',
+                    border: selected ? '1px solid var(--accent-text)' : '1px solid var(--line)',
+                    color: 'var(--text)',
                     cursor: s.available ? 'pointer' : 'not-allowed',
                     opacity: s.available ? 1 : 0.55,
                     fontFamily: 'inherit',
                   }}
                 >
                   <div style={{ fontSize: 14, fontWeight: 700 }}>{s.name}</div>
-                  <div style={{ fontSize: 11, color: s.available ? '#33BFBF' : '#8B98A6', marginTop: 4 }}>
+                  <div style={{ fontSize: 11, color: s.available ? 'var(--accent-text)' : 'var(--text3)', marginTop: 4 }}>
                     {s.available ? 'Available' : 'Coming soon'}
                   </div>
                 </button>
@@ -113,7 +113,7 @@ export default function CustomExamPage() {
               style={pillStyle(moduleCode === null)}
             >
               <div style={{ fontSize: 13, fontWeight: 700 }}>All modules</div>
-              <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 4 }}>Full subject range</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>Full subject range</div>
             </button>
             {allModules.map(({ module, year }) => {
               const selected = moduleCode === module.code;
@@ -124,10 +124,10 @@ export default function CustomExamPage() {
                   onClick={() => { setModuleCode(module.code); setChapterIds(new Set()); }}
                   style={pillStyle(selected)}
                 >
-                  <div style={{ fontSize: 11, color: '#00A6A6', fontWeight: 700, letterSpacing: '0.08em' }}>
+                  <div style={{ fontSize: 11, color: 'var(--accent-text)', fontWeight: 700, letterSpacing: '0.08em' }}>
                     HIST {module.code} · {year.year}
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F7F9FA', marginTop: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginTop: 4 }}>
                     {module.name}
                   </div>
                 </button>
@@ -152,11 +152,9 @@ export default function CustomExamPage() {
                       borderRadius: 999,
                       fontSize: 13,
                       fontWeight: 600,
-                      color: selected ? '#F7F9FA' : '#8B98A6',
-                      background: selected ? 'rgba(0,166,166,0.18)' : 'transparent',
-                      border: selected
-                        ? '1px solid rgba(0,166,166,0.5)'
-                        : '1px solid rgba(255,255,255,0.1)',
+                      color: selected ? 'var(--text)' : 'var(--text3)',
+                      background: selected ? 'var(--line2)' : 'transparent',
+                      border: '1px solid var(--line2)',
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                     }}
@@ -184,9 +182,12 @@ export default function CustomExamPage() {
                     borderRadius: 12,
                     fontSize: 15,
                     fontWeight: 800,
-                    color: selected ? '#F7F9FA' : '#8B98A6',
-                    background: selected ? 'linear-gradient(135deg,#00A6A6,#33BFBF)' : '#132B45',
-                    border: selected ? '1px solid transparent' : '1px solid rgba(255,255,255,0.08)',
+                    // White stays literal here: this pill's selected
+                    // state sits on the solid accent fill, not a
+                    // neutral surface, in both themes.
+                    color: selected ? '#F7F9FA' : 'var(--text3)',
+                    background: selected ? 'var(--accent-text)' : 'var(--surface)',
+                    border: selected ? '1px solid transparent' : '1px solid var(--line)',
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                   }}
@@ -208,15 +209,15 @@ export default function CustomExamPage() {
             gap: 20,
             padding: '20px 22px',
             borderRadius: 16,
-            background: 'linear-gradient(135deg, rgba(0,166,166,0.12), rgba(0,166,166,0.06))',
-            border: '1px solid rgba(0,166,166,0.35)',
+            background: 'var(--line2)',
+            border: '1px solid var(--line2)',
           }}
         >
           <div>
-            <div style={{ fontSize: 12, color: '#33BFBF', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 12, color: 'var(--accent-text)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               Ready
             </div>
-            <div style={{ fontSize: 16, color: '#F7F9FA', fontWeight: 700, marginTop: 4 }}>
+            <div style={{ fontSize: 16, color: 'var(--text)', fontWeight: 700, marginTop: 4 }}>
               {SUBJECTS.find((s) => s.id === subjectId)?.name} ·{' '}
               {activeModule ? `HIST ${activeModule.code}` : 'All modules'} · {length} questions
             </div>
@@ -231,19 +232,20 @@ export default function CustomExamPage() {
               gap: 10,
               fontSize: 15,
               fontWeight: 700,
+              // White stays literal: this button's fill is the solid
+              // accent (or a solid muted fallback when disabled), not
+              // a neutral surface.
               color: '#F7F9FA',
-              background: canGenerate ? 'linear-gradient(135deg,#00A6A6,#33BFBF)' : '#8B98A6',
+              background: canGenerate ? 'var(--accent-text)' : 'var(--text3)',
               padding: '14px 26px',
               borderRadius: 12,
-              boxShadow: canGenerate ? '0 0 24px rgba(0,166,166,0.4)' : 'none',
               cursor: canGenerate ? 'pointer' : 'not-allowed',
               border: 'none',
               fontFamily: 'inherit',
             }}
           >
-            <Sparkles style={{ width: 15, height: 15 }} />
             Generate Exam
-            <ArrowRight style={{ width: 15, height: 15 }} />
+            <ArrowRightIcon size={15} />
           </button>
         </div>
       </div>
@@ -263,8 +265,8 @@ function Section({
   return (
     <section style={{ marginTop: 36 }}>
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#F7F9FA' }}>{title}</div>
-        {hint && <div style={{ fontSize: 12, color: '#8B98A6', marginTop: 3 }}>{hint}</div>}
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{title}</div>
+        {hint && <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>{hint}</div>}
       </div>
       {children}
     </section>
@@ -276,10 +278,10 @@ function pillStyle(selected: boolean): React.CSSProperties {
     textAlign: 'left',
     padding: '14px 16px',
     borderRadius: 12,
-    background: selected ? 'rgba(0,166,166,0.14)' : '#132B45',
-    border: selected ? '1px solid rgba(0,166,166,0.55)' : '1px solid rgba(255,255,255,0.07)',
+    background: selected ? 'var(--fill)' : 'var(--surface)',
+    border: selected ? '1px solid var(--accent-text)' : '1px solid var(--line)',
     cursor: 'pointer',
     fontFamily: 'inherit',
-    color: '#F7F9FA',
+    color: 'var(--text)',
   };
 }

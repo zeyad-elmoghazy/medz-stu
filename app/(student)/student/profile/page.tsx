@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Mail, User, Bell, Moon, Sun } from 'lucide-react';
+import { LogOutIcon, MailIcon, UserIcon, BellIcon, MoonIcon, SunIcon } from '@/components/icons';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
 import {
   clearDemoProfile,
@@ -104,14 +104,14 @@ export default function ProfileSettingsPage() {
     .toUpperCase();
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
       <StudentNavbar />
       <div style={{ maxWidth: 780, margin: '0 auto', padding: '32px 32px 80px' }}>
         <header style={{ marginTop: 4 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#00A6A6', textTransform: 'uppercase' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--accent-text)', textTransform: 'uppercase' }}>
             Profile &amp; Settings
           </p>
-          <h1 style={{ margin: '10px 0 0', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: '#F7F9FA' }}>
+          <h1 style={{ margin: '10px 0 0', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
             Your account
           </h1>
         </header>
@@ -121,8 +121,8 @@ export default function ProfileSettingsPage() {
           style={{
             marginTop: 32,
             padding: 24,
-            background: '#132B45',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: 'var(--surface)',
+            border: '1px solid var(--line)',
             borderRadius: 16,
             display: 'flex',
             alignItems: 'center',
@@ -134,7 +134,9 @@ export default function ProfileSettingsPage() {
               width: 60,
               height: 60,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+              background: 'var(--accent-text)',
+              // White stays literal: this avatar chip's fill is the
+              // solid accent in both themes.
               color: '#F7F9FA',
               display: 'grid',
               placeItems: 'center',
@@ -146,11 +148,11 @@ export default function ProfileSettingsPage() {
             {initials || 'ME'}
           </span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#F7F9FA' }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>
               {displayName || 'Student'}
             </div>
-            <div style={{ fontSize: 13, color: '#8B98A6', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Mail style={{ width: 12, height: 12 }} />
+            <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <MailIcon size={12} />
               {email || 'No email on file'}
             </div>
           </div>
@@ -159,14 +161,14 @@ export default function ProfileSettingsPage() {
         {/* Details form */}
         <Card title="Profile details">
           <Field
-            icon={<User style={{ width: 14, height: 14 }} />}
+            icon={<UserIcon size={14} />}
             label="Full name"
             value={displayName}
             onChange={setDisplayName}
             placeholder="Your name"
           />
           <Field
-            icon={<Mail style={{ width: 14, height: 14 }} />}
+            icon={<MailIcon size={14} />}
             label="Email"
             value={email}
             onChange={setEmail}
@@ -180,23 +182,23 @@ export default function ProfileSettingsPage() {
         {/* Preferences */}
         <Card title="Preferences">
           <Toggle
-            icon={<Bell style={{ width: 14, height: 14 }} />}
+            icon={<BellIcon size={14} />}
             label="Email notifications"
             hint="Weekly progress summary and new-content announcements."
             value={prefs.emailNotifications}
             onChange={(v) => updatePrefs({ emailNotifications: v })}
           />
           <Toggle
-            icon={<Bell style={{ width: 14, height: 14 }} />}
+            icon={<BellIcon size={14} />}
             label="Study reminders"
             hint="A gentle nudge when your streak is at risk."
             value={prefs.reminderNotifications}
             onChange={(v) => updatePrefs({ reminderNotifications: v })}
           />
           <Toggle
-            icon={theme === 'dark' ? <Moon style={{ width: 14, height: 14 }} /> : <Sun style={{ width: 14, height: 14 }} />}
-            label="Dark theme"
-            hint="Applies everywhere — dashboard, catalogue, and quizzes."
+            icon={theme === 'dark' ? <MoonIcon size={14} /> : <SunIcon size={14} />}
+            label="Theme"
+            hint="Switch between light and dark mode, applied everywhere: dashboard, catalogue, and quizzes."
             value={theme === 'dark'}
             onChange={(v) => setTheme(v ? 'dark' : 'light')}
           />
@@ -215,15 +217,15 @@ export default function ProfileSettingsPage() {
               padding: '12px 18px',
               fontSize: 14,
               fontWeight: 700,
-              color: '#FCA5A5',
-              background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.35)',
+              color: 'var(--error)',
+              background: 'rgb(var(--error-rgb) / 0.08)',
+              border: '1px solid rgb(var(--error-rgb) / 0.35)',
               borderRadius: 10,
               cursor: signingOut ? 'progress' : 'pointer',
               fontFamily: 'inherit',
             }}
           >
-            <LogOut style={{ width: 14, height: 14 }} />
+            <LogOutIcon size={14} />
             {signingOut ? 'Signing out…' : 'Log out'}
           </button>
         </Card>
@@ -238,12 +240,12 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
       style={{
         marginTop: 22,
         padding: 22,
-        background: '#132B45',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
         borderRadius: 16,
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', color: '#00A6A6', textTransform: 'uppercase', marginBottom: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--accent-text)', textTransform: 'uppercase', marginBottom: 16 }}>
         {title}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div>
@@ -272,7 +274,7 @@ function Field({
 }) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 11, fontWeight: 600, color: '#8B98A6', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
         {icon} {label}
       </span>
       <input
@@ -284,15 +286,15 @@ function Field({
         style={{
           padding: '11px 14px',
           borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.1)',
-          background: disabled ? 'rgba(255,255,255,0.02)' : '#0B1F33',
-          color: '#F7F9FA',
+          border: '1px solid var(--line2)',
+          background: disabled ? 'var(--fill)' : 'var(--bg)',
+          color: 'var(--text)',
           fontSize: 14,
           fontFamily: 'inherit',
           outline: 'none',
         }}
       />
-      {hint && <span style={{ fontSize: 11, color: '#8B98A6' }}>{hint}</span>}
+      {hint && <span style={{ fontSize: 11, color: 'var(--text3)' }}>{hint}</span>}
     </label>
   );
 }
@@ -313,10 +315,10 @@ function Toggle({
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#F7F9FA', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           {icon} {label}
         </div>
-        {hint && <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3 }}>{hint}</div>}
+        {hint && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3 }}>{hint}</div>}
       </div>
       <button
         type="button"
@@ -329,7 +331,7 @@ function Toggle({
           height: 24,
           borderRadius: 999,
           border: 'none',
-          background: value ? 'linear-gradient(135deg,#00A6A6,#33BFBF)' : 'rgba(255,255,255,0.12)',
+          background: value ? 'var(--accent-text)' : 'var(--line2)',
           cursor: 'pointer',
           transition: 'background 0.2s',
         }}
@@ -342,6 +344,9 @@ function Toggle({
             width: 20,
             height: 20,
             borderRadius: '50%',
+            // White stays literal: this switch knob must read clearly
+            // against both the solid accent (on) and the line2 fill
+            // (off) tracks in both themes.
             background: '#F7F9FA',
             transition: 'left 0.2s',
           }}

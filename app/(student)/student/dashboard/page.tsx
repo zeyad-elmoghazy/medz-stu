@@ -4,8 +4,9 @@ import { Suspense, useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { SpinnerIcon } from '@/components/icons';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
+import { getSubjectImage } from '@/lib/subject-images';
 import { isDemoMode } from '@/lib/supabase';
 import { useDisplayName } from '@/lib/use-display-name';
 import {
@@ -52,7 +53,9 @@ function StudentDashboardInner() {
   // the in-page onViewAnalytics/onBackToSubjects callbacks below still
   // flip it directly without touching the URL, same as before.
   useEffect(() => {
-    setView(searchParams.get('view') === 'analytics' ? 'analytics' : 'home');
+    (() => {
+      setView(searchParams.get('view') === 'analytics' ? 'analytics' : 'home');
+    })();
   }, [searchParams]);
 
   // Fetch per-student stats from /api/student/stats. In demo mode
@@ -90,32 +93,30 @@ function StudentDashboardInner() {
     return () => { cancelled = true; };
   }, []);
 
-  // Canvas background — design's radial gradients + dotted texture.
   const canvasBg: CSSProperties = {
-    width: 1280,
+    maxWidth: 1280,
+    width: '100%',
     margin: '0 auto',
     position: 'relative',
-    background:
-      'radial-gradient(900px 520px at 88% -6%, rgba(0,166,166,0.3), transparent 60%),' +
-      'radial-gradient(760px 520px at 6% 42%, rgba(88,28,235,0.18), transparent 55%),' +
-      '#0B1F33',
+    background: 'var(--bg)',
     paddingBottom: 2,
   };
 
-  const dotTexture: CSSProperties = {
-    position: 'absolute',
-    inset: 0,
-    backgroundImage: 'radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px)',
-    backgroundSize: '26px 26px',
-    opacity: 0.5,
-    pointerEvents: 'none',
-  };
-
   return (
-    <main style={{ minHeight: '100vh', background: '#0B1F33', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media (max-width: 900px) {
+              .mz-dash-hero { grid-template-columns: 1fr !important; }
+              .mz-dash-kpis { grid-template-columns: repeat(2,1fr) !important; }
+              .mz-dash-trend { grid-template-columns: 1fr !important; }
+              .mz-dash-modules { grid-template-columns: repeat(auto-fit,minmax(200px,1fr)) !important; }
+            }
+          `,
+        }}
+      />
       <div style={canvasBg}>
-        <div aria-hidden style={dotTexture} />
-
         <StudentNavbar activeLabel={view === 'home' ? 'Home' : undefined} />
 
         {view === 'home' ? (
@@ -148,6 +149,7 @@ function HomeView({
 }) {
   const [catalogueStats, setCatalogueStats] = useState<CatalogueStats | null>(null);
   const [modulesByYear, setModulesByYear] = useState<ModulesByYear | null>(null);
+  const heroPhoto = getSubjectImage('anatomy');
 
   useEffect(() => {
     let cancelled = false;
@@ -170,6 +172,7 @@ function HomeView({
     <>
       {/* ================= HERO ================= */}
       <section
+        className="mz-dash-hero"
         style={{
           position: 'relative',
           display: 'grid',
@@ -179,88 +182,35 @@ function HomeView({
           padding: '54px 44px 40px',
         }}
       >
-        {/* MediZee holographic frame — rings + brand mark + orbiting feature chips */}
+        {/* Real product visual: the live Anatomy subject photo, not
+            a decorative brand mark — the brief's "product is the
+            centerpiece" principle. */}
         <div
           style={{
             position: 'relative',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: 440,
+            height: 380,
+            borderRadius: 20,
+            overflow: 'hidden',
+            border: '1px solid var(--line)',
           }}
         >
-          <div
-            aria-hidden
-            style={{
-              position: 'absolute',
-              width: 360,
-              height: 360,
-              borderRadius: '50%',
-              border: '1px solid rgba(0,166,166,0.25)',
-              animation: 'ringSpin 26s linear infinite',
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: 'absolute',
-              width: 300,
-              height: 300,
-              borderRadius: '50%',
-              border: '1px dashed rgba(0,166,166,0.3)',
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: 'absolute',
-              width: 380,
-              height: 200,
-              bottom: 34,
-              borderRadius: '50%',
-              background: 'radial-gradient(ellipse at center, rgba(0,166,166,0.45), transparent 70%)',
-              filter: 'blur(18px)',
-            }}
-          />
-
-          {/* Brand mark at the center */}
-          <div
-            style={{
-              position: 'relative',
-              zIndex: 2,
-              width: 220,
-              height: 220,
-              borderRadius: 28,
-              display: 'grid',
-              placeItems: 'center',
-              background: 'linear-gradient(160deg,#132B45,#0B1F33)',
-              border: '1px solid rgba(0,166,166,0.5)',
-              boxShadow: '0 0 0 1px rgba(0,166,166,0.3), 0 0 60px rgba(0,166,166,0.45)',
-            }}
-          >
-            <Image src="/medizee-logo.webp" alt="MediZee" width={120} height={120} priority style={{ borderRadius: 20 }} />
-          </div>
-
-          {/* Feature chip above the mark */}
+          {heroPhoto && (
+            <Image src={heroPhoto} alt="Anatomy" fill sizes="420px" style={{ objectFit: 'cover' }} />
+          )}
           <div
             style={{
               position: 'absolute',
-              zIndex: 3,
-              top: '8%',
-              left: '50%',
-              transform: 'translateX(-50%)',
+              bottom: 14,
+              left: 14,
               fontSize: 11,
               fontWeight: 700,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
-              color: '#33BFBF',
-              background: 'rgba(13,11,26,0.82)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(0,166,166,0.4)',
-              padding: '8px 12px',
-              borderRadius: 10,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              color: 'var(--text)',
+              background: 'var(--nav-bg)',
+              border: '1px solid var(--line2)',
+              padding: '7px 12px',
+              borderRadius: 8,
             }}
           >
             MCQ Bank
@@ -275,9 +225,9 @@ function HomeView({
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: '0.14em',
-                color: '#00A6A6',
+                color: 'var(--accent-text)',
                 textTransform: 'uppercase',
-                border: '1px solid rgba(0,166,166,0.35)',
+                border: '1px solid var(--line2)',
                 padding: '6px 12px',
                 borderRadius: 7,
               }}
@@ -293,10 +243,10 @@ function HomeView({
               lineHeight: 1.05,
               fontWeight: 900,
               letterSpacing: '-0.035em',
-              color: '#F7F9FA',
+              color: 'var(--text)',
             }}
           >
-            Master Your Curriculum, <span style={{ color: '#00A6A6' }}>Chapter by Chapter</span>
+            Master Your Curriculum, <span style={{ color: 'var(--accent-text)' }}>Chapter by Chapter</span>
           </h1>
 
           <div
@@ -305,7 +255,7 @@ function HomeView({
               fontWeight: 700,
               marginTop: 14,
               letterSpacing: '-0.01em',
-              color: '#F7F9FA',
+              color: 'var(--text)',
             }}
           >
             The Full MediZee Curriculum Catalogue
@@ -314,13 +264,13 @@ function HomeView({
           <p
             style={{
               fontSize: 15,
-              color: '#8B98A6',
+              color: 'var(--text3)',
               margin: '16px 0 0',
               maxWidth: 560,
               lineHeight: 1.6,
             }}
           >
-            Every module and chapter organized the way your program teaches it — high-yield questions, detailed explanations, and visual references, publishing chapter by chapter.
+            Every module and chapter organized the way your program teaches it: high-yield questions, detailed explanations, and visual references, publishing chapter by chapter.
           </p>
 
           {/* Micro-stat row — real structural counts, not a single
@@ -357,10 +307,9 @@ function HomeView({
                 fontSize: 15,
                 fontWeight: 700,
                 color: '#F7F9FA',
-                background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                background: 'var(--accent-text)',
                 padding: '16px 32px',
                 borderRadius: 13,
-                boxShadow: '0 0 30px rgba(0,166,166,0.5)',
                 cursor: 'pointer',
                 border: 'none',
                 textDecoration: 'none',
@@ -378,9 +327,9 @@ function HomeView({
                 gap: 10,
                 fontSize: 15,
                 fontWeight: 700,
-                color: '#33BFBF',
-                background: 'rgba(0,166,166,0.1)',
-                border: '1px solid rgba(0,166,166,0.45)',
+                color: 'var(--accent-text)',
+                background: 'var(--line2)',
+                border: '1px solid var(--line2)',
                 padding: '16px 28px',
                 borderRadius: 13,
                 cursor: 'pointer',
@@ -395,18 +344,19 @@ function HomeView({
       {/* ================= CATALOGUE ================= */}
       <section style={{ position: 'relative', padding: '34px 44px 30px' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', color: '#F7F9FA' }}>
+          <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text)' }}>
             Browse the Catalogue
           </h2>
-          <div style={{ fontSize: 13, color: '#8B98A6', marginTop: 8, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
+          <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
             {catalogueStats
-              ? `${catalogueStats.moduleCount} modules · ${catalogueStats.chapterCount} chapters across your curriculum. Spinal Cord (Anatomy) is the only chapter published so far — the rest are publishing over time.`
+              ? `${catalogueStats.moduleCount} modules · ${catalogueStats.chapterCount} chapters across your curriculum.`
               : 'Loading…'}
           </div>
         </div>
 
         {modulesByYear ? (
           <div
+            className="mz-dash-modules"
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${modulesByYear.years.length || 1}, 1fr)`,
@@ -418,8 +368,8 @@ function HomeView({
             ))}
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: '#8B98A6', fontSize: 13, padding: 40 }}>
-            <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text3)', fontSize: 13, padding: 40 }}>
+            <SpinnerIcon size={16} className="animate-spin" />
             Loading catalogue…
           </div>
         )}
@@ -433,9 +383,9 @@ function HomeView({
               gap: 10,
               fontSize: 13,
               fontWeight: 700,
-              color: '#33BFBF',
-              background: 'rgba(0,166,166,0.1)',
-              border: '1px solid rgba(0,166,166,0.45)',
+              color: 'var(--accent-text)',
+              background: 'var(--line2)',
+              border: '1px solid var(--line2)',
               padding: '12px 22px',
               borderRadius: 11,
               textDecoration: 'none',
@@ -492,20 +442,20 @@ function AnalyticsView({
       label: 'Total Questions',
       value: loading ? '—' : s.totalQuestionsAnswered.toLocaleString(),
       hint: 'Across all sessions',
-      color: '#F7F9FA',
+      color: 'var(--text)',
     },
     {
       label: 'Correct Answers',
       value: loading ? '—' : s.totalCorrectAnswers.toLocaleString(),
       hint: 'Cumulative correct',
-      color: '#10B981',
+      color: 'var(--success)',
     },
     {
       label: 'Overall Accuracy',
       value: loading ? '—' : s.overallAccuracy.toFixed(1),
       suffix: loading ? '' : '%',
       hint: 'Weighted mean',
-      color: '#F7F9FA',
+      color: 'var(--text)',
     },
     {
       label: 'Study Streak',
@@ -518,7 +468,7 @@ function AnalyticsView({
       label: 'Bookmarked Questions',
       value: loading ? '—' : s.bookmarksCount.toLocaleString(),
       hint: 'View saved questions & notes',
-      color: '#33BFBF',
+      color: 'var(--accent-text)',
     },
   ];
 
@@ -535,13 +485,13 @@ function AnalyticsView({
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#00A6A6', letterSpacing: '0.03em', marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent-text)', letterSpacing: '0.03em', marginBottom: 6 }}>
             Student Analytics
           </div>
-          <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: '#F7F9FA' }}>
+          <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--text)' }}>
             Your Progress, {firstName}
           </h2>
-          <p style={{ margin: '8px 0 0', fontSize: 13, color: '#8B98A6' }}>
+          <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--text3)' }}>
             Every metric below is drawn from your completed challenges.
           </p>
         </div>
@@ -551,8 +501,8 @@ function AnalyticsView({
           style={{
             fontSize: 12.5,
             fontWeight: 600,
-            color: '#33BFBF',
-            border: '1px solid rgba(0,166,166,0.4)',
+            color: 'var(--accent-text)',
+            border: '1px solid var(--line2)',
             padding: '10px 16px',
             borderRadius: 10,
             cursor: 'pointer',
@@ -574,17 +524,17 @@ function AnalyticsView({
             flexDirection: 'column',
             gap: 14,
             padding: '16px 20px',
-            background: 'linear-gradient(135deg, rgba(0,166,166,0.16), rgba(0,166,166,0.06))',
-            border: '1px solid rgba(0,166,166,0.45)',
+            background: 'var(--fill)',
+            border: '1px solid var(--line2)',
             borderRadius: 14,
           }}
         >
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#F7F9FA' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>
               You have {totalMistakes} question{totalMistakes === 1 ? '' : 's'} to review across{' '}
               {s.mistakes.length} chapter{s.mistakes.length === 1 ? '' : 's'}
             </div>
-            <div style={{ fontSize: 12, color: '#8B98A6', marginTop: 3 }}>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>
               Practice the ones you got wrong — spaced review sticks longest.
             </div>
           </div>
@@ -599,9 +549,9 @@ function AnalyticsView({
                   gap: 12,
                 }}
               >
-                <div style={{ fontSize: 12, color: '#F7F9FA' }}>
+                <div style={{ fontSize: 12, color: 'var(--text)' }}>
                   {m.chapterName}
-                  {m.moduleCode && <span style={{ color: '#8B98A6' }}> · {m.moduleCode}</span>}
+                  {m.moduleCode && <span style={{ color: 'var(--text3)' }}> · {m.moduleCode}</span>}
                 </div>
                 <button
                   type="button"
@@ -610,7 +560,7 @@ function AnalyticsView({
                     fontSize: 12,
                     fontWeight: 700,
                     color: '#F7F9FA',
-                    background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+                    background: 'var(--accent-text)',
                     padding: '8px 14px',
                     borderRadius: 8,
                     border: 'none',
@@ -628,7 +578,7 @@ function AnalyticsView({
       )}
 
       {/* KPI grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16 }}>
+      <div className="mz-dash-kpis" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16 }}>
         {kpis.map((k) => {
           const clickable = k.label === 'Bookmarked Questions';
           return (
@@ -636,14 +586,14 @@ function AnalyticsView({
               key={k.label}
               onClick={clickable ? () => router.push('/student/bookmarks') : undefined}
               style={{
-                background: '#132B45',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: 'var(--surface)',
+                border: '1px solid var(--line)',
                 borderRadius: 16,
                 padding: 20,
                 cursor: clickable ? 'pointer' : undefined,
               }}
             >
-              <div style={{ fontSize: 11, color: '#8B98A6' }}>{k.label}</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)' }}>{k.label}</div>
               <div
                 style={{
                   fontSize: 30,
@@ -655,24 +605,24 @@ function AnalyticsView({
               >
                 {k.value}
                 {k.suffix && (
-                  <span style={{ fontSize: 16, color: '#8B98A6', fontWeight: 700 }}>{k.suffix}</span>
+                  <span style={{ fontSize: 16, color: 'var(--text3)', fontWeight: 700 }}>{k.suffix}</span>
                 )}
               </div>
-              <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 6 }}>{k.hint}</div>
+              <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 6 }}>{k.hint}</div>
             </div>
           );
         })}
       </div>
 
       {/* Trend + Focus areas */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 22, alignItems: 'start' }}>
+      <div className="mz-dash-trend" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 22, alignItems: 'start' }}>
         <AccuracyTrend history={s.progressHistory} loading={loading} />
         <FocusAreas focusAreas={s.focusAreas} loading={loading} />
       </div>
 
       {/* Recent challenges */}
-      <div style={{ background: '#132B45', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 16, color: '#F7F9FA' }}>Recent Challenges</div>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 22 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 16, color: 'var(--text)' }}>Recent Challenges</div>
         <RecentChallenges challenges={s.recentChallenges} loading={loading} />
       </div>
     </section>
@@ -718,17 +668,17 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
   const lastLabel = history[history.length - 1]?.date ?? '';
 
   return (
-    <div style={{ background: '#132B45', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 22 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#F7F9FA' }}>Accuracy Trend</div>
-          <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3 }}>Last 30 days</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Accuracy Trend</div>
+          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3 }}>Last 30 days</div>
         </div>
         {delta !== null && (
           <div
             style={{
               fontSize: 11,
-              color: delta >= 0 ? '#10B981' : '#EF4444',
+              color: delta >= 0 ? 'var(--success)' : 'var(--error)',
               fontWeight: 600,
               background: delta >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
               padding: '4px 10px',
@@ -745,17 +695,17 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
           <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 200, display: 'block' }} preserveAspectRatio="none">
             <defs>
               <linearGradient id="homeArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#00A6A6" stopOpacity="0.45" />
-                <stop offset="100%" stopColor="#00A6A6" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--accent-text)" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="var(--accent-text)" stopOpacity="0" />
               </linearGradient>
             </defs>
-            <line x1="0" y1="50" x2={W} y2="50" stroke="rgba(255,255,255,0.05)" />
-            <line x1="0" y1="100" x2={W} y2="100" stroke="rgba(255,255,255,0.05)" />
-            <line x1="0" y1="150" x2={W} y2="150" stroke="rgba(255,255,255,0.05)" />
+            <line x1="0" y1="50" x2={W} y2="50" stroke="var(--fill)" />
+            <line x1="0" y1="100" x2={W} y2="100" stroke="var(--fill)" />
+            <line x1="0" y1="150" x2={W} y2="150" stroke="var(--fill)" />
             {areaPath && <path d={areaPath} fill="url(#homeArea)" />}
-            <path d={path} fill="none" stroke="#00A6A6" strokeWidth="2.5" />
+            <path d={path} fill="none" stroke="var(--accent-text)" strokeWidth="2.5" />
           </svg>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#8B98A6', marginTop: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text3)', marginTop: 8 }}>
             <span>{firstLabel}</span>
             <span>{lastLabel}</span>
           </div>
@@ -767,7 +717,7 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
             display: 'grid',
             placeItems: 'center',
             fontSize: 12,
-            color: '#8B98A6',
+            color: 'var(--text3)',
             textAlign: 'center',
             padding: '0 20px',
             lineHeight: 1.5,
@@ -775,7 +725,7 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
         >
           {loading
             ? 'Loading your accuracy trend…'
-            : 'Take at least two histology quizzes to see your accuracy trend.'}
+            : 'Take at least two quizzes to see your accuracy trend.'}
         </div>
       )}
     </div>
@@ -784,9 +734,9 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
 
 function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading: boolean }) {
   return (
-    <div style={{ background: '#132B45', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 22 }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: '#F7F9FA' }}>Focus Areas</div>
-      <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3, marginBottom: 16 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 22 }}>
+      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Focus Areas</div>
+      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3, marginBottom: 16 }}>
         Weakest topics — review before exam
       </div>
       {focusAreas.length > 0 ? (
@@ -794,20 +744,20 @@ function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading:
           {focusAreas.map((f) => (
             <div key={f.topic}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                <span style={{ color: '#F7F9FA', fontWeight: 600 }}>{f.topic}</span>
-                <span style={{ color: f.accuracy < 60 ? '#EF4444' : '#F97316' }}>{f.accuracy.toFixed(0)}%</span>
+                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{f.topic}</span>
+                <span style={{ color: f.accuracy < 60 ? 'var(--error)' : '#F97316' }}>{f.accuracy.toFixed(0)}%</span>
               </div>
-              <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.06)', marginTop: 6 }}>
+              <div style={{ height: 6, borderRadius: 3, background: 'var(--line)', marginTop: 6 }}>
                 <div
                   style={{
                     height: '100%',
                     width: `${Math.max(4, f.accuracy)}%`,
                     borderRadius: 3,
-                    background: f.accuracy < 60 ? '#EF4444' : '#F97316',
+                    background: f.accuracy < 60 ? 'var(--error)' : '#F97316',
                   }}
                 />
               </div>
-              <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 4 }}>
+              <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 4 }}>
                 {f.attempted} question{f.attempted === 1 ? '' : 's'} attempted
               </div>
             </div>
@@ -820,7 +770,7 @@ function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading:
             display: 'grid',
             placeItems: 'center',
             fontSize: 12,
-            color: '#8B98A6',
+            color: 'var(--text3)',
             textAlign: 'center',
             padding: '0 8px',
             lineHeight: 1.5,
@@ -837,12 +787,12 @@ function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading:
 
 function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult[]; loading: boolean }) {
   if (loading) {
-    return <div style={{ fontSize: 12, color: '#8B98A6' }}>Loading recent challenges…</div>;
+    return <div style={{ fontSize: 12, color: 'var(--text3)' }}>Loading recent challenges…</div>;
   }
   if (challenges.length === 0) {
     return (
-      <div style={{ fontSize: 12, color: '#8B98A6' }}>
-        No completed challenges yet — take a histology quiz to see it here.
+      <div style={{ fontSize: 12, color: 'var(--text3)' }}>
+        No completed challenges yet — take a quiz to see it here.
       </div>
     );
   }
@@ -861,14 +811,14 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
               alignItems: 'center',
               gap: 20,
               padding: '13px 0',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
+              borderTop: '1px solid var(--line)',
             }}
           >
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#F7F9FA' }}>{c.subjectName}</div>
-              <div style={{ fontSize: 10, color: '#8B98A6', marginTop: 2 }}>{relativeTime(c.completedAt)}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{c.subjectName}</div>
+              <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{relativeTime(c.completedAt)}</div>
             </div>
-            <div style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 12, color: '#8B98A6' }}>
+            <div style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 12, color: 'var(--text3)' }}>
               {c.score} / {c.total}
             </div>
             <div style={{ fontSize: 12, fontWeight: 700, minWidth: 52, textAlign: 'right', color }}>{pct}%</div>
@@ -896,9 +846,9 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
 // Threshold table for the accuracy pill. Matches the design's
 // green / orange / red palette.
 function challengeTone(pct: number): { color: string; tag: string; tagBg: string } {
-  if (pct >= 80) return { color: '#10B981', tag: 'Great',  tagBg: 'rgba(16,185,129,0.12)' };
+  if (pct >= 80) return { color: 'var(--success)', tag: 'Great',  tagBg: 'rgb(var(--success-rgb) / 0.12)' };
   if (pct >= 60) return { color: '#F97316', tag: 'Review', tagBg: 'rgba(249,115,22,0.12)' };
-  return           { color: '#EF4444', tag: 'Weak',   tagBg: 'rgba(239,68,68,0.12)'  };
+  return           { color: 'var(--error)', tag: 'Weak',   tagBg: 'rgb(var(--error-rgb) / 0.12)'  };
 }
 
 // "Today, 2:14 PM" / "Yesterday" / "3 days ago" — matches the
@@ -938,18 +888,18 @@ function StatMicro({
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       {value && (
-        <span style={{ fontSize: big ? 24 : 19, fontWeight: 900, color: '#00A6A6' }}>
+        <span style={{ fontSize: big ? 24 : 19, fontWeight: 900, color: 'var(--accent-text)' }}>
           {value}
         </span>
       )}
       {icon && <span style={{ fontSize: 19 }}>{icon}</span>}
-      <span style={{ fontSize: 11, color: '#8B98A6', lineHeight: 1.3 }}>{label}</span>
+      <span style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.3 }}>{label}</span>
     </div>
   );
 }
 
 function Divider() {
-  return <div style={{ width: 1, height: 34, background: 'rgba(255,255,255,0.12)' }} />;
+  return <div style={{ width: 1, height: 34, background: 'var(--line2)' }} />;
 }
 
 function YearCard({ year }: { year: ModulesByYear['years'][number] }) {
@@ -961,8 +911,8 @@ function YearCard({ year }: { year: ModulesByYear['years'][number] }) {
         position: 'relative',
         borderRadius: 16,
         overflow: 'hidden',
-        background: '#132B45',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
         padding: 20,
         textDecoration: 'none',
         display: 'block',
@@ -973,7 +923,7 @@ function YearCard({ year }: { year: ModulesByYear['years'][number] }) {
           width: 36,
           height: 36,
           borderRadius: 10,
-          background: 'linear-gradient(135deg,#00A6A6,#33BFBF)',
+          background: 'var(--accent-text)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -985,11 +935,11 @@ function YearCard({ year }: { year: ModulesByYear['years'][number] }) {
       >
         {year.year}
       </div>
-      <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', color: '#F7F9FA' }}>
+      <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text)' }}>
         Year {year.year}
       </div>
-      <div style={{ fontSize: 11.5, color: '#8B98A6', marginTop: 3 }}>{year.label}</div>
-      <div style={{ fontSize: 10.5, color: '#8B98A6', marginTop: 12 }}>
+      <div style={{ fontSize: 11.5, color: 'var(--text3)', marginTop: 3 }}>{year.label}</div>
+      <div style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 12 }}>
         {year.moduleCount} modules · {year.chapterCount} chapters
       </div>
     </Link>
