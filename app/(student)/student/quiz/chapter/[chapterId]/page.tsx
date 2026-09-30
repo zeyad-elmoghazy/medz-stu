@@ -1291,6 +1291,7 @@ function ReferenceCard({
   imageUrl: string | null;
 }) {
   const [zoomOpen, setZoomOpen] = useState(false);
+  const zoomTriggerRef = useRef<HTMLButtonElement>(null);
   const closeZoom = useCallback(() => setZoomOpen(false), []);
 
   return (
@@ -1322,6 +1323,7 @@ function ReferenceCard({
       {imageUrl && (
         <>
           <button
+            ref={zoomTriggerRef}
             type="button"
             onClick={() => setZoomOpen(true)}
             aria-label="Open reference page full screen to zoom"
@@ -1364,6 +1366,7 @@ function ReferenceCard({
             src={imageUrl}
             alt="Source page from the module reference book, enlarged"
             onClose={closeZoom}
+            returnFocusRef={zoomTriggerRef}
           />
         </>
       )}
