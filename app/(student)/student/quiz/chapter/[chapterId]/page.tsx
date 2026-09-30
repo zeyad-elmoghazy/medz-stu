@@ -140,7 +140,6 @@ export default function ChapterQuizPage() {
 
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
   const [referenceImageLoading, setReferenceImageLoading] = useState(false);
-  const referenceFetchedForRef = useRef<number | null>(null);
 
   const submittedRef = useRef(false);
 
@@ -191,12 +190,38 @@ export default function ChapterQuizPage() {
     setActiveTab('explanation');
     setReferenceImageUrl(null);
     setReferenceImageLoading(false);
-    referenceFetchedForRef.current = null;
     // Intentionally scoped to the id, not the whole `currentQuestion`
     // object — a new array reference from `questions` shouldn't
     // re-run this on every render, only an actual question change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion?.id, answers]);
+
+  // Fetch the source-page image whenever the current question is
+  // answered. Keyed on the persisted answer (not the transient
+  // `submitted` flag) so it also runs when a question is already
+  // answered on arrival — a resumed session, a page refresh, or
+  // stepping back to an earlier question — not only inside
+  // handleSubmit. Declared after the reset effect above so that, on
+  // the commit where an answer lands, the reset runs first and the
+  // fetch starts from a clean slate.
+  const currentIsAnswered = !!currentQuestion && answers[currentQuestion.id] != null;
+  const currentReferencePage = currentQuestion?.referencePage ?? null;
+  useEffect(() => {
+    if (!currentIsAnswered || currentReferencePage == null) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReferenceImageLoading(true);
+    fetchChapterReferenceImage(chapterId, currentReferencePage)
+      .then((url) => {
+        if (!cancelled) setReferenceImageUrl(url);
+      })
+      .finally(() => {
+        if (!cancelled) setReferenceImageLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [chapterId, currentQuestion?.id, currentIsAnswered, currentReferencePage]);
 
   useEffect(() => {
     if (!currentQuestion) return;
@@ -334,17 +359,8 @@ export default function ChapterQuizPage() {
     answerQuestion(currentQuestion.id, selectedChoice);
     setSubmitted(true);
     exitFullscreen();
-
-    if (
-      currentQuestion.referencePage != null &&
-      referenceFetchedForRef.current !== currentQuestion.id
-    ) {
-      referenceFetchedForRef.current = currentQuestion.id;
-      setReferenceImageLoading(true);
-      fetchChapterReferenceImage(chapterId, currentQuestion.referencePage)
-        .then(setReferenceImageUrl)
-        .finally(() => setReferenceImageLoading(false));
-    }
+    // The reference image is fetched by the effect keyed on the
+    // persisted answer, so it isn't started here.
   }
 
   async function handleNext() {
