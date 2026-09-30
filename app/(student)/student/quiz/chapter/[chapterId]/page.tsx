@@ -22,7 +22,9 @@ import {
   LogOutIcon,
   SpinnerIcon,
   StickyNoteIcon,
+  ZoomInIcon,
 } from '@/components/icons';
+import { ImageZoomViewer } from '@/components/quiz/ImageZoomViewer';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import {
   fetchChapterQuiz,
@@ -1288,6 +1290,9 @@ function ReferenceCard({
   reference: string;
   imageUrl: string | null;
 }) {
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const closeZoom = useCallback(() => setZoomOpen(false), []);
+
   return (
     <div
       className="relative overflow-hidden rounded-xl p-6"
@@ -1315,24 +1320,52 @@ function ReferenceCard({
       </div>
 
       {imageUrl && (
-        <div
-          className="mt-5 overflow-hidden rounded-lg"
-          style={{ border: '1px solid var(--reference-border)', backgroundColor: 'var(--reference-bg)' }}
-        >
-          {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl}
-            alt="Source page from the module reference book"
+        <>
+          <button
+            type="button"
+            onClick={() => setZoomOpen(true)}
+            aria-label="Open reference page full screen to zoom"
+            data-testid="reference-zoom-trigger"
+            className="group relative mt-5 block w-full overflow-hidden rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
-              display: 'block',
-              width: '100%',
-              height: 'auto',
-              maxHeight: '70vh',
-              objectFit: 'contain',
+              border: '1px solid var(--reference-border)',
+              backgroundColor: 'var(--reference-bg)',
+              cursor: 'zoom-in',
+              outlineColor: 'var(--reference-accent)',
             }}
+          >
+            {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt="Source page from the module reference book"
+              style={{
+                display: 'block',
+                width: '100%',
+                height: 'auto',
+                maxHeight: '70vh',
+                objectFit: 'contain',
+              }}
+            />
+            <span
+              className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+              style={{
+                backgroundColor: 'var(--surface)',
+                color: 'var(--text2)',
+                border: '1px solid var(--line)',
+              }}
+            >
+              <ZoomInIcon size={14} />
+              Tap to zoom
+            </span>
+          </button>
+          <ImageZoomViewer
+            open={zoomOpen}
+            src={imageUrl}
+            alt="Source page from the module reference book, enlarged"
+            onClose={closeZoom}
           />
-        </div>
+        </>
       )}
 
       <p className="mt-5 font-handwritten leading-relaxed" style={{ fontSize: '1.4rem', color: 'var(--reference-text)' }}>

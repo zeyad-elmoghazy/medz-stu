@@ -277,3 +277,24 @@ export function ListIcon(props: IconProps) {
     </Base>
   );
 }
+
+export function ZoomInIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+      <path d="M11 8v6" />
+      <path d="M8 11h6" />
+    </Base>
+  );
+}
+
+export function ZoomOutIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+      <path d="M8 11h6" />
+    </Base>
+  );
+}
