@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CloseIcon, ExpandIcon, ZoomInIcon, ZoomOutIcon } from '@/components/icons';
@@ -35,16 +35,25 @@ export function ImageZoomViewer({
   src,
   alt,
   onClose,
+  returnFocusRef,
 }: {
   open: boolean;
   src: string;
   alt: string;
   onClose: () => void;
+  /**
+   * Element to re-focus on close. Safari (desktop and iOS) doesn't focus a
+   * button when it's clicked, so `document.activeElement` at open time is
+   * <body> and can't be trusted to identify the trigger.
+   */
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   if (typeof document === 'undefined') return null;
   return createPortal(
     <AnimatePresence>
-      {open && <ViewerDialog src={src} alt={alt} onClose={onClose} />}
+      {open && (
+        <ViewerDialog src={src} alt={alt} onClose={onClose} returnFocusRef={returnFocusRef} />
+      )}
     </AnimatePresence>,
     document.body,
   );
@@ -54,10 +63,12 @@ function ViewerDialog({
   src,
   alt,
   onClose,
+  returnFocusRef,
 }: {
   src: string;
   alt: string;
   onClose: () => void;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const reduceMotion = useReducedMotion();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -127,14 +138,17 @@ function ViewerDialog({
   // Body scroll lock + focus management (restore focus to the trigger).
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
-    const prevFocus = document.activeElement as HTMLElement | null;
+    // Prefer the explicit trigger; fall back to whatever had focus (which is
+    // <body> on Safari after a mouse/touch click).
+    const returnTo =
+      returnFocusRef?.current ?? (document.activeElement as HTMLElement | null);
     document.body.style.overflow = 'hidden';
     dialogRef.current?.focus();
     return () => {
       document.body.style.overflow = prevOverflow;
-      prevFocus?.focus?.();
+      returnTo?.focus?.();
     };
-  }, []);
+  }, [returnFocusRef]);
 
   // Wheel needs a non-passive native listener so preventDefault stops
   // trackpad-pinch (ctrl+wheel) from zooming the whole browser page.
