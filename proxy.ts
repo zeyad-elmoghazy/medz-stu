@@ -167,6 +167,27 @@ export async function proxy(request: NextRequest) {
 
   if (!required) {
     if (session && (pathname === '/login' || pathname === '/signup')) {
+      // A session from clicking a password-recovery email link is a
+      // real, valid session — but the student hasn't actually set a
+      // new password yet. Without this check, visiting /login with
+      // that session active (e.g. a leaked/abandoned recovery link,
+      // or a student who clicked "back to log in" before finishing)
+      // would silently bounce straight into the dashboard, skipping
+      // the password reset entirely. Route that case to
+      // /reset-password instead so the reset always has to complete.
+      if (pathname === '/login') {
+        const { data: claimsData } = await supabase.auth.getClaims();
+        const amr = claimsData?.claims?.amr as
+          | { method: string }[]
+          | undefined;
+        const lastMethod = amr?.[amr.length - 1]?.method;
+        if (lastMethod === 'recovery') {
+          return withRateHeaders(
+            NextResponse.redirect(new URL('/reset-password', request.url))
+          );
+        }
+      }
+
       const profileQuery = await supabase
         .from('profiles')
         .select('role')

@@ -35,16 +35,25 @@ function LoginPageInner() {
   // there's no server-rendered content to hydrate against — reading
   // searchParams in a lazy initializer is safe here, unlike the
   // localStorage-backed cases elsewhere in this pass.
-  const [error, setError] = useState<string | null>(() =>
-    searchParams.get('error') === 'missing_profile'
-      ? 'Your profile could not be loaded. Please sign up again or contact support.'
-      : null
-  );
-  const [info] = useState<string | null>(() =>
-    searchParams.get('reset') === 'success'
-      ? 'Password updated. Log in with your new password.'
-      : null
-  );
+  const [error, setError] = useState<string | null>(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'missing_profile') {
+      return 'Your profile could not be loaded. Please sign up again or contact support.';
+    }
+    if (errorParam === 'invalid_link') {
+      return 'That link is invalid or has expired. Please request a new one.';
+    }
+    return null;
+  });
+  const [info] = useState<string | null>(() => {
+    if (searchParams.get('reset') === 'success') {
+      return 'Password updated. Log in with your new password.';
+    }
+    if (searchParams.get('confirmed') === '1') {
+      return 'Email confirmed. Log in to continue.';
+    }
+    return null;
+  });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

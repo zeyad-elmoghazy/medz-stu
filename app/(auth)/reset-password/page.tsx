@@ -36,18 +36,26 @@ function ResetPasswordPageInner() {
         return;
       }
 
-      const code = searchParams.get('code');
-      if (!code) {
+      // The link in the email points at /auth/confirm, a route
+      // handler that verifies the token server-side and — on
+      // success — redirects here with the session cookie already
+      // set. So by the time this page loads, either the session
+      // exists (verification already happened) or the route handler
+      // sent ?error=invalid_link because it didn't. Either way,
+      // there's nothing left to exchange client-side; just check
+      // which case we're in.
+      if (searchParams.get('error') === 'invalid_link') {
         if (!cancelled) setStatus('invalid');
         return;
       }
 
       const { createBrowserClient } = await import('@/lib/supabase');
       const supabase = createBrowserClient();
-      const { error: exchangeError } =
-        await supabase.auth.exchangeCodeForSession(code);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (!cancelled) setStatus(exchangeError ? 'invalid' : 'ready');
+      if (!cancelled) setStatus(session ? 'ready' : 'invalid');
     }
 
     verify();
@@ -84,6 +92,13 @@ function ResetPasswordPageInner() {
       setError(updateError.message ?? 'Unable to update password.');
       return;
     }
+
+    // The session active right now came from the recovery link, not
+    // a real login — proxy.ts specifically detects that and would
+    // otherwise bounce this redirect straight back to
+    // /reset-password. Sign out so /login sees a clean slate and the
+    // student has to log in with the password they just set.
+    await supabase.auth.signOut();
 
     router.push('/login?reset=success');
   }
