@@ -11,7 +11,8 @@ const SUBJECT_IMAGES: Record<string, string> = {
   genetics: '/subjects/genetics.webp',
   histology: '/subjects/histology-v2.webp',
   immunology: '/subjects/immunology.webp',
-  microbiology: '/subjects/microbiology-v2.webp',
+  // DB slug is the combined "Microbiology & Immunology" subject.
+  'microbiology-&-immunology': '/subjects/microbiology-v2.webp',
   parasitology: '/subjects/parasitology-v2.webp',
   pathology: '/subjects/pathology-v2.webp',
   pharmacology: '/subjects/pharmacology-v2.webp',
