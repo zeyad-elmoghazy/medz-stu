@@ -11,7 +11,14 @@ import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 
 export default function CatalogueChaptersPage() {
   const params = useParams<{ year: string; moduleCode: string; subjectSlug: string }>();
-  const { year, moduleCode, subjectSlug } = params;
+  const { year, moduleCode } = params;
+  // useParams() returns dynamic segments raw (still percent-encoded), unlike
+  // the decoded `params` prop Next.js passes to server pages. Slugs with a
+  // reserved character (e.g. "microbiology-&-immunology") arrive here as
+  // "microbiology-%26-immunology" and, left undecoded, get double-encoded
+  // by fetchChaptersBySubject's URLSearchParams.set() — which the API then
+  // only decodes once, so it never matches a real subject slug.
+  const subjectSlug = decodeURIComponent(params.subjectSlug);
 
   const [data, setData] = useState<ChaptersBySubject | null>(null);
   const [error, setError] = useState<string | null>(null);
