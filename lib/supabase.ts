@@ -82,6 +82,15 @@ export type Profile = {
   total_correct_answers: number;
   total_questions_answered: number;
   last_active_at: string | null;
+  /**
+   * The year the student chose (1–5) and the academic session it was
+   * chosen in. Don't read these directly for display — derive the current
+   * year with `currentAcademicYear()` from '@/lib/academic-year'.
+   */
+  academic_year: number | null;
+  academic_year_session: number | null;
+  notify_email: boolean;
+  notify_reminders: boolean;
 };
 
 type QuizSessionRow = {
@@ -155,6 +164,8 @@ export type Database = {
           email: string | null;
           role: UserRole;
           created_at?: string;
+          academic_year?: number | null;
+          academic_year_session?: number | null;
         };
         Update: Partial<Profile>;
       };
