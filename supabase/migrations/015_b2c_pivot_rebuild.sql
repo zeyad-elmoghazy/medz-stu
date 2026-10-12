@@ -276,11 +276,18 @@ CREATE POLICY "questions_read_published" ON questions
 -- 'none' (neither request.jwt.claim.role nor the session role is
 -- service_role) — without this, the trigger blocks this exact UPDATE
 -- the instant any real row has role='professor', rolling back the
--- entire migration. Reset immediately after so every object created
--- later in this file stays owned by postgres, as before.
-SET LOCAL ROLE service_role;
+-- entire migration.
+--
+-- Satisfy the trigger the way PostgREST does: set the transaction-local
+-- JWT role claim it reads first. We deliberately do NOT `SET LOCAL ROLE
+-- service_role` here: on a fresh local database (Supabase CLI 2.x, PG17)
+-- service_role has no table privileges on profiles yet, so switching to
+-- it fails with "permission denied" — even when zero rows match, since
+-- Postgres checks table privileges before it scans any rows. The claim
+-- is cleared straight after, so the elevation covers this one UPDATE.
+SELECT set_config('request.jwt.claim.role', 'service_role', true);
 UPDATE profiles SET role = 'admin' WHERE role = 'professor';
-RESET ROLE;
+SELECT set_config('request.jwt.claim.role', '', true);
 
 ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 ALTER TABLE profiles ADD CONSTRAINT profiles_role_check
