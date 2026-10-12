@@ -63,7 +63,7 @@ function demoProfileDto(): StudentProfileDto | null {
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
-  const { refresh: refreshNavProfile } = useStudentProfile();
+  const { refresh: refreshNavProfile, academicYear: sharedYear } = useStudentProfile();
   const { theme, setTheme } = useStudentTheme();
   const demo = isDemoMode();
 
@@ -107,6 +107,29 @@ export default function ProfileSettingsPage() {
       cancelled = true;
     };
   }, [demo]);
+
+  // The one-time year prompt saves through the shared provider, not this
+  // page, so this page's own copy of the profile can go stale. When the
+  // shared year moves out from under it, pull a fresh copy.
+  const pageYear = profile?.academicYear;
+  useEffect(() => {
+    if (!profile || sharedYear == null || sharedYear === pageYear) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const fresh = demo ? demoProfileDto() : await fetchStudentProfile();
+        if (!cancelled && fresh) setProfile(fresh);
+      } catch {
+        /* keep what we have; the next full load will correct it */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // `profile` itself is deliberately not a dependency: only a change in
+    // either year should trigger a re-sync, not every profile edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharedYear, pageYear, demo]);
 
   const saveProfile = useCallback(
     async (patch: ProfilePatch) => {

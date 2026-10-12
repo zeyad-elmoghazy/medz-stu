@@ -22,6 +22,15 @@ export function EditDetailsCard({
   const [fullName, setFullName] = useState(profile.fullName);
   const [username, setUsername] = useState(profile.username ?? '');
   const [year, setYear] = useState(profile.academicYear != null ? String(profile.academicYear) : '');
+  // The year can change from outside this card (the one-time prompt, or a
+  // September rollover while the page is open). Re-sync the dropdown when
+  // it does — adjusting state during render is React's sanctioned way to
+  // reset state from a prop without an effect.
+  const [seenYear, setSeenYear] = useState(profile.academicYear);
+  if (seenYear !== profile.academicYear) {
+    setSeenYear(profile.academicYear);
+    setYear(profile.academicYear != null ? String(profile.academicYear) : '');
+  }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
