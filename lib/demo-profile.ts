@@ -31,6 +31,12 @@ export type DemoProfile = {
   full_name: string;
   email: string;
   role: UserRole;
+  // Optional so profiles saved before these fields existed still parse.
+  username?: string | null;
+  academic_year?: number | null;
+  academic_year_session?: number | null;
+  notify_email?: boolean;
+  notify_reminders?: boolean;
 };
 
 export function readDemoProfile(): DemoProfile | null {

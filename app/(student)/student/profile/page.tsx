@@ -1,357 +1,230 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOutIcon, MailIcon, UserIcon, BellIcon, MoonIcon, SunIcon } from '@/components/icons';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
+import { ProfileHeader } from '@/components/student/profile/ProfileHeader';
+import {
+  BadgesCard,
+  QuickLinks,
+  StatsOverview,
+  SubjectProgress,
+} from '@/components/student/profile/StatsSections';
+import { EditDetailsCard } from '@/components/student/profile/EditDetailsCard';
+import {
+  AccountCard,
+  PreferencesCard,
+  SecurityCard,
+} from '@/components/student/profile/AccountCards';
+import { Notice } from '@/components/student/profile/ui';
+import { academicSession } from '@/lib/academic-year';
+import { getEmptyStudentStats, type StudentStats } from '@/lib/dashboard-data';
+import {
+  changeStudentPassword,
+  deleteStudentAccount,
+  fetchMyLeaderboardRow,
+  fetchStudentProfile,
+  fetchStudentStats,
+  updateStudentProfile,
+} from '@/lib/student-api';
+import { toProfileDto, type StudentProfileDto } from '@/lib/student-profile';
+import type { ProfilePatch } from '@/lib/profile-schema';
 import {
   clearDemoProfile,
   createBrowserClient,
   isDemoMode,
   readDemoProfile,
-  type Profile,
+  writeDemoProfile,
+  type LeaderboardRow,
 } from '@/lib/supabase';
+import { useStudentProfile } from '@/lib/use-display-name';
 import { useStudentTheme } from '@/lib/use-student-theme';
 
-const PREF_KEY = 'medz.studentPrefs';
+const DEMO_NOTE = 'Not available in demo mode — there is no real account behind it.';
 
-type Prefs = {
-  emailNotifications: boolean;
-  reminderNotifications: boolean;
-  theme: 'dark' | 'light';
-};
-
-const DEFAULT_PREFS: Prefs = {
-  emailNotifications: true,
-  reminderNotifications: true,
-  theme: 'dark',
-};
+/** Demo mode keeps the profile in localStorage; shape it like the API's DTO. */
+function demoProfileDto(): StudentProfileDto | null {
+  const demo = readDemoProfile();
+  if (!demo) return null;
+  return toProfileDto({
+    id: demo.id,
+    role: demo.role,
+    full_name: demo.full_name,
+    username: demo.username ?? null,
+    email: demo.email,
+    created_at: '',
+    academic_year: demo.academic_year ?? null,
+    academic_year_session: demo.academic_year_session ?? null,
+    notify_email: demo.notify_email ?? true,
+    notify_reminders: demo.notify_reminders ?? true,
+    total_xp: 0,
+  });
+}
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
-  const supabase = createBrowserClient();
-
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const { refresh: refreshNavProfile } = useStudentProfile();
   const { theme, setTheme } = useStudentTheme();
+  const demo = isDemoMode();
+
+  const [profile, setProfile] = useState<StudentProfileDto | null>(null);
+  const [stats, setStats] = useState<StudentStats | null>(null);
+  const [rank, setRank] = useState<LeaderboardRow | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      if (isDemoMode()) {
-        const demo = readDemoProfile();
-        if (demo?.full_name) setDisplayName(demo.full_name);
-        if (demo?.email) setEmail(demo.email);
+      if (demo) {
+        if (cancelled) return;
+        setProfile(demoProfileDto());
+        setStats(getEmptyStudentStats());
+        setLoading(false);
         return;
       }
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        setEmail(user.email ?? '');
-        const { data } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
-          .single();
-        const profile = data as Pick<Profile, 'full_name'> | null;
-        if (profile?.full_name) setDisplayName(profile.full_name);
-      } catch {
-        /* leave blank */
+      // The profile is essential; stats and rank are best-effort so a
+      // slow or failing analytics query can't block editing the account.
+      const [profileRes, statsRes, rankRes] = await Promise.allSettled([
+        fetchStudentProfile(),
+        fetchStudentStats(),
+        fetchMyLeaderboardRow(),
+      ]);
+      if (cancelled) return;
+      if (profileRes.status === 'fulfilled') {
+        setProfile(profileRes.value);
+      } else {
+        setLoadError(
+          profileRes.reason instanceof Error ? profileRes.reason.message : 'Failed to load your profile'
+        );
       }
+      if (statsRes.status === 'fulfilled') setStats(statsRes.value);
+      if (rankRes.status === 'fulfilled') setRank(rankRes.value);
+      setLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
+  }, [demo]);
 
-    // localStorage isn't available during SSR, so saved prefs can only
-    // be read post-mount. supabase is a module-level singleton (see
-    // createBrowserClient in lib/supabase.ts), so this effect only
-    // fires once despite the dependency.
-    try {
-      const raw = localStorage.getItem(PREF_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(raw) });
-    } catch {
-      /* keep defaults */
-    }
-  }, [supabase]);
-
-  function updatePrefs(patch: Partial<Prefs>) {
-    setPrefs((prev) => {
-      const next = { ...prev, ...patch };
-      try {
-        localStorage.setItem(PREF_KEY, JSON.stringify(next));
-      } catch {
-        /* localStorage may be blocked; UI still updates */
+  const saveProfile = useCallback(
+    async (patch: ProfilePatch) => {
+      if (demo) {
+        const current = readDemoProfile();
+        if (!current) throw new Error('No demo profile found');
+        const { academic_year, full_name, ...rest } = patch;
+        writeDemoProfile({
+          ...current,
+          ...rest,
+          ...(full_name !== undefined ? { full_name } : {}),
+          ...(academic_year !== undefined
+            ? { academic_year, academic_year_session: academicSession() }
+            : {}),
+        });
+        setProfile(demoProfileDto());
+      } else {
+        setProfile(await updateStudentProfile(patch));
       }
-      return next;
-    });
-  }
+      // Keep the navbar name / year prompt in step with what was saved.
+      void refreshNavProfile();
+    },
+    [demo, refreshNavProfile]
+  );
 
   async function handleLogout() {
     if (signingOut) return;
     setSigningOut(true);
     clearDemoProfile();
-    if (!isDemoMode()) await supabase.auth.signOut().catch(() => {});
+    if (!demo) await createBrowserClient().auth.signOut().catch(() => {});
     router.push('/login');
     router.refresh();
   }
 
-  const initials = displayName
-    .split(/\s+/)
-    .map((n) => n[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  async function handleDelete(confirmEmail: string) {
+    await deleteStudentAccount(confirmEmail);
+    // The server already ended the session; clear any client-side residue.
+    await createBrowserClient().auth.signOut().catch(() => {});
+    router.push('/login');
+    router.refresh();
+  }
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
+    <main
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        fontFamily: 'var(--font-sans), system-ui, sans-serif',
+      }}
+    >
       <StudentNavbar />
-      <div style={{ maxWidth: 780, margin: '0 auto', padding: '32px 32px 80px' }}>
+      <div style={{ maxWidth: 780, margin: '0 auto', padding: '32px 20px 80px' }}>
         <header style={{ marginTop: 4 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--accent-text)', textTransform: 'uppercase' }}>
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.18em',
+              color: 'var(--accent-text)',
+              textTransform: 'uppercase',
+            }}
+          >
             Profile &amp; Settings
           </p>
-          <h1 style={{ margin: '10px 0 0', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
+          <h1
+            style={{
+              margin: '10px 0 0',
+              fontSize: 40,
+              fontWeight: 800,
+              letterSpacing: '-0.03em',
+              color: 'var(--text)',
+            }}
+          >
             Your account
           </h1>
         </header>
 
-        {/* Profile card */}
-        <section
-          style={{
-            marginTop: 32,
-            padding: 24,
-            background: 'var(--surface)',
-            border: '1px solid var(--line)',
-            borderRadius: 16,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 18,
-          }}
-        >
-          <span
-            style={{
-              width: 60,
-              height: 60,
-              borderRadius: '50%',
-              background: 'var(--accent-text)',
-              // White stays literal: this avatar chip's fill is the
-              // solid accent in both themes.
-              color: '#F7F9FA',
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: 22,
-              fontWeight: 800,
-              flex: 'none',
-            }}
-          >
-            {initials || 'ME'}
-          </span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>
-              {displayName || 'Student'}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <MailIcon size={12} />
-              {email || 'No email on file'}
-            </div>
+        {loadError && (
+          <div style={{ marginTop: 24 }}>
+            <Notice kind="error">{loadError}</Notice>
           </div>
-        </section>
+        )}
 
-        {/* Details form */}
-        <Card title="Profile details">
-          <Field
-            icon={<UserIcon size={14} />}
-            label="Full name"
-            value={displayName}
-            onChange={setDisplayName}
-            placeholder="Your name"
-          />
-          <Field
-            icon={<MailIcon size={14} />}
-            label="Email"
-            value={email}
-            onChange={setEmail}
-            placeholder="you@example.com"
-            type="email"
-            disabled
-            hint="Contact support to change the email tied to your account."
-          />
-        </Card>
+        <ProfileHeader profile={profile} rank={rank} loading={loading} />
 
-        {/* Preferences */}
-        <Card title="Preferences">
-          <Toggle
-            icon={<BellIcon size={14} />}
-            label="Email notifications"
-            hint="Weekly progress summary and new-content announcements."
-            value={prefs.emailNotifications}
-            onChange={(v) => updatePrefs({ emailNotifications: v })}
-          />
-          <Toggle
-            icon={<BellIcon size={14} />}
-            label="Study reminders"
-            hint="A gentle nudge when your streak is at risk."
-            value={prefs.reminderNotifications}
-            onChange={(v) => updatePrefs({ reminderNotifications: v })}
-          />
-          <Toggle
-            icon={theme === 'dark' ? <MoonIcon size={14} /> : <SunIcon size={14} />}
-            label="Theme"
-            hint="Switch between light and dark mode, applied everywhere: dashboard, catalogue, and quizzes."
-            value={theme === 'dark'}
-            onChange={(v) => setTheme(v ? 'dark' : 'light')}
-          />
-        </Card>
+        <StatsOverview
+          stats={stats}
+          totalXp={profile ? profile.totalXp : null}
+          rank={rank}
+          loading={loading}
+        />
+        <SubjectProgress stats={stats} />
+        <BadgesCard badges={profile?.badges ?? []} />
+        <QuickLinks bookmarksCount={stats ? stats.bookmarksCount : null} />
 
-        {/* Session */}
-        <Card title="Session">
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={signingOut}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '12px 18px',
-              fontSize: 14,
-              fontWeight: 700,
-              color: 'var(--error)',
-              background: 'rgb(var(--error-rgb) / 0.08)',
-              border: '1px solid rgb(var(--error-rgb) / 0.35)',
-              borderRadius: 10,
-              cursor: signingOut ? 'progress' : 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            <LogOutIcon size={14} />
-            {signingOut ? 'Signing out…' : 'Log out'}
-          </button>
-        </Card>
+        {profile && (
+          <>
+            <EditDetailsCard key={profile.id} profile={profile} onSave={saveProfile} />
+            <PreferencesCard
+              profile={profile}
+              onSave={saveProfile}
+              theme={theme}
+              setTheme={setTheme}
+            />
+            <SecurityCard
+              onChangePassword={changeStudentPassword}
+              unavailableReason={demo ? DEMO_NOTE : undefined}
+            />
+            <AccountCard
+              email={profile.email}
+              signingOut={signingOut}
+              onLogout={handleLogout}
+              onDelete={handleDelete}
+              deleteUnavailableReason={demo ? DEMO_NOTE : undefined}
+            />
+          </>
+        )}
       </div>
     </main>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section
-      style={{
-        marginTop: 22,
-        padding: 22,
-        background: 'var(--surface)',
-        border: '1px solid var(--line)',
-        borderRadius: 16,
-      }}
-    >
-      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', color: 'var(--accent-text)', textTransform: 'uppercase', marginBottom: 16 }}>
-        {title}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{children}</div>
-    </section>
-  );
-}
-
-function Field({
-  icon,
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = 'text',
-  disabled,
-  hint,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-  disabled?: boolean;
-  hint?: string;
-}) {
-  return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-        {icon} {label}
-      </span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        style={{
-          padding: '11px 14px',
-          borderRadius: 10,
-          border: '1px solid var(--line2)',
-          background: disabled ? 'var(--fill)' : 'var(--bg)',
-          color: 'var(--text)',
-          fontSize: 14,
-          fontFamily: 'inherit',
-          outline: 'none',
-        }}
-      />
-      {hint && <span style={{ fontSize: 11, color: 'var(--text3)' }}>{hint}</span>}
-    </label>
-  );
-}
-
-function Toggle({
-  icon,
-  label,
-  hint,
-  value,
-  onChange,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  hint?: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-      <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          {icon} {label}
-        </div>
-        {hint && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3 }}>{hint}</div>}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={value}
-        onClick={() => onChange(!value)}
-        style={{
-          position: 'relative',
-          width: 44,
-          height: 24,
-          borderRadius: 999,
-          border: 'none',
-          background: value ? 'var(--accent-text)' : 'var(--line2)',
-          cursor: 'pointer',
-          transition: 'background 0.2s',
-        }}
-      >
-        <span
-          style={{
-            position: 'absolute',
-            top: 2,
-            left: value ? 22 : 2,
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            // White stays literal: this switch knob must read clearly
-            // against both the solid accent (on) and the line2 fill
-            // (off) tracks in both themes.
-            background: '#F7F9FA',
-            transition: 'left 0.2s',
-          }}
-        />
-      </button>
-    </div>
   );
 }

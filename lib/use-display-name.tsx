@@ -1,17 +1,58 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   createBrowserClient,
   isDemoMode,
   readDemoProfile,
   type Profile,
 } from '@/lib/supabase';
+import { currentAcademicYear } from '@/lib/academic-year';
 
-const DisplayNameContext = createContext('');
+export type StudentProfileState = {
+  /** True once the first fetch has settled (success or failure). */
+  loaded: boolean;
+  fullName: string;
+  /**
+   * The student's CURRENT academic year (1–5), derived from what they
+   * chose and the September rollover — null if they haven't chosen one.
+   */
+  academicYear: number | null;
+  /**
+   * True only when we positively know a signed-in student hasn't picked a
+   * year yet. False while loading, when signed out, and when the year
+   * columns aren't available — so the prompt never fires on a guess.
+   */
+  needsAcademicYear: boolean;
+  /** Re-fetch after the profile was edited elsewhere (e.g. the profile page). */
+  refresh: () => Promise<void>;
+};
+
+const NOOP_STATE: StudentProfileState = {
+  loaded: false,
+  fullName: '',
+  academicYear: null,
+  needsAcademicYear: false,
+  refresh: async () => {},
+};
+
+const StudentProfileContext = createContext<StudentProfileState>(NOOP_STATE);
+
+type ProfileSlice = Pick<
+  Profile,
+  'full_name' | 'academic_year' | 'academic_year_session'
+>;
 
 /**
- * Fetches the signed-in student's display name once and shares it via
+ * Fetches the signed-in student's basic profile once and shares it via
  * context. Mounted in app/(student)/student/layout.tsx, which persists
  * across navigation between /student pages (Next.js keeps a shared
  * layout's component instance mounted across sibling routes) — so the
@@ -21,43 +62,93 @@ const DisplayNameContext = createContext('');
  * '' and flashing "Guest" on every navigation.
  */
 export function DisplayNameProvider({ children }: { children: ReactNode }) {
-  const [displayName, setDisplayName] = useState('');
+  const [loaded, setLoaded] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [academicYear, setAcademicYear] = useState<number | null>(null);
+  const [needsAcademicYear, setNeedsAcademicYear] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const load = useCallback(async (isCancelled: () => boolean = () => false) => {
+    let slice: Partial<ProfileSlice> | null = null;
+    // Whether the academic-year columns were actually readable.
+    let yearColumnsKnown = false;
+    try {
       if (isDemoMode()) {
         const demo = readDemoProfile();
-        if (demo?.full_name && !cancelled) setDisplayName(demo.full_name);
-        return;
-      }
-      try {
+        slice = demo
+          ? {
+              full_name: demo.full_name,
+              academic_year: demo.academic_year ?? null,
+              academic_year_session: demo.academic_year_session ?? null,
+            }
+          : null;
+        yearColumnsKnown = true;
+      } else {
         const supabase = createBrowserClient();
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
-          .single();
-        const profile = data as Pick<Profile, 'full_name'> | null;
-        if (!cancelled && profile?.full_name) setDisplayName(profile.full_name);
-      } catch {
-        /* leave blank on failure */
+        if (user) {
+          const full = await supabase
+            .from('profiles')
+            .select('full_name, academic_year, academic_year_session')
+            .eq('id', user.id)
+            .single();
+          if (!full.error) {
+            slice = full.data as ProfileSlice | null;
+            yearColumnsKnown = true;
+          } else {
+            // The academic-year columns may not exist yet (app deployed
+            // ahead of migration 030) — don't lose the name over it.
+            const nameOnly = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', user.id)
+              .single();
+            slice = nameOnly.data as Pick<Profile, 'full_name'> | null;
+          }
+        }
       }
-    })();
+    } catch {
+      /* leave blank on failure */
+    }
+    if (isCancelled()) return;
+    setFullName(slice?.full_name ?? '');
+    const year = currentAcademicYear(slice?.academic_year, slice?.academic_year_session);
+    setAcademicYear(year);
+    setNeedsAcademicYear(slice != null && yearColumnsKnown && year == null);
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load(() => cancelled);
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [load]);
+
+  const refresh = useCallback(() => load(), [load]);
+
+  const value = useMemo<StudentProfileState>(
+    () => ({ loaded, fullName, academicYear, needsAcademicYear, refresh }),
+    [loaded, fullName, academicYear, needsAcademicYear, refresh]
+  );
 
   return (
-    <DisplayNameContext.Provider value={displayName}>
+    <StudentProfileContext.Provider value={value}>
       {children}
-    </DisplayNameContext.Provider>
+    </StudentProfileContext.Provider>
   );
+}
+
+/**
+ * The signed-in student's basic profile (name + current academic year).
+ * Returns an inert, not-yet-loaded state if no provider is mounted above
+ * the caller (e.g. a page outside /student).
+ */
+export function useStudentProfile(): StudentProfileState {
+  return useContext(StudentProfileContext);
 }
 
 /**
@@ -69,5 +160,5 @@ export function DisplayNameProvider({ children }: { children: ReactNode }) {
  * render their own fallback (e.g. "Guest") for the empty case.
  */
 export function useDisplayName(): string {
-  return useContext(DisplayNameContext);
+  return useStudentProfile().fullName;
 }

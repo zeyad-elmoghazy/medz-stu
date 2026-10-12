@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRightIcon,
+  ChevronDownIcon,
+  ListIcon,
   SpinnerIcon,
   LockIcon,
   MailIcon,
@@ -16,6 +18,12 @@ import {
   writeDemoProfile,
 } from '@/lib/demo-profile';
 import { CheckInboxCard } from '@/components/auth/CheckInboxCard';
+import {
+  ACADEMIC_YEARS,
+  academicSession,
+  formatAcademicYear,
+  isValidAcademicYear,
+} from '@/lib/academic-year';
 
 type SelectableRole = 'student';
 
@@ -25,6 +33,8 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Kept as the raw <select> value; '' means "not chosen yet".
+  const [academicYear, setAcademicYear] = useState('');
   const role: SelectableRole = 'student';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +49,12 @@ export default function SignupPage() {
       return;
     }
 
+    const chosenYear = Number(academicYear);
+    if (!isValidAcademicYear(chosenYear)) {
+      setError('Please select the academic year you are in.');
+      return;
+    }
+
     setLoading(true);
 
     if (isDemoMode()) {
@@ -47,6 +63,8 @@ export default function SignupPage() {
         full_name: fullName,
         email,
         role,
+        academic_year: chosenYear,
+        academic_year_session: academicSession(),
       });
       router.push(dashboardPathForRole(role));
       router.refresh();
@@ -61,7 +79,10 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { full_name: fullName, role },
+        // The on_auth_user_created trigger validates `academic_year`
+        // (1–5) and stamps the session; `role` is ignored server-side
+        // (migration 030) and only kept for the client-side fallback.
+        data: { full_name: fullName, role, academic_year: chosenYear },
       },
     });
 
@@ -182,6 +203,42 @@ export default function SignupPage() {
                 value={email}
                 onChange={setEmail}
               />
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="academicYear"
+                  className="text-xs font-medium uppercase tracking-[0.16em] text-text-muted"
+                >
+                  Academic year
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+                    <ListIcon size={16} />
+                  </span>
+                  <select
+                    id="academicYear"
+                    required
+                    value={academicYear}
+                    onChange={(e) => setAcademicYear(e.target.value)}
+                    className="block h-11 w-full appearance-none rounded-lg border border-border bg-background pl-10 pr-10 text-sm text-text-primary transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40 invalid:text-text-muted/60"
+                  >
+                    <option value="" disabled>
+                      Select your year
+                    </option>
+                    {ACADEMIC_YEARS.map((y) => (
+                      <option key={y} value={y}>
+                        {formatAcademicYear(y)}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted">
+                    <ChevronDownIcon size={16} />
+                  </span>
+                </div>
+                <p className="text-[11px] text-text-muted">
+                  It moves up automatically every September.
+                </p>
+              </div>
 
               <FormField
                 id="password"
