@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@/lib/supabase-server';
+import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient } from '@/lib/supabase-service';
 import type { Database, UserRole } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -46,20 +47,20 @@ export async function POST() {
 
   const today = todayISODate();
 
+  // The streak RPC checks auth.uid(), so it must keep using the
+  // student's own session.
   const sb = supabase as unknown as {
-    from: (table: string) => {
-      upsert: (
-        row: Record<string, unknown>,
-        opts?: { onConflict?: string; ignoreDuplicates?: boolean }
-      ) => Promise<{ error: { message: string } | null }>;
-    };
     rpc: (
       name: string,
       args: Record<string, unknown>
     ) => Promise<{ data: number | null; error: { message: string } | null }>;
   };
 
-  const { error: upsertError } = await sb.from('daily_streaks').upsert(
+  // daily_streaks is read-only for students (migration 031): writes
+  // go through the server key, scoped to the authenticated user's id.
+  const service = untypedFrom(serviceRoleClient());
+
+  const { error: upsertError } = await service.from('daily_streaks').upsert(
     {
       student_id: user.id,
       streak_date: today,
