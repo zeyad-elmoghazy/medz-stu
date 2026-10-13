@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@/lib/supabase-server';
+import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient } from '@/lib/supabase-service';
 import type { Database, UserRole } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -51,32 +52,21 @@ export async function POST() {
   const today = todayISODate();
 
   type ErrorShape = { message: string } | null;
+  // The streak RPC checks auth.uid(), so it must keep using the
+  // student's own session.
   const sb = supabase as unknown as {
-    from: (table: string) => {
-      select: (cols: string) => {
-        eq: (col: string, val: unknown) => {
-          eq: (col: string, val: unknown) => {
-            maybeSingle: () => Promise<{
-              data: { challenges_completed: number } | null;
-              error: ErrorShape;
-            }>;
-          };
-        };
-      };
-      update: (patch: Record<string, unknown>) => {
-        eq: (col: string, val: unknown) => {
-          eq: (col: string, val: unknown) => Promise<{ error: ErrorShape }>;
-        };
-      };
-      insert: (row: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
-    };
     rpc: (
       name: string,
       args: Record<string, unknown>
     ) => Promise<{ data: number | null; error: ErrorShape }>;
   };
 
-  const { data: existing, error: selectError } = await sb
+  // daily_streaks is read-only for students (migration 031): writes
+  // go through the server key, always scoped to the authenticated
+  // user's id (RLS does not apply to the service role).
+  const service = untypedFrom(serviceRoleClient());
+
+  const { data: existing, error: selectError } = await service
     .from('daily_streaks')
     .select('challenges_completed')
     .eq('student_id', user.id)
@@ -88,7 +78,7 @@ export async function POST() {
   }
 
   if (existing) {
-    const { error: updateError } = await sb
+    const { error: updateError } = await service
       .from('daily_streaks')
       .update({
         challenges_completed: (existing.challenges_completed ?? 0) + 1,
@@ -100,7 +90,7 @@ export async function POST() {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
   } else {
-    const { error: insertError } = await sb.from('daily_streaks').insert({
+    const { error: insertError } = await service.from('daily_streaks').insert({
       student_id: user.id,
       streak_date: today,
       challenges_completed: 1,

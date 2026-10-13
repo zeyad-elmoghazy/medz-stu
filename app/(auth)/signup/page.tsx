@@ -92,37 +92,11 @@ export default function SignupPage() {
       return;
     }
 
-    // The DB trigger `on_auth_user_created` inserts the matching
-    // profiles row using auth.users.raw_user_meta_data, so no
-    // client-side INSERT is needed here. This upsert is a belt-
-    // and-suspenders: if the trigger is disabled for some reason,
-    // we still get a profile row; if it already ran, ignoreDuplicates
-    // makes this a no-op.
-    const upsertResult = await (
-      supabase as unknown as {
-        from: (t: string) => {
-          upsert: (
-            row: Record<string, unknown>,
-            opts: { onConflict: string; ignoreDuplicates: boolean }
-          ) => Promise<{ error: { message: string } | null }>;
-        };
-      }
-    )
-      .from('profiles')
-      .upsert(
-        { id: data.user.id, full_name: fullName, email, role },
-        { onConflict: 'id', ignoreDuplicates: true }
-      );
-    const profileError = upsertResult.error;
-
-    // Swallow RLS violations (42501) — the trigger will have
-    // already created the row, so we don't need the client insert
-    // to succeed. Any OTHER error is worth surfacing.
-    if (profileError && !/row-level security/i.test(profileError.message)) {
-      setLoading(false);
-      setError(`Account created, but profile failed: ${profileError.message}`);
-      return;
-    }
+    // The DB trigger `on_auth_user_created` creates the matching
+    // profiles row from auth.users.raw_user_meta_data (migration 030).
+    // There is deliberately NO client-side insert: students can't
+    // create or edit protected profile data through the API
+    // (migration 031), and the trigger is the single creator.
 
     if (!data.session) {
       // No session yet means email confirmation is required (the
