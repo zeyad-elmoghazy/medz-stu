@@ -82,19 +82,3 @@ export async function fetchMyLeaderboardRow(): Promise<LeaderboardRow | null> {
   const body = (await res.json()) as { me: LeaderboardRow | null };
   return body.me ?? null;
 }
-
-export async function pingStreak(): Promise<void> {
-  await fetch('/api/student/streak/update', {
-    method: 'POST',
-    credentials: 'include',
-  });
-}
-
-export async function markChallengeComplete(): Promise<number> {
-  const res = await fetch('/api/student/streak/complete', {
-    method: 'POST',
-    credentials: 'include',
-  });
-  const data = await res.json();
-  return data.streak;
-}
