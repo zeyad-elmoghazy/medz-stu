@@ -20,7 +20,7 @@ const SubmitBodySchema = z.object({
     }),
   // Ids the client actually rendered in this session — when present,
   // scoring (and the returned per-question results) are restricted
-  // to just these, same reasoning as /api/quiz/submit.
+  // to just these.
   questionIds: z.array(z.number().int()).optional(),
 });
 
@@ -32,19 +32,15 @@ const SubmitBodySchema = z.object({
  * chapter-scoped practice quiz (app/(student)/student/quiz/chapter/
  * [chapterId]/page.tsx). That route is intentionally unproctored
  * (no fullscreen enforcement, no anti-cheat violation tracking —
- * see its own header comment), so this earns XP via the exact same
- * formula and DAILY CAP POOL as the proctored /api/quiz/submit path
- * (deliberate: the cap already bounds the benefit of an unproctored
- * attempt, so a second, separate cap isn't needed).
+ * see its own header comment); the daily XP cap bounds the benefit
+ * of an unproctored attempt.
  *
  * Also inserts one row into `quiz_sessions` (chapter_id set — see
- * supabase/migrations/026_quiz_sessions_chapter_id.sql) so this,
- * the app's real/primary quiz flow, feeds the student Analytics
- * view's "Recent Challenges", "Accuracy Trend", and per-subject
- * numbers the same way the old proctored flow's /api/quiz/submit
- * does. That insert is best-effort (logged, non-fatal) since this
- * route's response doesn't depend on a session id the way
- * /api/quiz/submit's does. Also updates the running XP/stat
+ * supabase/migrations/026_quiz_sessions_chapter_id.sql) so the quiz
+ * feeds the student Analytics view's "Recent Challenges", "Accuracy
+ * Trend", and per-subject numbers. That insert is best-effort
+ * (logged, non-fatal) since this route's response doesn't depend on
+ * a session id. Also updates the running XP/stat
  * counters on `profiles` and the leaderboard — and enforces the
  * daily XP cap — atomically inside the `record_quiz_result` RPC
  * (see supabase/migrations/029_fix_record_quiz_result_race.sql;
@@ -52,8 +48,7 @@ const SubmitBodySchema = z.object({
  * read-then-write step, which raced under concurrent submissions).
  * Also returns a per-question `results` breakdown (chosen/correct/
  * isCorrect) — the chapter quiz page's results screen renders
- * entirely from this response, the same way the proctored results
- * page renders from /api/quiz/submit's response.
+ * entirely from this response.
  */
 export async function POST(
   request: NextRequest,
@@ -103,7 +98,7 @@ export async function POST(
   const service = serviceRoleClient();
 
   // Never trust client-supplied correctness — recompute from the
-  // canonical bank, same principle as /api/quiz/submit, even though
+  // canonical bank, even though
   // this chapter's GET endpoint already reveals correct answers to
   // the client (a pre-existing, separate design choice in that
   // route, not something this endpoint should compound by also
@@ -191,7 +186,7 @@ export async function POST(
 }
 
 // ============== Service-role client typing ==============
-// Same minimum-surface rationale as app/api/quiz/submit/route.ts.
+// Minimum-surface typing for the service-role client.
 type ErrorShape = { message: string } | null;
 
 type ServiceClient = {

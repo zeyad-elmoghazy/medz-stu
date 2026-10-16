@@ -385,7 +385,7 @@ export default function CatalogueChaptersPage() {
                                   onClick={() =>
                                     useChapterQuizStore
                                       .getState()
-                                      .startMistakeSession(c.id, c.mistakeQuestionIds)
+                                      .startMistakeSession(c.mistakeQuestionIds)
                                   }
                                   style={{
                                     flex: 'none',

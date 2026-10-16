@@ -39,11 +39,7 @@ type NoteItem = QuestionDetailFields & {
 /**
  * /student/bookmarks — lists everything a student has bookmarked or
  * annotated via the chapter-quiz flow (app/api/student/bookmarks,
- * app/api/student/notes, list mode). Deliberately does not attempt
- * to surface the legacy [subjectId] quiz's bookmarks/notes — those
- * are pure localStorage state against questions that don't exist in
- * the `questions` table, so there is nothing real to show for them
- * (see the plan's investigation of data/histology-questions.ts).
+ * app/api/student/notes, list mode).
  *
  * Each row can be opened to reveal the question's choices, the
  * correct answer, and its explanation — a read-only review, not a

@@ -1,6 +1,6 @@
 // Small hand-authored icon set, replacing lucide-react across the
 // redesigned surfaces (landing, dashboard, catalogue, auth, quiz,
-// results, NotesEditor, AITutor). Each icon is a plain stroke-based
+// results, NotesEditor). Each icon is a plain stroke-based
 // SVG so it inherits color/size via normal CSS/props instead of a
 // library dependency. Icons are added here only as a surface in
 // scope for the redesign actually needs one — purely decorative

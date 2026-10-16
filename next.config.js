@@ -141,17 +141,16 @@ const nextConfig = {
   // error catching in development
   reactStrictMode: true,
 
-  // The legacy Subjects flow (static data/histology-catalog.ts,
-  // Histology-only) is superseded by the DB-backed Catalogue. Route
-  // files aren't deleted yet — this redirect just stops sending
-  // anyone to them while that's confirmed safe.
+  // The legacy Subjects and Custom Exam flows were removed in favor of
+  // the DB-backed Catalogue; keep old bookmarks/links landing somewhere
+  // useful. `:subjectId` matches a single segment, so it never shadows
+  // the live /student/quiz/chapter/[chapterId] route.
   async redirects() {
     return [
-      {
-        source: '/student/subjects/:path*',
-        destination: '/student/catalogue',
-        permanent: false,
-      },
+      { source: '/student/subjects/:path*', destination: '/student/catalogue', permanent: false },
+      { source: '/student/exam', destination: '/student/catalogue', permanent: false },
+      { source: '/student/quiz/:subjectId', destination: '/student/catalogue', permanent: false },
+      { source: '/student/results/histology', destination: '/student/catalogue', permanent: false },
     ];
   },
 
