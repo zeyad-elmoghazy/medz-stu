@@ -101,6 +101,17 @@ export async function createTestUser(
   if (error || !data.user) {
     throw new Error(`createTestUser(${role}) failed: ${error?.message}`);
   }
+  if (role === 'admin') {
+    // Signup always yields role='student' (030_academic_year_and_profile_prefs.sql);
+    // admins are promoted by hand, so do the same via the service role.
+    const { error: promoteError } = await admin
+      .from('profiles')
+      .update({ role: 'admin' })
+      .eq('id', data.user.id);
+    if (promoteError) {
+      throw new Error(`createTestUser(admin) promote failed: ${promoteError.message}`);
+    }
+  }
   return { id: data.user.id, email, password };
 }
 
