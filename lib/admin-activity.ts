@@ -26,7 +26,6 @@ export type ActivityEntry = {
  * admin route without fighting the generic.
  */
 export async function logActivity(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, any, any>,
   entry: ActivityEntry
 ): Promise<void> {

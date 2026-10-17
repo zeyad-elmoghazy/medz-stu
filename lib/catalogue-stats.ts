@@ -33,7 +33,7 @@ export async function fetchCatalogueStats(): Promise<CatalogueStats> {
   // that file is server-only (next/headers) and can't be pulled
   // into this client-callable module.
   const client = supabase as unknown as {
-    from: (table: string) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    from: (table: string) => any;
   };
 
   const [modulesRes, chaptersRes, questionsRes] = await Promise.all([
@@ -69,7 +69,7 @@ export type LandingModuleCard = {
 export async function fetchLandingModules(codes: string[]): Promise<LandingModuleCard[]> {
   const supabase = createBrowserClient();
   const client = supabase as unknown as {
-    from: (table: string) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    from: (table: string) => any;
   };
 
   const [modulesRes, chaptersRes] = await Promise.all([
