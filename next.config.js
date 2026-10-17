@@ -78,16 +78,9 @@ const nextConfig = {
 
   // Modularize barrel imports so `import { Foo } from 'lucide-react'`
   // pulls just Foo, not every icon in the library. Same for framer /
-  // recharts / radix — huge wins on First Load JS.
+  // wins on First Load JS.
   experimental: {
-    optimizePackageImports: [
-      'lucide-react',
-      'framer-motion',
-      'recharts',
-      '@radix-ui/react-label',
-      '@radix-ui/react-progress',
-      '@radix-ui/react-slot',
-    ],
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
 
   // Server-only Node deps that must NOT enter the webpack graph:
@@ -125,7 +118,6 @@ const nextConfig = {
     // hardcoding a slug, but is still narrowed by protocol.
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
-      { protocol: 'https', hostname: 'cdn.medz.app' }, // future CDN domain
     ],
     formats: ['image/avif', 'image/webp'],
     // Cache images for 1 year on CDN
@@ -157,27 +149,6 @@ const nextConfig = {
   // Headers for caching static assets + security
   async headers() {
     return [
-      {
-        // Cache static assets for 1 year
-        source: '/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        // Cache API responses for subject list
-        // (changes rarely)
-        source: '/api/subjects',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
-          },
-        ],
-      },
       {
         // Never cache auth endpoints
         source: '/api/auth/:path*',

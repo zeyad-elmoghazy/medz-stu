@@ -29,27 +29,13 @@ module.exports = {
         'text-muted': 'rgb(var(--text3-rgb) / <alpha-value>)',
         border: 'var(--line)',
         input: 'var(--fill)',
-        ring: 'rgb(var(--accent-text-rgb) / <alpha-value>)',
-        foreground: 'var(--text)',
         primary: {
           DEFAULT: 'rgb(var(--accent-text-rgb) / <alpha-value>)',
-          foreground: '#F7F9FA',
-        },
-        secondary: {
-          DEFAULT: 'var(--surface)',
-          foreground: 'var(--text)',
-        },
-        destructive: {
-          DEFAULT: 'rgb(var(--error-rgb) / <alpha-value>)',
           foreground: '#F7F9FA',
         },
         muted: {
           DEFAULT: 'var(--surface)',
           foreground: 'rgb(var(--text3-rgb) / <alpha-value>)',
-        },
-        card: {
-          DEFAULT: 'var(--surface)',
-          foreground: 'var(--text)',
         },
       },
       borderRadius: {
