@@ -1,134 +1,71 @@
-# MediZee — Adaptive medical learning
+# MediZee — adaptive medical question bank
 
-Next.js 14 (App Router) demo for an adaptive medical question bank, with student,
-professor, and program-admin surfaces. Tailwind, shadcn-style components,
-Framer Motion, Zustand state, Supabase auth scaffolding, and a Dr.&nbsp;Zahra–
-authored Histology MCQ bank.
+Next.js 16 (App Router) + React 19 + Supabase (auth, Postgres, storage) for Egyptian medical
+students. Students browse a year → module → subject → chapter catalogue, take chapter quizzes
+backed by the database, earn XP and streaks, and climb a leaderboard. Admins manage content
+(modules, subjects, chapters, books, questions) through `/admin/content` and a PDF/OCR upload
+wizard. Styling is Tailwind + CSS variables; client state uses Zustand.
+
+Production runs on **Vercel** (merge to `main` auto-deploys; every PR gets a Preview) against a
+hosted Supabase project. Migrations are applied to Supabase by hand — a deploy never runs them.
+
+## Routes
+
+| Area | Path |
+| --- | --- |
+| Marketing | `/`, `/privacy`, `/terms` |
+| Auth | `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/auth/confirm` |
+| Student | `/student/dashboard`, `/student/catalogue/...`, `/student/quiz/chapter/[chapterId]`, `/student/results/chapter/[chapterId]`, `/student/bookmarks`, `/student/leaderboard`, `/student/profile` |
+| Admin | `/admin/content` |
+| API | `/api/student/*`, `/api/admin/*`, `/api/auth/login`, `/api/health` |
+
+`proxy.ts` is the request gate (session refresh, role-based redirects, rate limiting).
 
 ## Setup
 
-### A. Demo mode (no backend, ~30 seconds)
-
 ```bash
 npm install
-cp .env.local.example .env.local
-# The example already ships with NEXT_PUBLIC_DEMO=0. Flip to 1:
-# NEXT_PUBLIC_DEMO=1
+cp .env.local.example .env.local   # then fill in the values
 npm run dev
 ```
 
-Auth uses `localStorage`, questions are served from the bundled
-histology module, and any password logs you in. Perfect for
-walking through the UI without provisioning anything.
+Environment variables (see `.env.local.example`):
 
-### B. Real Supabase (test with real data)
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — browser + server auth.
+- `SUPABASE_SERVICE_ROLE_KEY` — server only; admin routes and scripts. Never expose it.
+- `UPSTASH_REDIS_URL`, `UPSTASH_REDIS_TOKEN` — optional caching and rate limiting; both degrade
+  to no-ops when unset.
+- `NEXT_PUBLIC_DEMO=1` — opt-in demo mode (localStorage auth, no backend). **Never set this in
+  production**: it makes `proxy.ts` wave every request through.
 
-**1. Create the Supabase project**
+## Database
 
-- Go to <https://supabase.com> → *New project*.
-- Pick a strong DB password (store it in your password manager).
-- Wait ~1 min for the project to provision.
+Migrations live in `supabase/migrations/` (001–031; there is intentionally no 002) and are applied
+in filename order. `supabase/seed.sql` is for local stacks only — never run it against a hosted
+project. `supabase/tests/` holds the SQL RLS/hardening checks.
 
-**2. Apply the migrations**
-
-**Option 1 — CLI (recommended):**
-
-```bash
-supabase login
-supabase link --project-ref <your-project-ref>
-supabase db push
-```
-
-Files apply in filename order: `001 → 003 → 004 → 005`.
-
-**Option 2 — SQL editor:**
-
-Open Supabase → *SQL Editor* → paste each file in this order and click *Run*:
-
-1. `supabase/migrations/001_initial_schema.sql`
-2. `supabase/migrations/003_student_personalization.sql`
-3. `supabase/migrations/004_jobs_table.sql`
-4. `supabase/migrations/005_performance_indexes.sql`
-
-**3. Wire the env file**
-
-Get these from Supabase → *Settings* → *API*:
-
-```
-NEXT_PUBLIC_DEMO=0
-NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from the API page>
-SUPABASE_SERVICE_ROLE_KEY=<service_role key — server-only, never send to browser>
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-Leave the Upstash and QStash blocks empty for now — the app
-degrades gracefully (see `lib/cache.ts` and `lib/queue.ts`).
-
-**4. Seed the question bank**
+Run a throwaway local stack with the Supabase CLI:
 
 ```bash
-npm run seed:questions
+supabase start      # applies migrations, then supabase/seed.sql
+supabase status     # local URL + keys to put in .env.local
 ```
 
-Idempotent — safe to re-run. Reads from `data/histology-questions.ts`
-and INSERTs into `questions` with `ON CONFLICT (subject_id,
-subject_bundle_id) DO NOTHING`. Requires the service role key.
+## Scripts
 
-**5. Boot the app**
+| Command | What it does |
+| --- | --- |
+| `npm run dev` / `build` / `start` | Next.js dev server, production build, serve the build |
+| `npm run lint` | ESLint |
+| `npm test` | Jest. Unit tests run anywhere; `__tests__/integration/*` need Supabase env vars and write real rows, so point them at a **local** stack, never production |
+| `npm run test:ocr` | OCR MCQ parser tests |
+| `npm run test:ocr:integration` | OCR pipeline test against `__tests__/fixtures/demo-questions.pdf` |
+| `npm run seed:curriculum` | Seed the module/subject/chapter curriculum from `scripts/seed/medizee-curriculum-seed.json` |
+| `npm run cleanup:legacy-placeholder-chapters` | One-off cleanup of early placeholder chapters |
 
-```bash
-npm run dev
-```
+## Layout
 
-Open <http://localhost:3000>, click *Create an account*, sign up
-with a real email. Verify in the Supabase dashboard that:
-
-- `auth.users` has your new user
-- `profiles` has the matching row with your role (defaults to
-  `student` — promote yourself to `admin` via
-  `UPDATE profiles SET role = 'admin' WHERE email = '<you>';`)
-
-Take the histology quiz. Verify:
-
-- `quiz_sessions` gets a new row with your `score` and `accuracy`
-- `daily_streaks` gets a row for today with `challenges_completed = 1`
-- The dashboard reflects your real numbers (via `/api/student/stats`)
-
-### Troubleshooting
-
-- **App refuses to boot with "Missing NEXT_PUBLIC_SUPABASE_URL":**
-  You set `NEXT_PUBLIC_DEMO=0` (or unset it) without providing
-  real Supabase env. Either fill in the Supabase vars or set
-  `NEXT_PUBLIC_DEMO=1`.
-- **`seed:questions` fails with a permissions error:** you're
-  probably using the anon key. It has to be `service_role`.
-- **Quiz returns 400 "no published questions yet":** the
-  `questions` table is empty for that subject. Run
-  `npm run seed:questions` after applying migrations.
-
-## Surfaces
-
-- `/` — marketing landing
-- `/login`, `/signup` — Supabase-backed auth screens
-- `/dashboard` — student home (stats, weekly chart, subjects)
-- `/quiz/[subjectId]` — split/focus MCQ runner with handwritten reference notes
-- `/professor/dashboard` — cohort analytics, flagged questions, activity feed
-- `/admin/dashboard` — program-level operations, MRR, partner status
-
-## State
-
-Quiz progress lives in `lib/store.ts` (Zustand with `localStorage` persistence):
-`currentQuestionIndex`, `answers`, `bookmarks`, `notes`, `quizMode`,
-`sessionComplete`, plus actions `answerQuestion`, `toggleBookmark`, `setNote`,
-`nextQuestion`, `prevQuestion`, `jumpToQuestion`, `setQuizMode`,
-`completeSession`, `resetSession`.
-
-## Question bank
-
-`data/histology-questions.ts` contains 11 medically accurate MCQs covering the
-blood–brain barrier, epithelium classification, cell junctions, connective
-tissue, pemphigus/desmosome pathology, goblet cells, hyaline cartilage,
-osteoclasts, sarcomere mechanics, eosinophil identification, and germinal
-centers — each with four choices, a 3–4 sentence explanation, and a
-handwritten-style reference note attributed to Dr. Zahra.
+- `app/` — pages and API routes. `components/` — UI. `lib/` — Supabase clients, auth guards,
+  caching, rate limiting, OCR (`lib/ocr/`), and API helpers.
+- `scripts/` — seeding and content-import tooling. `docs/` — product document.
+- `__tests__/` — unit, integration, security and OCR tests.

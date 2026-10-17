@@ -1,6 +1,6 @@
 // Small hand-authored icon set, replacing lucide-react across the
 // redesigned surfaces (landing, dashboard, catalogue, auth, quiz,
-// results, NotesEditor, AITutor). Each icon is a plain stroke-based
+// results, NotesEditor). Each icon is a plain stroke-based
 // SVG so it inherits color/size via normal CSS/props instead of a
 // library dependency. Icons are added here only as a surface in
 // scope for the redesign actually needs one — purely decorative
@@ -206,30 +206,11 @@ export function RotateCcwIcon(props: IconProps) {
   );
 }
 
-export function ShieldAlertIcon(props: IconProps) {
-  return (
-    <Base {...props}>
-      <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z" />
-      <line x1="12" y1="8" x2="12" y2="13" />
-      <circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none" />
-    </Base>
-  );
-}
-
 export function StickyNoteIcon(props: IconProps) {
   return (
     <Base {...props}>
       <path d="M5 3h11l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
       <path d="M15 3v5h5" />
-    </Base>
-  );
-}
-
-export function SendIcon(props: IconProps) {
-  return (
-    <Base {...props}>
-      <line x1="22" y1="2" x2="11" y2="13" />
-      <polygon points="22 2 15 22 11 13 2 9 22 2" />
     </Base>
   );
 }

@@ -76,13 +76,6 @@ html[data-mz-theme="dark"] [data-mz-root]{--bg:#0F1B22;--bg2:#0F1B22;--surface:#
     100% { background-position: 200% 0; }
   }
 
-  /* Slow rotation behind the dashboard's featured-subject photo.
-     Kept here (still consumed by dashboard/page.tsx) pending that
-     page's own redesign pass. */
-  @keyframes ringSpin {
-    to { transform: rotate(360deg); }
-  }
-
   /* Hide scrollbar on horizontal carousels (catalogue/landing
      subject strips). */
   .scrollbar-none {

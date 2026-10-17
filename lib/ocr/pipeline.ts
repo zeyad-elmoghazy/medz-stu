@@ -54,7 +54,6 @@ export async function processPdf(
   pdfPath: string,
   options: {
     subjectId?: string;
-    professorId?: string;
     cleanupImages?: boolean;
   } = {}
 ): Promise<PipelineResult> {

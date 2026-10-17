@@ -106,7 +106,7 @@ export default function ChapterResultsPage() {
 
   function handleQuizMistakes() {
     if (practiceIds.length === 0) return;
-    startMistakeSession(chapterId, practiceIds);
+    startMistakeSession(practiceIds);
     router.push(`/student/quiz/chapter/${chapterId}`);
   }
 

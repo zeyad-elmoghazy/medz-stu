@@ -424,7 +424,7 @@ function AnalyticsView({
 
   function practiceChapterMistakes(chapterId: string, questionIds: number[]) {
     if (questionIds.length === 0) return;
-    useChapterQuizStore.getState().startMistakeSession(chapterId, questionIds);
+    useChapterQuizStore.getState().startMistakeSession(questionIds);
     router.push(`/student/quiz/chapter/${chapterId}`);
   }
 

@@ -47,7 +47,13 @@ export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?
  * environment has no Supabase secrets configured.
  */
 export function supabaseTestEnvAvailable(): boolean {
-  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_SERVICE_ROLE_KEY);
+  if (!(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_SERVICE_ROLE_KEY)) return false;
+  // These suites create and delete real users and rows. .env.development.local
+  // may point at the hosted (production) project, so only run against a local
+  // stack unless the caller explicitly opts in to a remote one.
+  const host = new URL(SUPABASE_URL).hostname;
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+  return isLocal || process.env.ALLOW_REMOTE_SUPABASE_TESTS === '1';
 }
 
 export function getServiceRoleClient(): SupabaseClient {
@@ -94,6 +100,17 @@ export async function createTestUser(
   });
   if (error || !data.user) {
     throw new Error(`createTestUser(${role}) failed: ${error?.message}`);
+  }
+  if (role === 'admin') {
+    // Signup always yields role='student' (030_academic_year_and_profile_prefs.sql);
+    // admins are promoted by hand, so do the same via the service role.
+    const { error: promoteError } = await admin
+      .from('profiles')
+      .update({ role: 'admin' })
+      .eq('id', data.user.id);
+    if (promoteError) {
+      throw new Error(`createTestUser(admin) promote failed: ${promoteError.message}`);
+    }
   }
   return { id: data.user.id, email, password };
 }

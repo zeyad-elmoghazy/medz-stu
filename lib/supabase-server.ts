@@ -59,6 +59,6 @@ export async function createRouteHandlerClient<T = Database>(
  */
 export function untypedFrom(supabase: unknown) {
   return supabase as unknown as {
-    from: (table: string) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    from: (table: string) => any;
   };
 }

@@ -1,9 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logActivity } from '@/lib/admin-activity';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type AnyClient = SupabaseClient<any, any, any>;
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export type RemoveStudentResult =
   | { ok: true; removedId: string }

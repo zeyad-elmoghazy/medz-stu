@@ -2,7 +2,6 @@
 // hardening pass. These are pure logic tests — they don't hit the
 // network, the DB, or the Next runtime, so they run in every CI
 // environment (including the one without Upstash / Supabase creds).
-import { ApiError, handleApiError } from '@/lib/api-error';
 import { safeFilename, validateFile } from '@/lib/file-validation';
 
 // ------------------------ helpers ------------------------
@@ -21,24 +20,6 @@ function makeFile(bytes: number[], mime: string, name = 'x'): File {
     arrayBuffer: async () => arr.buffer,
   } as unknown as File;
 }
-
-// ------------------------ api-error ------------------------
-
-describe('handleApiError', () => {
-  it('returns the custom message + status for ApiError', async () => {
-    const res = handleApiError(new ApiError(403, 'nope'));
-    expect(res.status).toBe(403);
-    expect(await res.json()).toEqual({ error: 'nope' });
-  });
-
-  it('collapses unknown throws to a 500 with a generic message', async () => {
-    const res = handleApiError(new Error('secret internals: db_pass=hunter2'));
-    expect(res.status).toBe(500);
-    const body = await res.json();
-    expect(body).toEqual({ error: 'Internal server error' });
-    expect(JSON.stringify(body)).not.toMatch(/hunter2/);
-  });
-});
 
 // ------------------------ file-validation ------------------------
 

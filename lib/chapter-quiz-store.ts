@@ -2,18 +2,9 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 /**
- * Chapter-scoped counterpart to lib/store.ts's useQuizStore — same
- * shape and actions, adapted for a `chapterId`-keyed session instead
- * of a `subjectId`-keyed one, and for mistake tracking namespaced
- * per chapter (unlike the reference store's single flat array, which
- * only ever has to disambiguate within one subject's question ids —
- * chapter question ids can collide across different chapters).
- * A new, parallel file: lib/store.ts is left untouched.
- *
- * Unlike the reference store, bookmarks and notes are NOT tracked
- * here — the chapter quiz page keeps using its already-working,
- * DB-backed bookmark/notes API (lib/chapter-quiz-api.ts) instead of
- * the reference implementation's purely local, unpersisted toggle.
+ * Chapter-scoped quiz session store (persisted to localStorage).
+ * Bookmarks and notes are NOT tracked here — the chapter quiz page
+ * uses the DB-backed bookmark/notes API (lib/chapter-quiz-api.ts).
  */
 
 export type ChapterSubmissionResult = {
@@ -57,7 +48,7 @@ export type ChapterQuizState = {
   jumpToQuestion: (index: number) => void;
   completeSession: () => void;
   startSession: () => void;
-  startMistakeSession: (chapterId: string, mistakeIds: number[]) => void;
+  startMistakeSession: (mistakeIds: number[]) => void;
   clearFilter: () => void;
   setLastResult: (result: ChapterSubmissionResult) => void;
   recordMistakes: (chapterId: string, ids: number[]) => void;
@@ -114,7 +105,7 @@ export const useChapterQuizStore = create<ChapterQuizState>()(
           sessionComplete: false,
         }),
 
-      startMistakeSession: (chapterId, mistakeIds) =>
+      startMistakeSession: (mistakeIds) =>
         set((state) => {
           const newAnswers = { ...state.answers };
           mistakeIds.forEach((id) => {

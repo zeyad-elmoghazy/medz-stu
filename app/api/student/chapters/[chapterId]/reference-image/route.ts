@@ -11,10 +11,8 @@ export const dynamic = 'force-dynamic';
  *
  * On-demand signed URL for one book-page reference image, resolved
  * the moment the chapter-scoped quiz needs it (after a question is
- * answered) rather than eagerly for every question up front —
- * unlike /api/questions/[subjectId], which resolves referenceImageUrl
- * for its whole (11-question, static) bank in one request. Same
- * getSignedBookPageUrl() resolution, same server-only constraint
+ * answered) rather than eagerly for every question up front. Uses
+ * getSignedBookPageUrl() resolution, with the server-only constraint
  * (it transitively imports next/headers via lib/supabase-server),
  * which is why this can't be called directly from the 'use client'
  * quiz page.

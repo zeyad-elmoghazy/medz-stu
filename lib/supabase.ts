@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   createBrowserClient as createBrowserSSR,
   createServerClient as createServerSSR,
@@ -21,14 +21,6 @@ if ((!supabaseUrl || !supabaseAnonKey) && !demoFlag) {
   }
   console.warn(message);
 }
-
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
 
 // Cache the browser client across React renders. Minting a fresh client
 // every call invalidates referential-equality checks in `useEffect` deps
@@ -237,17 +229,13 @@ export type Database = {
   };
 };
 
-// Re-exports for backward compatibility. Prefer importing directly
-// from '@/lib/demo-profile' — that path has zero supabase-js deps,
-// which lets webpack tree-shake the ~90 KB @supabase/* module tree
-// out of routes that only need the demo helpers.
+// Re-exports of the demo helpers still imported via '@/lib/supabase'.
+// Prefer importing from '@/lib/demo-profile' directly — that path has
+// zero supabase-js deps, which lets webpack tree-shake the ~90 KB
+// @supabase/* module tree out of routes that only need them.
 export {
-  dashboardPathForRole,
   isDemoMode,
   readDemoProfile,
   writeDemoProfile,
   clearDemoProfile,
-  inferRoleFromEmail,
-  DEMO_PROFILE_KEY,
-  type DemoProfile,
 } from '@/lib/demo-profile';

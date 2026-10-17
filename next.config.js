@@ -78,16 +78,9 @@ const nextConfig = {
 
   // Modularize barrel imports so `import { Foo } from 'lucide-react'`
   // pulls just Foo, not every icon in the library. Same for framer /
-  // recharts / radix — huge wins on First Load JS.
+  // wins on First Load JS.
   experimental: {
-    optimizePackageImports: [
-      'lucide-react',
-      'framer-motion',
-      'recharts',
-      '@radix-ui/react-label',
-      '@radix-ui/react-progress',
-      '@radix-ui/react-slot',
-    ],
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
 
   // Server-only Node deps that must NOT enter the webpack graph:
@@ -125,7 +118,6 @@ const nextConfig = {
     // hardcoding a slug, but is still narrowed by protocol.
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
-      { protocol: 'https', hostname: 'cdn.medz.app' }, // future CDN domain
     ],
     formats: ['image/avif', 'image/webp'],
     // Cache images for 1 year on CDN
@@ -141,44 +133,22 @@ const nextConfig = {
   // error catching in development
   reactStrictMode: true,
 
-  // The legacy Subjects flow (static data/histology-catalog.ts,
-  // Histology-only) is superseded by the DB-backed Catalogue. Route
-  // files aren't deleted yet — this redirect just stops sending
-  // anyone to them while that's confirmed safe.
+  // The legacy Subjects and Custom Exam flows were removed in favor of
+  // the DB-backed Catalogue; keep old bookmarks/links landing somewhere
+  // useful. `:subjectId` matches a single segment, so it never shadows
+  // the live /student/quiz/chapter/[chapterId] route.
   async redirects() {
     return [
-      {
-        source: '/student/subjects/:path*',
-        destination: '/student/catalogue',
-        permanent: false,
-      },
+      { source: '/student/subjects/:path*', destination: '/student/catalogue', permanent: false },
+      { source: '/student/exam', destination: '/student/catalogue', permanent: false },
+      { source: '/student/quiz/:subjectId', destination: '/student/catalogue', permanent: false },
+      { source: '/student/results/histology', destination: '/student/catalogue', permanent: false },
     ];
   },
 
   // Headers for caching static assets + security
   async headers() {
     return [
-      {
-        // Cache static assets for 1 year
-        source: '/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        // Cache API responses for subject list
-        // (changes rarely)
-        source: '/api/subjects',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
-          },
-        ],
-      },
       {
         // Never cache auth endpoints
         source: '/api/auth/:path*',
