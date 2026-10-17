@@ -20,7 +20,7 @@ export type Subject = {
   // LIVE published-question count from the DB (chapters
   // trigger keeps chapters.published_count in sync, and
   // /api/student/stats sums by subject_id). This is the
-  // number that changes the moment a professor publishes.
+  // number that changes the moment an admin publishes.
   publishedCount?: number;
 };
 

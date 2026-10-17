@@ -240,8 +240,8 @@ export async function GET() {
 
   // Merge real per-subject numbers into the static SUBJECTS_CONFIG so
   // subjects with no sessions yet still appear with zeroed metrics.
-  // publishedCount is the LIVE number kept up-to-date by the professor
-  // authoring trigger — this is the sync signal.
+  // publishedCount is the LIVE number kept up-to-date by the chapters
+  // published_count trigger — this is the sync signal.
   const subjects: Subject[] = SUBJECTS_CONFIG.map((config) => {
     const real = subjectStats.find((s) => s.subject_id === config.id);
     const publishedCount = publishedBySubject.get(config.id) ?? 0;

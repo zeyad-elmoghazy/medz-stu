@@ -62,8 +62,8 @@ export const TTL = {
   SUBJECTS: 86400,
 
   // QUESTIONS — 24 hours.
-  // Question banks are versioned content: once Dr. Zahra publishes
-  // a block, the 11 questions don't mutate. 24h means hundreds of
+  // Question banks are versioned content: once a block is published
+  // its questions rarely mutate. 24h means hundreds of
   // student quiz starts share a single Postgres read of the bank;
   // we also invalidate on publish, so most entries live the full
   // day from cold start.

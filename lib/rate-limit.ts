@@ -54,8 +54,8 @@ export const apiLimiter = buildLimiter(100, '1 m', 'rl:api');
 // in the UI while making scripted abuse loud.
 export const adminLimiter = buildLimiter(20, '1 m', 'rl:admin');
 
-// Professor uploads: 10 per hour
-// Uploads trigger AI processing — expensive on the server side.
+// Admin uploads: 10 per hour
+// Uploads trigger PDF/OCR processing — expensive on the server side.
 // 10/h covers a normal authoring session without inviting
-// pathological batches.
+// pathological batches. (Not yet applied to the upload route.)
 export const uploadLimiter = buildLimiter(10, '1 h', 'rl:upload');

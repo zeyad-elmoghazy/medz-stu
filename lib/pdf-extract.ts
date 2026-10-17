@@ -1,22 +1,9 @@
 /**
  * PDF extraction helpers — pdf-parse first (free, deterministic),
- * regex MCQ parser second (free), LLM fallback third (paid,
- * only called when the heuristic finds nothing).
- *
- * Cost model:
- *   text-based PDFs → 0 API calls, sub-second latency
- *   scanned PDFs    → tesseract.js OCR on the client
- *                     (TODO: not yet wired — see NOTE below)
- *   messy layouts   → 1 LLM call over the extracted text only,
- *                     never the raw PDF bytes
- *
- * NOTE — client-side OCR:
- *   Real scanned-PDF OCR belongs on the client (tesseract.js in
- *   a Web Worker) so the professor's laptop does the CPU work
- *   and the server never touches image bytes. This module can
- *   also accept a pre-OCR'd text string via extractQuestionsFromText().
- *   Add the tesseract.js path in the UploadWizard when demand
- *   justifies the +8 MB bundle cost.
+ * then the regex MCQ parser. Scanned PDFs with no text layer are
+ * handled by the OCR pipeline in lib/ocr (see the admin upload
+ * route); this module can also take pre-OCR'd text via
+ * extractQuestionsFromText().
  */
 
 // pdf-parse v2 is a class-based API — new PDFParse({data}).getText()

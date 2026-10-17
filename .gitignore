@@ -28,3 +28,6 @@ scripts/import/*.png
 # in next.config.js instead if you'd rather Next stop writing these.
 AGENTS.md
 CLAUDE.md
+
+# Tool cache (local only)
+.impeccable/

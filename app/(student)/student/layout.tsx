@@ -8,8 +8,7 @@ import { StudentThemeProvider } from '@/lib/use-student-theme';
 // DisplayNameProvider's fetch (see lib/use-display-name.ts) runs once
 // per session here instead of once per page. StudentThemeProvider
 // (lib/use-student-theme.tsx) gives the whole /student tree the same
-// shared theme state and [data-mz-root] scope the landing page has —
-// see LIGHT_MODE_AUDIT.md for why that was missing before.
+// shared theme state and [data-mz-root] scope the landing page has.
 export default function StudentLayout({ children }: { children: ReactNode }) {
   return (
     <StudentThemeProvider>
