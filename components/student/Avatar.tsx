@@ -3,7 +3,7 @@
  * chip StudentNavbar and the leaderboard draw by hand; this is the
  * shared version for new surfaces.
  */
-export function initialsOf(name: string, fallback = 'ME'): string {
+function initialsOf(name: string, fallback = 'ME'): string {
   const initials = name
     .split(/\s+/)
     .map((part) => part[0])
