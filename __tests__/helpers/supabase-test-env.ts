@@ -47,7 +47,13 @@ export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?
  * environment has no Supabase secrets configured.
  */
 export function supabaseTestEnvAvailable(): boolean {
-  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_SERVICE_ROLE_KEY);
+  if (!(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_SERVICE_ROLE_KEY)) return false;
+  // These suites create and delete real users and rows. .env.development.local
+  // may point at the hosted (production) project, so only run against a local
+  // stack unless the caller explicitly opts in to a remote one.
+  const host = new URL(SUPABASE_URL).hostname;
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+  return isLocal || process.env.ALLOW_REMOTE_SUPABASE_TESTS === '1';
 }
 
 export function getServiceRoleClient(): SupabaseClient {
