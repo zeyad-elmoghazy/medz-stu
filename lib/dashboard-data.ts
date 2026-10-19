@@ -28,6 +28,12 @@ export type ChallengeResult = {
   id: string;
   subjectId: string;
   subjectName: string;
+  // Where the challenge happened. All null for legacy proctored-quiz
+  // sessions (quiz_sessions.chapter_id IS NULL), which have no chapter.
+  chapterId: string | null;
+  chapterName: string | null;
+  moduleCode: string | null;
+  moduleName: string | null;
   score: number;         // e.g. 8
   total: number;         // e.g. 11
   accuracy: number;      // e.g. 72.7
@@ -39,11 +45,30 @@ export type ProgressDataPoint = {
   accuracy: number;      // 0-100
 };
 
+// A weak spot, at chapter granularity. (It used to be per
+// `questions.topic`, but topics are near-unique per question in the
+// real bank, so no topic ever reached the minimum sample.)
 export type FocusArea = {
-  topic: string;
+  chapterId: string;
+  chapterName: string;
+  subjectName: string;
+  moduleCode: string;
+  moduleName: string | null;
   accuracy: number;      // 0-100
-  attempted: number;     // question-attempts this topic is based on
+  attempted: number;     // question-attempts this chapter is based on
 };
+
+/**
+ * "Module 205 · Nervous & Cardiovascular Systems" — or just "Module 102"
+ * when the module has no real name yet (the DB holds placeholders like
+ * "Module 102", which would otherwise render as "Module 102 · Module 102").
+ */
+export function moduleLabel(code: string, name: string | null | undefined): string {
+  const trimmed = (name ?? '').trim();
+  const isPlaceholder =
+    trimmed === '' || trimmed === code || /^module\s+\d+$/i.test(trimmed);
+  return isPlaceholder ? `Module ${code}` : `Module ${code} · ${trimmed}`;
+}
 
 export type ChapterMistake = {
   chapterId: string;

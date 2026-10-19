@@ -29,6 +29,47 @@ export type ChapterMistakes = {
   questionIds: number[];
 };
 
+export type ChapterAccuracy = {
+  chapterId: string;
+  accuracy: number; // 0-100, one decimal
+  attempted: number;
+};
+
+// Focus Areas policy. A chapter needs at least this many question
+// attempts before it counts as a real signal (avoids a one-off miss
+// reading as a "weak chapter")…
+export const FOCUS_MIN_ATTEMPTS = 3;
+// …and the card shows at most this many, weakest first.
+export const FOCUS_MAX_AREAS = 3;
+
+/**
+ * Per-chapter accuracy across the given attempts, restricted to chapters
+ * with enough attempts to be meaningful, weakest first (ties: the chapter
+ * with more attempts — i.e. the more reliable signal — first), capped at
+ * FOCUS_MAX_AREAS. Chapter — not `questions.topic` — is the unit: topics
+ * are near-unique per question in the real bank (2,286 distinct over
+ * 5,173 published questions), so a per-topic minimum sample is never met.
+ */
+export function deriveFocusAreas(attempts: QuestionAttempt[]): ChapterAccuracy[] {
+  const byChapter = new Map<string, { attempted: number; correct: number }>();
+  for (const a of attempts) {
+    const bucket = byChapter.get(a.chapterId) ?? { attempted: 0, correct: 0 };
+    bucket.attempted += 1;
+    if (a.chosen === a.correctAnswer) bucket.correct += 1;
+    byChapter.set(a.chapterId, bucket);
+  }
+
+  return Array.from(byChapter.entries())
+    .map(([chapterId, { attempted, correct }]) => ({
+      chapterId,
+      accuracy: Math.round((correct / attempted) * 1000) / 10,
+      attempted,
+    }))
+    .filter((c) => c.attempted >= FOCUS_MIN_ATTEMPTS)
+    .sort((a, b) => a.accuracy - b.accuracy || b.attempted - a.attempted)
+    .slice(0, FOCUS_MAX_AREAS);
+}
+
 /**
  * Fetches this student's chapter-quiz answer history and resolves
  * each answered question's topic/correct_answer, so callers can

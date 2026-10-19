@@ -11,6 +11,7 @@ import { isDemoMode } from '@/lib/supabase';
 import { useDisplayName } from '@/lib/use-display-name';
 import {
   getEmptyStudentStats,
+  moduleLabel,
   type ChallengeResult,
   type FocusArea,
   type ProgressDataPoint,
@@ -732,21 +733,51 @@ function AccuracyTrend({ history, loading }: { history: ProgressDataPoint[]; loa
   );
 }
 
+// "Module 205 · Nervous & Cardiovascular Systems › Anatomy" — the
+// where-am-I trail shown under a chapter name in both cards below.
+// Renders nothing when there is no module/subject to show (legacy
+// sessions that predate chapter quizzes).
+function ChapterPath({
+  moduleCode,
+  moduleName,
+  subjectName,
+}: {
+  moduleCode: string | null;
+  moduleName: string | null;
+  subjectName: string | null;
+}) {
+  const parts = [moduleCode ? moduleLabel(moduleCode, moduleName) : null, subjectName || null].filter(
+    (p): p is string => !!p
+  );
+  if (parts.length === 0) return null;
+  return (
+    <div style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 2, lineHeight: 1.4, overflowWrap: 'anywhere' }}>
+      {/* nbsp before the chevron keeps it on the end of the first line when the trail wraps */}
+      {parts.join('\u00A0› ')}
+    </div>
+  );
+}
+
 function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading: boolean }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 22 }}>
       <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Focus Areas</div>
       <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3, marginBottom: 16 }}>
-        Weakest topics — review before exam
+        Weakest chapters — review before exam
       </div>
       {focusAreas.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {focusAreas.map((f) => (
-            <div key={f.topic}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{f.topic}</span>
-                <span style={{ color: f.accuracy < 60 ? 'var(--error)' : '#F97316' }}>{f.accuracy.toFixed(0)}%</span>
+            <div key={f.chapterId}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 12 }}>
+                <span style={{ color: 'var(--text)', fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>
+                  {f.chapterName}
+                </span>
+                <span style={{ color: f.accuracy < 60 ? 'var(--error)' : '#F97316', flex: 'none' }}>
+                  {f.accuracy.toFixed(0)}%
+                </span>
               </div>
+              <ChapterPath moduleCode={f.moduleCode} moduleName={f.moduleName} subjectName={f.subjectName} />
               <div style={{ height: 6, borderRadius: 3, background: 'var(--line)', marginTop: 6 }}>
                 <div
                   style={{
@@ -778,7 +809,7 @@ function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading:
         >
           {loading
             ? 'Loading your focus areas…'
-            : 'Answer at least 3 questions in a topic to see it here.'}
+            : 'Answer at least 3 questions in a chapter to see it here.'}
         </div>
       )}
     </div>
@@ -807,15 +838,22 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
             key={c.id}
             style={{
               display: 'grid',
-              gridTemplateColumns: '1fr auto auto auto',
+              gridTemplateColumns: 'minmax(0,1fr) auto auto auto',
               alignItems: 'center',
               gap: 20,
               padding: '13px 0',
               borderTop: '1px solid var(--line)',
             }}
           >
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{c.subjectName}</div>
+            <div style={{ minWidth: 0 }}>
+              {/* Chapter-quiz sessions lead with the chapter; legacy
+                  sessions (no chapter) fall back to the subject name. */}
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflowWrap: 'anywhere' }}>
+                {c.chapterName ?? c.subjectName}
+              </div>
+              {c.chapterName && (
+                <ChapterPath moduleCode={c.moduleCode} moduleName={c.moduleName} subjectName={c.subjectName} />
+              )}
               <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{relativeTime(c.completedAt)}</div>
             </div>
             <div style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 12, color: 'var(--text3)' }}>

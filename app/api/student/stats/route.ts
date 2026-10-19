@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@/lib/supabase-server';
+import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database, UserRole } from '@/lib/supabase';
 import {
@@ -12,7 +12,11 @@ import {
   type StudentStats,
   type Subject,
 } from '@/lib/dashboard-data';
-import { deriveChapterMistakes, fetchChapterQuizAttempts } from '@/lib/server/chapter-mistakes';
+import {
+  deriveChapterMistakes,
+  deriveFocusAreas,
+  fetchChapterQuizAttempts,
+} from '@/lib/server/chapter-mistakes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -136,7 +140,7 @@ export async function GET() {
     // (d) recent 5 sessions
     supabase
       .from('quiz_sessions')
-      .select('id, subject_id, score, total_questions, accuracy, completed_at')
+      .select('id, subject_id, chapter_id, score, total_questions, accuracy, completed_at')
       .eq('student_id', user.id)
       .order('completed_at', { ascending: false })
       .limit(5),
@@ -203,6 +207,7 @@ export async function GET() {
   type SessionRow = {
     id: string;
     subject_id: string;
+    chapter_id: string | null;
     score: number;
     total_questions: number;
     accuracy: number;
@@ -264,16 +269,6 @@ export async function GET() {
   });
 
   const recentSessions = (recentSessionsRes.data ?? []) as SessionRow[];
-  const recentChallenges: ChallengeResult[] = recentSessions.map((s) => ({
-    id: s.id,
-    subjectId: s.subject_id,
-    subjectName:
-      SUBJECTS_CONFIG.find((c) => c.id === s.subject_id)?.name ?? s.subject_id,
-    score: s.score,
-    total: s.total_questions,
-    accuracy: Number(s.accuracy),
-    completedAt: s.completed_at,
-  }));
 
   const progressRows = (progressSessionsRes.data ?? []) as ProgressRow[];
   const progressHistory: ProgressDataPoint[] = progressRows.map((r) => ({
@@ -297,57 +292,83 @@ export async function GET() {
     limitSessions: 50,
   });
 
-  const topicAgg = new Map<string, { attempted: number; correct: number }>();
-  for (const a of attempts) {
-    const bucket = topicAgg.get(a.topic) ?? { attempted: 0, correct: 0 };
-    bucket.attempted += 1;
-    if (a.chosen === a.correctAnswer) bucket.correct += 1;
-    topicAgg.set(a.topic, bucket);
-  }
-  const focusAreas: FocusArea[] = Array.from(topicAgg.entries())
-    .map(([topic, { attempted, correct }]) => ({
-      topic,
-      accuracy: Math.round((correct / attempted) * 1000) / 10,
-      attempted,
-    }))
-    // Avoid noisy single-question "weak spots" — require a minimum
-    // sample before a topic counts as a real signal.
-    .filter((t) => t.attempted >= 3)
-    .sort((a, b) => a.accuracy - b.accuracy)
-    .slice(0, 3);
-
+  const focusAccuracy = deriveFocusAreas(attempts);
   const chapterMistakes = deriveChapterMistakes(attempts);
-  let mistakes: ChapterMistake[] = [];
-  if (chapterMistakes.length > 0) {
-    const chapterIds = chapterMistakes.map((c) => c.chapterId);
-    const chaptersInfoRes = await (supabase as unknown as {
-      from: (t: string) => {
-        select: (c: string) => {
-          in: (
-            col: string,
-            vals: string[]
-          ) => Promise<{
-            data: Array<{ id: string; name: string; module_code: string }> | null;
-          }>;
-        };
-      };
-    })
+
+  // One chapter → subject/module lookup shared by Recent Challenges,
+  // Focus Areas and the mistakes banner, so all three name the same
+  // chapter / subject / module the same way. Names come from the DB
+  // (subjects.name, modules.name) rather than SUBJECTS_CONFIG, which
+  // only knows 6 of the 8 subjects.
+  const chapterIds = Array.from(
+    new Set([
+      ...recentSessions.map((s) => s.chapter_id).filter((id): id is string => !!id),
+      ...focusAccuracy.map((f) => f.chapterId),
+      ...chapterMistakes.map((c) => c.chapterId),
+    ])
+  );
+  const chapterInfoById = new Map<string, ChapterInfo>();
+  if (chapterIds.length > 0) {
+    const chaptersInfoRes = (await untypedFrom(supabase)
       .from('chapters')
-      .select('id, name, module_code')
-      .in('id', chapterIds);
-    const chapterInfoById = new Map(
-      (chaptersInfoRes.data ?? []).map((c) => [c.id, c])
-    );
-    mistakes = chapterMistakes.map((cm) => {
-      const info = chapterInfoById.get(cm.chapterId);
-      return {
-        chapterId: cm.chapterId,
-        chapterName: info?.name ?? 'Chapter',
-        moduleCode: info?.module_code ?? '',
-        questionIds: cm.questionIds,
-      };
-    });
+      .select('id, name, module_code, subjects(name), modules(name)')
+      .in('id', chapterIds)) as { data: ChapterInfoRow[] | null };
+    for (const c of chaptersInfoRes.data ?? []) {
+      chapterInfoById.set(c.id, {
+        name: c.name,
+        moduleCode: c.module_code,
+        moduleName: embedded(c.modules)?.name ?? null,
+        subjectName: embedded(c.subjects)?.name ?? null,
+      });
+    }
   }
+
+  const recentChallenges: ChallengeResult[] = recentSessions.map((s) => {
+    const info = s.chapter_id ? chapterInfoById.get(s.chapter_id) : undefined;
+    return {
+      id: s.id,
+      subjectId: s.subject_id,
+      subjectName:
+        info?.subjectName ??
+        SUBJECTS_CONFIG.find((c) => c.id === s.subject_id)?.name ??
+        s.subject_id,
+      chapterId: s.chapter_id,
+      chapterName: info?.name ?? null,
+      moduleCode: info?.moduleCode ?? null,
+      moduleName: info?.moduleName ?? null,
+      score: s.score,
+      total: s.total_questions,
+      accuracy: Number(s.accuracy),
+      completedAt: s.completed_at,
+    };
+  });
+
+  const focusAreas: FocusArea[] = focusAccuracy.flatMap((f) => {
+    const info = chapterInfoById.get(f.chapterId);
+    // Chapter deleted since the attempt — nothing meaningful to show.
+    if (!info) return [];
+    return [
+      {
+        chapterId: f.chapterId,
+        chapterName: info.name,
+        subjectName: info.subjectName ?? '',
+        moduleCode: info.moduleCode,
+        moduleName: info.moduleName,
+        accuracy: f.accuracy,
+        attempted: f.attempted,
+      },
+    ];
+  });
+
+  const mistakes: ChapterMistake[] = chapterMistakes.map((cm) => {
+    const info = chapterInfoById.get(cm.chapterId);
+    return {
+      chapterId: cm.chapterId,
+      chapterName: info?.name ?? 'Chapter',
+      moduleCode: info?.moduleCode ?? '',
+      questionIds: cm.questionIds,
+    };
+  });
 
   const stats: StudentStats & {
     profile: { id: string; full_name: string | null; email: string | null };
@@ -398,6 +419,27 @@ function formatMonDay(iso: string): string {
   const d = new Date(iso);
   // "Mon DD" — matches the design (e.g. "May 14", "Jun 11").
   return `${MONTHS[d.getMonth()]} ${d.getDate().toString().padStart(2, '0')}`;
+}
+
+type ChapterInfo = {
+  name: string;
+  moduleCode: string;
+  moduleName: string | null;
+  subjectName: string | null;
+};
+
+// Row shape of chapters + embedded subjects/modules (PostgREST embeds a
+// to-one relation as an object; tolerate a one-element array too).
+type ChapterInfoRow = {
+  id: string;
+  name: string;
+  module_code: string;
+  subjects: { name: string } | { name: string }[] | null;
+  modules: { name: string } | { name: string }[] | null;
+};
+
+function embedded<T>(value: T | T[] | null | undefined): T | null {
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
 }
 
 function serviceRoleClient() {
