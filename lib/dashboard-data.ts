@@ -73,7 +73,9 @@ export function moduleLabel(code: string, name: string | null | undefined): stri
 export type ChapterMistake = {
   chapterId: string;
   chapterName: string;
+  subjectName: string;       // '' if the chapter's subject could not be resolved
   moduleCode: string;
+  moduleName: string | null;
   questionIds: number[];
 };
 

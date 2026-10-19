@@ -550,9 +550,9 @@ function AnalyticsView({
                   gap: 12,
                 }}
               >
-                <div style={{ fontSize: 12, color: 'var(--text)' }}>
-                  {m.chapterName}
-                  {m.moduleCode && <span style={{ color: 'var(--text3)' }}> · {m.moduleCode}</span>}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text)', overflowWrap: 'anywhere' }}>{m.chapterName}</div>
+                  <ChapterPath moduleCode={m.moduleCode || null} moduleName={m.moduleName} subjectName={m.subjectName} />
                 </div>
                 <button
                   type="button"

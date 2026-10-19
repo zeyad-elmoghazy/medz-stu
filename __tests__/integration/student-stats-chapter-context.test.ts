@@ -245,7 +245,7 @@ describeIfSupabase('GET /api/student/stats — chapter/subject/module context', 
     expect(stats.focusAreas.map((f) => f.chapterId)).not.toContain(tiny.chapterId);
   });
 
-  test('the practice-mistakes banner still reports the chapter and module code', async () => {
+  test('the practice-mistakes banner carries chapter, subject and module like the other cards', async () => {
     await session(weak, 1, 4, '2026-10-01T10:00:00.000Z');
 
     const stats = await getStats();
@@ -253,7 +253,9 @@ describeIfSupabase('GET /api/student/stats — chapter/subject/module context', 
     expect(stats.mistakes[0]).toMatchObject({
       chapterId: weak.chapterId,
       chapterName: 'Nematoda (test)',
+      subjectName: 'Parasitology (test)',
       moduleCode: weak.moduleCode,
+      moduleName: 'Module 977', // raw; the UI collapses placeholders via moduleLabel
     });
     expect(stats.mistakes[0].questionIds).toHaveLength(3);
   });

@@ -365,7 +365,9 @@ export async function GET() {
     return {
       chapterId: cm.chapterId,
       chapterName: info?.name ?? 'Chapter',
+      subjectName: info?.subjectName ?? '',
       moduleCode: info?.moduleCode ?? '',
+      moduleName: info?.moduleName ?? null,
       questionIds: cm.questionIds,
     };
   });
