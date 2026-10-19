@@ -8,6 +8,7 @@ import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchChaptersBySubject, type ChaptersBySubject } from '@/lib/catalogue-api';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
+import { deleteChapterProgress } from '@/lib/chapter-quiz-api';
 
 export default function CatalogueChaptersPage() {
   const params = useParams<{ year: string; moduleCode: string; subjectSlug: string }>();
@@ -24,6 +25,37 @@ export default function CatalogueChaptersPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [topicFilter, setTopicFilter] = useState('All');
+  const [restartingId, setRestartingId] = useState<string | null>(null);
+
+  // "Start over": discard the saved attempt for one chapter, then show
+  // the card as it would look with no attempt in progress.
+  async function handleStartOver(chapterId: string) {
+    if (restartingId) return;
+    if (
+      !window.confirm(
+        'Start this chapter over? Your saved answers for this attempt will be discarded.'
+      )
+    ) {
+      return;
+    }
+    setRestartingId(chapterId);
+    const ok = await deleteChapterProgress(chapterId);
+    setRestartingId(null);
+    if (!ok) {
+      window.alert("Couldn't discard your saved progress. Check your connection and try again.");
+      return;
+    }
+    setData((d) =>
+      d
+        ? {
+            ...d,
+            chapters: d.chapters.map((ch) =>
+              ch.id === chapterId ? { ...ch, inProgress: null } : ch
+            ),
+          }
+        : d
+    );
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -341,7 +373,60 @@ export default function CatalogueChaptersPage() {
                               ? `${c.publishedCount} published question${c.publishedCount === 1 ? '' : 's'}`
                               : '0 questions'}
                           </span>
-                          {published && !c.attempted && (
+                          {published && c.inProgress && (
+                            <>
+                              <span
+                                style={{
+                                  flex: 'none',
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap',
+                                  color: 'var(--text2)',
+                                }}
+                              >
+                                {c.inProgress.answered} / {c.inProgress.total} answered
+                              </span>
+                              {/* No startSession() here: Continue must resume the
+                                  saved attempt, not reset it. */}
+                              <Link
+                                href={`/student/quiz/chapter/${c.id}`}
+                                style={{
+                                  flex: 'none',
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  whiteSpace: 'nowrap',
+                                  padding: '7px 12px',
+                                  borderRadius: 7,
+                                  color: '#F7F9FA',
+                                  background: 'var(--accent-text)',
+                                  textDecoration: 'none',
+                                }}
+                              >
+                                Continue
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => handleStartOver(c.id)}
+                                disabled={restartingId === c.id}
+                                style={{
+                                  flex: 'none',
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  whiteSpace: 'nowrap',
+                                  padding: '7px 12px',
+                                  borderRadius: 7,
+                                  color: 'var(--text2)',
+                                  background: 'var(--fill)',
+                                  border: '1px solid var(--line)',
+                                  cursor: restartingId === c.id ? 'default' : 'pointer',
+                                  opacity: restartingId === c.id ? 0.6 : 1,
+                                }}
+                              >
+                                {restartingId === c.id ? 'Resetting…' : 'Start over'}
+                              </button>
+                            </>
+                          )}
+                          {published && !c.inProgress && !c.attempted && (
                             <Link
                               href={`/student/quiz/chapter/${c.id}`}
                               onClick={() => useChapterQuizStore.getState().startSession()}
@@ -360,7 +445,7 @@ export default function CatalogueChaptersPage() {
                               Start Quiz
                             </Link>
                           )}
-                          {published && c.attempted && (
+                          {published && !c.inProgress && c.attempted && (
                             <>
                               <Link
                                 href={`/student/quiz/chapter/${c.id}`}

@@ -104,13 +104,34 @@ export async function fetchChapterQuizAttempts(
   }
 
   const { data: sessions, error } = await query;
-  if (error || !sessions) return [];
 
-  const rows = sessions as {
+  type AttemptRow = {
     chapter_id: string;
     answers: Record<string, string>;
     completed_at: string;
-  }[];
+  };
+  const rows: AttemptRow[] = error || !sessions ? [] : (sessions as AttemptRow[]);
+
+  // Answers from an UNFINISHED attempt (chapter_quiz_progress, migration
+  // 032) count too — they are real answers the student gave — so Focus
+  // Areas and the mistakes pool reflect them before the chapter is
+  // submitted. `updated_at` stands in for the completion time, which
+  // keeps "latest attempt per question wins" correct. A failed read
+  // here just means no unfinished answers; it never fails the caller.
+  let progressQuery = client
+    .from('chapter_quiz_progress')
+    .select('chapter_id, answers, updated_at')
+    .eq('student_id', studentId);
+  if (opts.chapterIds && opts.chapterIds.length > 0) {
+    progressQuery = progressQuery.in('chapter_id', opts.chapterIds);
+  }
+  const { data: progress, error: progressError } = await progressQuery;
+  if (!progressError && progress) {
+    for (const p of progress as { chapter_id: string; answers: Record<string, string>; updated_at: string }[]) {
+      rows.push({ chapter_id: p.chapter_id, answers: p.answers, completed_at: p.updated_at });
+    }
+  }
+  if (rows.length === 0) return [];
 
   // Batch-fetch topic/correct_answer once for every question id
   // referenced across these sessions, instead of one lookup each.

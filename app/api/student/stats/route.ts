@@ -17,6 +17,10 @@ import {
   deriveFocusAreas,
   fetchChapterQuizAttempts,
 } from '@/lib/server/chapter-mistakes';
+import {
+  fetchInProgressChapters,
+  mergeInProgressIntoSubject,
+} from '@/lib/server/chapter-quiz-progress';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -126,6 +130,7 @@ export async function GET() {
     bookmarksRes,
     subjectsForCountsRes,
     chaptersForCountsRes,
+    inProgressChapters,
   ] = await Promise.all([
     // (b/c) per-subject aggregates — also feeds the overall totals.
     // Reads the matview via the service-role client because API access
@@ -169,6 +174,11 @@ export async function GET() {
     // (h + i) live per-subject published-question count.
     subjectsForCountsPromise,
     chaptersForCountsPromise,
+
+    // (j) chapters the student has started but not finished
+    // (chapter_quiz_progress) — their answers count toward the
+    // totals below even though the chapter isn't submitted yet.
+    fetchInProgressChapters(service, user.id),
   ]);
 
   // Aggregate published_count by subject slug — keyed by slug (not
@@ -228,16 +238,25 @@ export async function GET() {
     })
   );
 
-  // Overall totals derived from the materialized view rather than a
-  // second aggregate scan over quiz_sessions.
-  const totalQuestionsAnswered = subjectStats.reduce(
-    (sum, s) => sum + s.total_answered,
-    0
-  );
-  const totalCorrectAnswers = subjectStats.reduce(
-    (sum, s) => sum + s.total_correct,
-    0
-  );
+  // Unfinished chapters grouped by subject slug, so they can be folded
+  // into the per-subject numbers below.
+  const inProgressBySubject = new Map<string, typeof inProgressChapters>();
+  for (const item of inProgressChapters) {
+    const list = inProgressBySubject.get(item.subjectId) ?? [];
+    list.push(item);
+    inProgressBySubject.set(item.subjectId, list);
+  }
+
+  // Overall totals: the materialized view (completed attempts) plus
+  // the answers given so far in unfinished chapters. Finishing a
+  // chapter deletes its progress row in the same request that writes
+  // the completed quiz_sessions row, so no answer is counted twice.
+  const totalQuestionsAnswered =
+    subjectStats.reduce((sum, s) => sum + s.total_answered, 0) +
+    inProgressChapters.reduce((sum, i) => sum + i.answered, 0);
+  const totalCorrectAnswers =
+    subjectStats.reduce((sum, s) => sum + s.total_correct, 0) +
+    inProgressChapters.reduce((sum, i) => sum + i.correct, 0);
   const overallAccuracy =
     totalQuestionsAnswered > 0
       ? Math.round((totalCorrectAnswers / totalQuestionsAnswered) * 1000) / 10
@@ -254,15 +273,20 @@ export async function GET() {
       ...config,
       publishedCount,
     };
-    if (!real) return base;
+    const unfinished = inProgressBySubject.get(config.id) ?? [];
+    if (!real && unfinished.length === 0) return base;
 
-    const accuracy = Math.round(real.avg_accuracy * 10) / 10;
+    // Completed attempts (matview) + answers from unfinished chapters.
+    // `challengesCompleted` stays completed-only: an unfinished chapter
+    // isn't a finished challenge.
+    const merged = mergeInProgressIntoSubject(real, unfinished);
+    const accuracy = Math.round(merged.avgAccuracy * 10) / 10;
     return {
       ...base,
       accuracy,
-      questionsAnswered: real.total_answered,
-      correctAnswers: real.total_correct,
-      challengesCompleted: real.total_sessions,
+      questionsAnswered: merged.totalAnswered,
+      correctAnswers: merged.totalCorrect,
+      challengesCompleted: real?.total_sessions ?? 0,
       // Progress mirrors accuracy until we have a richer mastery model.
       progress: Math.round(accuracy),
     };
@@ -281,8 +305,12 @@ export async function GET() {
       ? streakRes.data
       : Number(streakRes.data ?? 0);
 
+  // Latest activity: a finished quiz, or the last answer in an
+  // unfinished chapter — whichever is newer.
   const lastActiveDate =
-    recentSessions[0]?.completed_at ?? new Date().toISOString();
+    [recentSessions[0]?.completed_at, ...inProgressChapters.map((i) => i.updatedAt)]
+      .filter((d): d is string => !!d)
+      .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? new Date().toISOString();
 
   // Focus Areas (weakest topics) + the Analytics "Practice mistakes"
   // banner both derive from the same chapter-quiz answer history —
@@ -303,6 +331,7 @@ export async function GET() {
   const chapterIds = Array.from(
     new Set([
       ...recentSessions.map((s) => s.chapter_id).filter((id): id is string => !!id),
+      ...inProgressChapters.map((i) => i.chapterId),
       ...focusAccuracy.map((f) => f.chapterId),
       ...chapterMistakes.map((c) => c.chapterId),
     ])
@@ -323,7 +352,7 @@ export async function GET() {
     }
   }
 
-  const recentChallenges: ChallengeResult[] = recentSessions.map((s) => {
+  const completedChallenges: ChallengeResult[] = recentSessions.map((s) => {
     const info = s.chapter_id ? chapterInfoById.get(s.chapter_id) : undefined;
     return {
       id: s.id,
@@ -342,6 +371,35 @@ export async function GET() {
       completedAt: s.completed_at,
     };
   });
+
+  // Unfinished chapters show up alongside finished quizzes, flagged, with
+  // score / total = correct / answered so far and `completedAt` = the last
+  // answer. Together they're re-sorted and trimmed to the usual 5.
+  const unfinishedChallenges: ChallengeResult[] = inProgressChapters.map((i) => {
+    const info = chapterInfoById.get(i.chapterId);
+    return {
+      id: `in-progress:${i.chapterId}`,
+      subjectId: i.subjectId,
+      subjectName:
+        info?.subjectName ??
+        SUBJECTS_CONFIG.find((c) => c.id === i.subjectId)?.name ??
+        i.subjectId,
+      chapterId: i.chapterId,
+      chapterName: info?.name ?? null,
+      moduleCode: info?.moduleCode ?? null,
+      moduleName: info?.moduleName ?? null,
+      score: i.correct,
+      total: i.answered,
+      accuracy: Math.round((i.correct / i.answered) * 1000) / 10,
+      completedAt: i.updatedAt,
+      inProgress: true,
+      questionTotal: i.total,
+    };
+  });
+
+  const recentChallenges: ChallengeResult[] = [...completedChallenges, ...unfinishedChallenges]
+    .sort((a, b) => Date.parse(b.completedAt) - Date.parse(a.completedAt))
+    .slice(0, 5);
 
   const focusAreas: FocusArea[] = focusAccuracy.flatMap((f) => {
     const info = chapterInfoById.get(f.chapterId);
@@ -395,9 +453,10 @@ export async function GET() {
 
   return NextResponse.json(stats, {
     headers: {
-      // Private cache: each user's browser/CDN edge can keep this
-      // for 60 s without cross-user leakage.
-      'Cache-Control': 'private, max-age=60',
+      // Never cached: answers are recorded as they are given, so the
+      // numbers must be current the moment the student opens this page
+      // (e.g. straight after Save & Exit).
+      'Cache-Control': 'private, no-store',
     },
   });
 }

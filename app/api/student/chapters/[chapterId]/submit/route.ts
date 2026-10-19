@@ -181,6 +181,24 @@ export async function POST(
   }
   const xpEarned = rpcRes.data?.[0]?.xp_earned ?? 0;
 
+  // The attempt is now complete: drop the unfinished-attempt row
+  // (chapter_quiz_progress, migration 032) so the catalogue stops
+  // offering "Continue" and the dashboard doesn't count these answers
+  // twice (they now live in the quiz_sessions row above). Done even if
+  // a best-effort step above failed, so a finished quiz can never be
+  // left looking in-progress.
+  const progressDeleteRes = await service
+    .from('chapter_quiz_progress')
+    .delete()
+    .eq('student_id', user.id)
+    .eq('chapter_id', chapterId);
+  if (progressDeleteRes.error) {
+    console.error(
+      '[chapters/submit] chapter_quiz_progress cleanup failed:',
+      progressDeleteRes.error.message
+    );
+  }
+
   try {
     await invalidateCache(CACHE_KEYS.leaderboardGlobal());
   } catch {
@@ -205,6 +223,11 @@ type ServiceClient = {
       };
     };
     insert: (row: Record<string, unknown>) => Promise<{ error: ErrorShape }>;
+    delete: () => {
+      eq: (col: string, val: unknown) => {
+        eq: (col: string, val: unknown) => Promise<{ error: ErrorShape }>;
+      };
+    };
   };
   rpc: (
     name: string,

@@ -35,6 +35,9 @@ import {
   fetchNote,
   saveNote,
   submitChapterQuiz,
+  fetchChapterProgress,
+  saveChapterProgress,
+  deleteChapterProgress,
   type ChapterQuiz,
   type ChapterQuizQuestion,
 } from '@/lib/chapter-quiz-api';
@@ -86,7 +89,8 @@ export default function ChapterQuizPage() {
   const setLastResult = useChapterQuizStore((s) => s.setLastResult);
   const recordMistakes = useChapterQuizStore((s) => s.recordMistakes);
   const clearMistakes = useChapterQuizStore((s) => s.clearMistakes);
-  const saveSession = useChapterQuizStore((s) => s.saveSession);
+  const hydrateFromProgress = useChapterQuizStore((s) => s.hydrateFromProgress);
+  const clearPendingFreshStart = useChapterQuizStore((s) => s.clearPendingFreshStart);
   const clearSession = useChapterQuizStore((s) => s.clearSession);
   const jumpToQuestion = useChapterQuizStore((s) => s.jumpToQuestion);
   const startSession = useChapterQuizStore((s) => s.startSession);
@@ -129,6 +133,16 @@ export default function ChapterQuizPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isResuming, setIsResuming] = useState(false);
+  // False until the saved-attempt check below has settled, so the
+  // student can't answer a question that is about to be replaced by
+  // the restored state.
+  const [progressChecked, setProgressChecked] = useState(false);
+  const [savingExit, setSavingExit] = useState(false);
+  const [exitError, setExitError] = useState<string | null>(null);
+  // Tail of the queue of progress saves. Saves run one after another
+  // so a slow earlier request can never land after a later one, and
+  // Save & Exit / submit can wait for everything in flight.
+  const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
 
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -145,20 +159,56 @@ export default function ChapterQuizPage() {
 
   useEffect(() => {
     if (!data) return;
-    // If the store already has answers, the user is resuming a
-    // saved session — show the toast and keep the state as-is.
-    // Otherwise this is a fresh visit: wipe any stale saved session
-    // and start the timer.
-    const existingAnswers = useChapterQuizStore.getState().answers;
-    if (Object.keys(existingAnswers).length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsResuming(true);
-    } else {
-      clearSession();
-      if (!sessionStartedAt) {
-        startSession();
+    let cancelled = false;
+
+    // The server (chapter_quiz_progress) is the source of truth for an
+    // unfinished attempt — browser-local state alone can't be trusted:
+    // it is wiped by every "Start" click and isn't tied to a chapter.
+    //  - Arrived through a "start fresh" entry point (Start Quiz, Solve
+    //    Again, Practice mistakes): discard any saved attempt and keep
+    //    the state that entry point just set up.
+    //  - Otherwise (Continue, a reload, a direct URL): restore the saved
+    //    attempt if there is one, else begin fresh.
+    async function init() {
+      if (useChapterQuizStore.getState().pendingFreshStart) {
+        const cleared = await deleteChapterProgress(chapterId);
+        if (cancelled) return;
+        if (!cleared) {
+          setLoadError(
+            "Couldn't reset your saved progress. Check your connection and try again."
+          );
+          return;
+        }
+        clearPendingFreshStart();
+        setProgressChecked(true);
+        return;
+      }
+
+      try {
+        const progress = await fetchChapterProgress(chapterId);
+        if (cancelled) return;
+        if (progress) {
+          hydrateFromProgress(progress);
+          setIsResuming(true);
+        } else {
+          // Nothing saved for this chapter: never reuse leftover local
+          // answers (they may belong to another chapter).
+          startSession();
+          clearPendingFreshStart();
+        }
+        setProgressChecked(true);
+      } catch {
+        if (cancelled) return;
+        setLoadError(
+          "Couldn't load your saved progress. Check your connection and refresh to try again."
+        );
       }
     }
+    void init();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!data]);
 
@@ -316,8 +366,50 @@ export default function ChapterQuizPage() {
     setShowExitModal(true);
   }
 
-  function handleSaveAndExit() {
-    saveSession(chapterId);
+  /**
+   * Saves the attempt (every answer so far + where the student is) to
+   * the server, queued behind any save already in flight. Resolves to
+   * whether the server confirmed THIS save — the queue is serial, so a
+   * confirmed save also means every earlier one has landed.
+   */
+  function persistProgress(
+    answersToSave: Record<number, string>,
+    index: number
+  ): Promise<boolean> {
+    const stringKeyed: Record<string, string> = {};
+    for (const [k, v] of Object.entries(answersToSave)) {
+      stringKeyed[String(k)] = v;
+    }
+    const subsetIds =
+      filterQuestionIds && filterQuestionIds.length > 0 ? filterQuestionIds : undefined;
+    const run = saveQueueRef.current.then(() =>
+      saveChapterProgress(chapterId, {
+        answers: stringKeyed,
+        currentQuestionIndex: index,
+        questionIds: subsetIds,
+      })
+    );
+    saveQueueRef.current = run;
+    return run;
+  }
+
+  async function handleSaveAndExit() {
+    if (savingExit) return;
+    setExitError(null);
+    setSavingExit(true);
+
+    // Leave only once the server has confirmed the save. On failure
+    // stay put, keep the answers, and say so — never claim "saved"
+    // when it wasn't.
+    const saved = await persistProgress(answers, safeIndex);
+    if (!saved) {
+      setSavingExit(false);
+      setExitError(
+        "We couldn't save your progress. Check your connection and try again — your answers are still here."
+      );
+      return;
+    }
+
     if (typeof document !== 'undefined' && document.fullscreenElement) {
       intentionalExitRef.current = true;
       document.exitFullscreen().catch(() => {});
@@ -327,6 +419,8 @@ export default function ChapterQuizPage() {
   }
 
   function handleContinueChallenge() {
+    if (savingExit) return;
+    setExitError(null);
     setShowExitModal(false);
     if (!submittedRef.current) enterFullscreen();
   }
@@ -359,6 +453,12 @@ export default function ChapterQuizPage() {
     answerQuestion(currentQuestion.id, selectedChoice);
     setSubmitted(true);
     exitFullscreen();
+    // Record this answer on the server right away, so it counts toward
+    // the Progress dashboard and survives a closed tab even if the
+    // student never reaches Save & Exit. Fire-and-forget: a failure
+    // here is retried by the next answer's full snapshot and, finally,
+    // by Save & Exit, which blocks until a save is confirmed.
+    void persistProgress({ ...answers, [currentQuestion.id]: selectedChoice }, safeIndex);
     // The reference image is fetched by the effect keyed on the
     // persisted answer, so it isn't started here.
   }
@@ -395,6 +495,10 @@ export default function ChapterQuizPage() {
 
     setSubmitting(true);
     try {
+      // Let any in-flight progress save land BEFORE submitting: the
+      // submit route deletes the saved attempt, and a save arriving
+      // after that would resurrect it as a phantom "Continue".
+      await saveQueueRef.current.catch(() => undefined);
       const resultData = await submitChapterQuiz(
         chapterId,
         stringKeyedAnswers,
@@ -454,7 +558,7 @@ export default function ChapterQuizPage() {
     );
   }
 
-  if (!data) {
+  if (!data || !progressChecked) {
     return (
       <main
         className="flex min-h-screen w-full items-center justify-center gap-2 text-sm text-text-muted"
@@ -648,6 +752,8 @@ export default function ChapterQuizPage() {
               return q && q.correctAnswer === choice ? sum + 1 : sum;
             }, 0)}
             currentIndex={safeIndex}
+            saving={savingExit}
+            error={exitError}
             onSaveAndExit={handleSaveAndExit}
             onContinue={handleContinueChallenge}
           />
@@ -1403,6 +1509,8 @@ function ExitConfirmationModal({
   totalCount,
   correctCount,
   currentIndex,
+  saving,
+  error,
   onSaveAndExit,
   onContinue,
 }: {
@@ -1410,6 +1518,8 @@ function ExitConfirmationModal({
   totalCount: number;
   correctCount: number;
   currentIndex: number;
+  saving: boolean;
+  error: string | null;
   onSaveAndExit: () => void;
   onContinue: () => void;
 }) {
@@ -1442,7 +1552,7 @@ function ExitConfirmationModal({
           Exit Quiz?
         </h2>
         <p className="mb-2 text-center text-sm text-text-muted">
-          Your progress will be saved automatically.
+          Your answers so far will be saved, and you can pick up where you left off.
         </p>
 
         <div className="mb-6 mt-4 rounded-xl p-4" style={{ backgroundColor: 'var(--fill)' }}>
@@ -1460,21 +1570,29 @@ function ExitConfirmationModal({
           />
         </div>
 
+        {error && (
+          <p role="alert" className="mb-4 text-center text-sm text-error">
+            {error}
+          </p>
+        )}
+
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onSaveAndExit}
-            className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
+            disabled={saving}
+            className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200 disabled:opacity-60"
             style={{ backgroundColor: 'var(--error)' }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--error)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--error)')}
           >
-            Save &amp; Exit
+            {saving ? 'Saving…' : error ? 'Try again' : 'Save & Exit'}
           </button>
           <button
             type="button"
             onClick={onContinue}
-            className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
+            disabled={saving}
+            className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200 disabled:opacity-60"
             style={{ backgroundColor: 'var(--accent-text)' }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-text)')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-text)')}
