@@ -6,6 +6,7 @@ type Props = {
   overview: AdminOverview | null;
   onGoUpload: () => void;
   onGoReview: () => void;
+  onGoReports: () => void;
 };
 
 const CARD: React.CSSProperties = {
@@ -48,9 +49,10 @@ function actionIcon(action: string): { icon: string; bg: string; color: string }
   return { icon: '•', bg: 'rgba(148,163,184,0.15)', color: '#8B98A6' };
 }
 
-export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) {
+export function AdminOverviewPanel({ overview, onGoUpload, onGoReview, onGoReports }: Props) {
   const skeleton = overview === null;
   const q = overview?.counts.questions;
+  const openReports = overview?.counts.openReports ?? 0;
 
   const kpis = [
     { label: 'Students', value: overview?.counts.students ?? 0, color: '#F7F9FA' },
@@ -104,6 +106,46 @@ export function AdminOverviewPanel({ overview, onGoUpload, onGoReview }: Props) 
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Student reports — questions flagged from the chapter quiz */}
+      <div
+        style={{
+          ...CARD,
+          padding: 22,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+          ...(openReports > 0 ? { borderColor: 'rgba(249,115,22,0.45)' } : null),
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>Student reports</div>
+          <div style={{ fontSize: 11, color: '#8B98A6', marginTop: 3 }}>
+            {skeleton
+              ? '—'
+              : openReports > 0
+                ? `${openReports} open report${openReports === 1 ? '' : 's'} waiting for review`
+                : 'No open reports'}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+              color: openReports > 0 ? '#F97316' : '#F7F9FA',
+              opacity: skeleton ? 0.35 : 1,
+            }}
+          >
+            {skeleton ? '—' : openReports}
+          </div>
+          <button type="button" onClick={onGoReports} style={ghostBtn}>
+            Open reports →
+          </button>
+        </div>
       </div>
 
       {/* Question status breakdown + CTAs */}

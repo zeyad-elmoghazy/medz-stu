@@ -38,6 +38,7 @@ export async function GET() {
     questionRowsRes,
     recentSessionsRes,
     recentActivityRes,
+    openReportsRes,
   ] = await Promise.all([
     untypedFrom(supabase).from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'student'),
     untypedFrom(supabase).from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'admin'),
@@ -54,6 +55,13 @@ export async function GET() {
       .select('id, actor_id, action, entity_type, entity_id, summary, created_at, profiles(full_name, email)')
       .order('created_at', { ascending: false })
       .limit(10),
+    // Unresolved student reports (Reports tab). A failed count — e.g.
+    // migration 033's admin policy not applied yet — reads as 0 rather
+    // than breaking the whole overview.
+    untypedFrom(supabase)
+      .from('question_flags')
+      .select('id', { count: 'exact', head: true })
+      .eq('resolved', false),
   ]);
 
   const questionRows = (questionRowsRes.data ?? []) as {
@@ -108,6 +116,7 @@ export async function GET() {
         subjects: subjectCountRes.count ?? 0,
         chapters: chapterCountRes.count ?? 0,
         questions: questionCounts,
+        openReports: openReportsRes.count ?? 0,
       },
       dauTrend,
       recentActivity: recentActivityRes.data ?? [],

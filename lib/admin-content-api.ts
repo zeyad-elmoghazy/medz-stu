@@ -63,6 +63,8 @@ export type AdminOverview = {
       archived: number;
       total: number;
     };
+    /** Unresolved student reports (question_flags.resolved = false). */
+    openReports: number;
   };
   dauTrend: { date: string; activeStudents: number }[];
   recentActivity: {
@@ -108,6 +110,50 @@ async function json<T>(res: Response): Promise<T> {
 export async function fetchOverview(): Promise<AdminOverview> {
   const res = await fetch('/api/admin/content/overview', { credentials: 'include', cache: 'no-store' });
   return json(res);
+}
+
+/** One student report on a question, as listed in the admin Reports tab. */
+export type AdminFlag = {
+  id: string;
+  questionId: number;
+  reason: string;
+  detail: string | null;
+  resolved: boolean;
+  createdAt: string;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  reporter: { fullName: string | null; email: string | null } | null;
+  question: {
+    text: string;
+    choices: { id: string; text: string }[];
+    correctAnswer: string;
+    status: string;
+    chapterName: string | null;
+    moduleCode: string | null;
+    subjectName: string | null;
+  } | null;
+};
+
+export type AdminFlagStatus = 'open' | 'resolved' | 'all';
+
+export async function fetchAdminFlags(
+  status: AdminFlagStatus
+): Promise<{ flags: AdminFlag[]; counts: { open: number; resolved: number } }> {
+  const res = await fetch(`/api/admin/content/flags?status=${status}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  return json(res);
+}
+
+export async function resolveAdminFlag(flagId: string, resolved: boolean): Promise<void> {
+  const res = await fetch(`/api/admin/content/flags/${encodeURIComponent(flagId)}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resolved }),
+  });
+  await json(res);
 }
 
 export async function fetchAdminModules(): Promise<{ modules: AdminModule[] }> {

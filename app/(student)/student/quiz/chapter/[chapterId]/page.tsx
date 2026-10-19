@@ -19,6 +19,7 @@ import {
   CloseIcon,
   CopyIcon,
   ExpandIcon,
+  FlagIcon,
   LogOutIcon,
   SpinnerIcon,
   StickyNoteIcon,
@@ -32,6 +33,8 @@ import {
   fetchBookmarkStatus,
   addBookmark,
   removeBookmark,
+  fetchFlagStatus,
+  reportQuestion,
   fetchNote,
   saveNote,
   submitChapterQuiz,
@@ -42,6 +45,12 @@ import {
   type ChapterQuizQuestion,
 } from '@/lib/chapter-quiz-api';
 import { cn, letterFor } from '@/lib/utils';
+import {
+  FLAG_DETAIL_MAX,
+  FLAG_REASONS,
+  FLAG_REASON_LABELS,
+  type FlagReason,
+} from '@/lib/question-flags';
 
 /**
  * Chapter-scoped quiz — same UI/UX as the working custom-exam quiz
@@ -150,6 +159,14 @@ export default function ChapterQuizPage() {
 
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  // "Report this question to the admins" — ids of the questions THIS
+  // student already has a question_flags row for. Keyed by question id
+  // (rather than a single boolean) so moving to the next question can
+  // never show the previous one's "Reported" state. The modal keeps its
+  // own form state.
+  const [reportedIds, setReportedIds] = useState<ReadonlySet<number>>(() => new Set());
+  const reported = currentQuestion ? reportedIds.has(currentQuestion.id) : false;
+  const [showReportModal, setShowReportModal] = useState(false);
   const [noteContent, setNoteContent] = useState('');
 
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
@@ -278,6 +295,19 @@ export default function ChapterQuizPage() {
     let cancelled = false;
     fetchBookmarkStatus(currentQuestion.id).then((b) => {
       if (!cancelled) setBookmarked(b);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.id]);
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    let cancelled = false;
+    const questionId = currentQuestion.id;
+    fetchFlagStatus(questionId).then((flagged) => {
+      if (!cancelled && flagged) setReportedIds((prev) => new Set(prev).add(questionId));
     });
     return () => {
       cancelled = true;
@@ -435,13 +465,28 @@ export default function ChapterQuizPage() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && showNotesPanel) {
+      if (e.key === 'Escape' && showReportModal) {
+        setShowReportModal(false);
+      } else if (e.key === 'Escape' && showNotesPanel) {
         setShowNotesPanel(false);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showNotesPanel]);
+  }, [showNotesPanel, showReportModal]);
+
+  // Sends the report. Throws on failure so the modal can show the
+  // message inline; 'already_reported' counts as success — the admins
+  // already have this student's report.
+  async function handleReportSubmit(reason: FlagReason, detail: string) {
+    if (!currentQuestion) return;
+    const questionId = currentQuestion.id;
+    await reportQuestion(questionId, {
+      reason,
+      detail: detail.trim() || undefined,
+    });
+    setReportedIds((prev) => new Set(prev).add(questionId));
+  }
 
   const isCorrect = !!currentQuestion && submitted && selectedChoice === currentQuestion.correctAnswer;
   const isLastQuestion = safeIndex === totalQuestions - 1;
@@ -695,6 +740,8 @@ export default function ChapterQuizPage() {
                 isBookmarked={bookmarked}
                 onBookmarkToggle={toggleBookmark}
                 onNotesOpen={() => setShowNotesPanel(true)}
+                isReported={reported}
+                onReportOpen={() => setShowReportModal(true)}
                 onCopy={handleCopy}
                 copied={copied}
                 onNext={handleNext}
@@ -756,6 +803,17 @@ export default function ChapterQuizPage() {
             error={exitError}
             onSaveAndExit={handleSaveAndExit}
             onContinue={handleContinueChallenge}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showReportModal && (
+          <ReportQuestionModal
+            key={currentQuestion.id}
+            alreadyReported={reported}
+            onSubmit={handleReportSubmit}
+            onClose={() => setShowReportModal(false)}
           />
         )}
       </AnimatePresence>
@@ -993,6 +1051,8 @@ function PhaseTwoLeft({
   isBookmarked,
   onBookmarkToggle,
   onNotesOpen,
+  isReported,
+  onReportOpen,
   onCopy,
   copied,
   onNext,
@@ -1005,6 +1065,8 @@ function PhaseTwoLeft({
   isBookmarked: boolean;
   onBookmarkToggle: () => void;
   onNotesOpen: () => void;
+  isReported: boolean;
+  onReportOpen: () => void;
   onCopy: () => void;
   copied: boolean;
   onNext: () => void;
@@ -1106,6 +1168,12 @@ function PhaseTwoLeft({
             label="Notes"
             onClick={onNotesOpen}
             icon={<StickyNoteIcon size={14} />}
+          />
+          <ToolbarButton
+            label={isReported ? 'Reported' : 'Report'}
+            onClick={onReportOpen}
+            active={isReported}
+            icon={<FlagIcon size={14} filled={isReported} />}
           />
           <ToolbarButton
             label={copied ? 'Copied!' : 'Copy'}
@@ -1623,6 +1691,185 @@ function ExitProgressRow({
     >
       <span>{label}</span>
       <span className={valueClass ?? 'text-text-primary font-semibold'}>{value}</span>
+    </div>
+  );
+}
+
+/**
+ * "Report this question" dialog. Collects a reason (required) and an
+ * optional note, hands them to `onSubmit` (which throws on failure so
+ * the message can be shown here) and then switches to a thank-you
+ * state. Purely additive: it never touches answers, progress or the
+ * Save & Exit flow.
+ */
+function ReportQuestionModal({
+  alreadyReported,
+  onSubmit,
+  onClose,
+}: {
+  alreadyReported: boolean;
+  onSubmit: (reason: FlagReason, detail: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState<FlagReason | null>(null);
+  const [detail, setDetail] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  async function handleSend() {
+    if (!reason || sending) return;
+    setSending(true);
+    setError(null);
+    try {
+      await onSubmit(reason, detail);
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send your report. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const showForm = !done && !alreadyReported;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-question-title"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+        className="relative mx-4 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl p-6 shadow-2xl sm:p-8"
+        style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
+      >
+        <div
+          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full"
+          style={{ backgroundColor: 'rgb(var(--accent-text-rgb) / 0.15)' }}
+        >
+          {showForm ? (
+            <FlagIcon size={22} className="text-accent" />
+          ) : (
+            <CheckIcon size={22} className="text-success" />
+          )}
+        </div>
+
+        <h2
+          id="report-question-title"
+          className="mb-2 text-center text-xl font-bold text-text-primary"
+        >
+          {done ? 'Report sent' : alreadyReported ? 'Already reported' : 'Report this question'}
+        </h2>
+
+        {!showForm ? (
+          <>
+            <p className="mb-6 text-center text-sm text-text-muted">
+              {done
+                ? 'Thanks — an admin will review this question.'
+                : 'You have already reported this question. An admin will review it.'}
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-xl py-3 text-sm font-semibold text-white transition"
+              style={{ backgroundColor: 'var(--accent-text)' }}
+            >
+              Back to quiz
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="mb-5 text-center text-sm text-text-muted">
+              Spotted a problem? Tell the admins what is wrong and they will take a look.
+            </p>
+
+            <fieldset className="mb-4 flex flex-col gap-2" disabled={sending}>
+              <legend className="sr-only">What is wrong with this question?</legend>
+              {FLAG_REASONS.map((r) => {
+                const selected = reason === r;
+                return (
+                  <label
+                    key={r}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-text-primary transition"
+                    style={{
+                      border: `1px solid ${selected ? 'var(--accent-text)' : 'var(--line)'}`,
+                      backgroundColor: selected
+                        ? 'rgb(var(--accent-text-rgb) / 0.12)'
+                        : 'var(--bg)',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="report-reason"
+                      value={r}
+                      checked={selected}
+                      onChange={() => setReason(r)}
+                      className="h-4 w-4 accent-[var(--accent-text)]"
+                    />
+                    {FLAG_REASON_LABELS[r]}
+                  </label>
+                );
+              })}
+            </fieldset>
+
+            <label className="mb-1 block text-xs font-medium text-text-muted" htmlFor="report-detail">
+              Details (optional)
+            </label>
+            <textarea
+              id="report-detail"
+              value={detail}
+              onChange={(e) => setDetail(e.target.value.slice(0, FLAG_DETAIL_MAX))}
+              maxLength={FLAG_DETAIL_MAX}
+              rows={3}
+              disabled={sending}
+              placeholder="e.g. the explanation says B but the key is C"
+              className="w-full resize-none rounded-xl px-3 py-2 text-sm text-text-primary outline-none"
+              style={{ border: '1px solid var(--line)', backgroundColor: 'var(--bg)' }}
+            />
+            <p className="mb-4 mt-1 text-right text-xs text-text-muted">
+              {detail.length}/{FLAG_DETAIL_MAX}
+            </p>
+
+            {error && (
+              <p role="alert" className="mb-4 text-center text-sm text-error">
+                {error}
+              </p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={sending}
+                className="flex-1 rounded-xl py-3 text-sm font-semibold text-text-primary transition disabled:opacity-60"
+                style={{ border: '1px solid var(--line)', backgroundColor: 'var(--bg)' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!reason || sending}
+                className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ backgroundColor: 'var(--accent-text)' }}
+              >
+                {sending ? 'Sending…' : error ? 'Try again' : 'Send report'}
+              </button>
+            </div>
+          </>
+        )}
+      </motion.div>
     </div>
   );
 }

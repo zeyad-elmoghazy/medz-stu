@@ -160,6 +160,15 @@ export function BookmarkIcon({ filled, ...props }: IconProps & { filled?: boolea
   );
 }
 
+export function FlagIcon({ filled, ...props }: IconProps & { filled?: boolean }) {
+  return (
+    <Base {...props} fill={filled ? 'currentColor' : 'none'}>
+      <path d="M5 21V4" />
+      <path d="M5 4h11l-2 4 2 4H5" />
+    </Base>
+  );
+}
+
 export function ArrowLeftIcon(props: IconProps) {
   return (
     <Base {...props}>
