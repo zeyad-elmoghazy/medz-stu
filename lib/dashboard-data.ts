@@ -38,6 +38,12 @@ export type ChallengeResult = {
   total: number;         // e.g. 11
   accuracy: number;      // e.g. 72.7
   completedAt: string;   // ISO date string
+  // An unfinished chapter attempt (chapter_quiz_progress). For these,
+  // `score` / `total` are correct / answered SO FAR, `accuracy` is over
+  // the answered questions, `completedAt` is the last answer time, and
+  // `questionTotal` is how many questions the whole attempt has.
+  inProgress?: boolean;
+  questionTotal?: number;
 };
 
 export type ProgressDataPoint = {

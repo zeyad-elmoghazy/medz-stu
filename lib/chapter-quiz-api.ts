@@ -155,6 +155,79 @@ export async function submitChapterQuiz(
   return res.json();
 }
 
+export type ChapterProgress = {
+  /** questions.id (string key) -> chosen choice id. */
+  answers: Record<string, string>;
+  currentQuestionIndex: number;
+  /** Set for a "Practice mistakes" subset run; null = whole chapter. */
+  questionIds: number[] | null;
+  totalQuestions: number;
+  updatedAt: string;
+};
+
+/**
+ * The student's saved, unfinished attempt at this chapter, or null
+ * if there is none — /api/student/chapters/[chapterId]/progress.
+ * Throws on a failed request (rather than returning null) so the
+ * quiz page never mistakes "couldn't reach the server" for "nothing
+ * saved" and silently starts the chapter over.
+ */
+export async function fetchChapterProgress(
+  chapterId: string
+): Promise<ChapterProgress | null> {
+  const res = await fetch(
+    `/api/student/chapters/${encodeURIComponent(chapterId)}/progress`,
+    { credentials: 'include', cache: 'no-store' }
+  );
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const body = (await res.json()) as { progress: ChapterProgress | null };
+  return body.progress;
+}
+
+/**
+ * Saves the attempt so far (full snapshot — safe to repeat). Returns
+ * whether the server confirmed the write: Save & Exit only leaves the
+ * page on `true`. `keepalive` lets an in-flight save survive the tab
+ * being closed.
+ */
+export async function saveChapterProgress(
+  chapterId: string,
+  snapshot: {
+    answers: Record<string, string>;
+    currentQuestionIndex: number;
+    questionIds?: number[];
+  }
+): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `/api/student/chapters/${encodeURIComponent(chapterId)}/progress`,
+      {
+        method: 'PUT',
+        credentials: 'include',
+        keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(snapshot),
+      }
+    );
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Discards the saved attempt ("Start over"). Returns whether it succeeded. */
+export async function deleteChapterProgress(chapterId: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `/api/student/chapters/${encodeURIComponent(chapterId)}/progress`,
+      { method: 'DELETE', credentials: 'include' }
+    );
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /** The signed-in student's saved note content for this question, or '' if none. */
 export async function fetchNote(questionId: number): Promise<string> {
   const res = await fetch(`/api/student/notes?questionId=${questionId}`, {

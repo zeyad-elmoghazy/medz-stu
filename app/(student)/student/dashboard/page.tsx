@@ -76,9 +76,8 @@ function StudentDashboardInner() {
       try {
         const res = await fetch('/api/student/stats', {
           credentials: 'include',
-          // Let the browser reuse the server's `Cache-Control: private,
-          // max-age=60` response so a quick dashboard → analytics →
-          // dashboard round-trip skips the API call.
+          // The server sends `Cache-Control: private, no-store` — answers
+          // are recorded as they're given, so this must always be fresh.
         });
         if (!res.ok) throw new Error(`stats fetch failed: ${res.status}`);
         const json = (await res.json()) as StudentStats;
@@ -493,7 +492,7 @@ function AnalyticsView({
             Your Progress, {firstName}
           </h2>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--text3)' }}>
-            Every metric below is drawn from your completed challenges.
+            Every metric below counts the questions you&apos;ve answered, including chapters you haven&apos;t finished yet.
           </p>
         </div>
         <button
@@ -823,7 +822,7 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
   if (challenges.length === 0) {
     return (
       <div style={{ fontSize: 12, color: 'var(--text3)' }}>
-        No completed challenges yet — take a quiz to see it here.
+        No challenges yet — answer a question in any chapter to see it here.
       </div>
     );
   }
@@ -854,7 +853,11 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
               {c.chapterName && (
                 <ChapterPath moduleCode={c.moduleCode} moduleName={c.moduleName} subjectName={c.subjectName} />
               )}
-              <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{relativeTime(c.completedAt)}</div>
+              <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>
+                {c.inProgress && c.questionTotal
+                  ? `In progress · ${c.total} of ${c.questionTotal} answered · ${relativeTime(c.completedAt)}`
+                  : relativeTime(c.completedAt)}
+              </div>
             </div>
             <div style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 12, color: 'var(--text3)' }}>
               {c.score} / {c.total}
@@ -872,7 +875,7 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
                 borderRadius: 6,
               }}
             >
-              {tag}
+              {c.inProgress ? 'In progress' : tag}
             </div>
           </div>
         );

@@ -29,16 +29,6 @@ export type ChapterSubmissionResult = {
   }>;
 };
 
-export type ChapterSavedSession = {
-  chapterId: string;
-  currentQuestionIndex: number;
-  answers: Record<number, string>;
-  startedAt: string;
-};
-
-const SAVED_SESSION_KEY = 'medz_chapter_quiz_session';
-const SAVED_SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-
 export type ChapterQuizState = {
   currentQuestionIndex: number;
   answers: Record<number, string>;
@@ -47,7 +37,17 @@ export type ChapterQuizState = {
   sessionEndedAt: number | null;
   filterQuestionIds: number[] | null;
   lastResult: ChapterSubmissionResult | null;
-  savedSession: ChapterSavedSession | null;
+  /**
+   * Set by startSession / startMistakeSession — the entry points that
+   * mean "begin this chapter fresh" (Start Quiz, Solve Again, Practice
+   * mistakes). The quiz page reads it on mount: when set it discards
+   * any server-saved attempt instead of resuming it. Every other way
+   * of arriving (the catalogue's Continue link, a reload, a direct
+   * URL) leaves it false, so a saved attempt is resumed. Deliberately
+   * NOT persisted: if it were, a start that never reached the quiz
+   * page could later wipe an attempt the student meant to continue.
+   */
+  pendingFreshStart: boolean;
   /** Question ids the student got wrong, namespaced per chapter so
    *  "Practice mistakes" never mixes ids from two different chapters. */
   mistakeQuestionIdsByChapter: Record<string, number[]>;
@@ -62,8 +62,13 @@ export type ChapterQuizState = {
   setLastResult: (result: ChapterSubmissionResult) => void;
   recordMistakes: (chapterId: string, ids: number[]) => void;
   clearMistakes: (chapterId: string, ids: number[]) => void;
-  saveSession: (chapterId: string) => void;
-  loadSession: (chapterId: string) => boolean;
+  /** Restore an attempt saved on the server (see chapter_quiz_progress). */
+  hydrateFromProgress: (progress: {
+    answers: Record<string, string>;
+    currentQuestionIndex: number;
+    questionIds: number[] | null;
+  }) => void;
+  clearPendingFreshStart: () => void;
   clearSession: () => void;
 };
 
@@ -75,7 +80,7 @@ const initialState = {
   sessionEndedAt: null as number | null,
   filterQuestionIds: null as number[] | null,
   lastResult: null as ChapterSubmissionResult | null,
-  savedSession: null as ChapterSavedSession | null,
+  pendingFreshStart: false,
   mistakeQuestionIdsByChapter: {} as Record<string, number[]>,
 };
 
@@ -112,6 +117,7 @@ export const useChapterQuizStore = create<ChapterQuizState>()(
           answers: {},
           currentQuestionIndex: 0,
           sessionComplete: false,
+          pendingFreshStart: true,
         }),
 
       startMistakeSession: (chapterId, mistakeIds) =>
@@ -127,6 +133,7 @@ export const useChapterQuizStore = create<ChapterQuizState>()(
             filterQuestionIds: mistakeIds,
             currentQuestionIndex: 0,
             sessionComplete: false,
+            pendingFreshStart: true,
           };
         }),
 
@@ -163,98 +170,37 @@ export const useChapterQuizStore = create<ChapterQuizState>()(
         }),
 
       /**
-       * Snapshot the current quiz state to the store AND
-       * localStorage. Same purpose as the reference store's
-       * saveSession — called from the Exit Confirmation Modal.
+       * Restore an attempt saved on the server (chapter_quiz_progress).
+       * Answers arrive keyed by string question id (JSON); the store
+       * keys them by number.
        */
-      saveSession: (chapterId) => {
-        const state = get();
-        const session: ChapterSavedSession = {
-          chapterId,
-          currentQuestionIndex: state.currentQuestionIndex,
-          answers: state.answers,
-          startedAt: state.sessionStartedAt
-            ? new Date(state.sessionStartedAt).toISOString()
-            : new Date().toISOString(),
-        };
-        set({ savedSession: session });
-        if (typeof window !== 'undefined') {
-          try {
-            window.localStorage.setItem(
-              SAVED_SESSION_KEY,
-              JSON.stringify(session)
-            );
-          } catch {
-            // localStorage can be unavailable in private mode — the
-            // in-memory copy in `savedSession` still works for this tab.
-          }
+      hydrateFromProgress: (progress) => {
+        const answers: Record<number, string> = {};
+        for (const [key, choice] of Object.entries(progress.answers)) {
+          const id = Number(key);
+          if (Number.isInteger(id)) answers[id] = choice;
         }
-      },
-
-      /**
-       * Try to restore a saved session for `chapterId`. Same safety
-       * checks as the reference store: chapterId must match, and
-       * startedAt must be within the last 24 hours.
-       */
-      loadSession: (chapterId) => {
-        if (typeof window === 'undefined') return false;
-        let raw: string | null = null;
-        try {
-          raw = window.localStorage.getItem(SAVED_SESSION_KEY);
-        } catch {
-          return false;
-        }
-        if (!raw) return false;
-
-        let parsed: ChapterSavedSession;
-        try {
-          parsed = JSON.parse(raw) as ChapterSavedSession;
-        } catch {
-          window.localStorage.removeItem(SAVED_SESSION_KEY);
-          return false;
-        }
-
-        if (parsed.chapterId !== chapterId) return false;
-
-        const startedAtMs = new Date(parsed.startedAt).getTime();
-        if (!Number.isFinite(startedAtMs)) {
-          window.localStorage.removeItem(SAVED_SESSION_KEY);
-          return false;
-        }
-        if (Date.now() - startedAtMs > SAVED_SESSION_MAX_AGE_MS) {
-          window.localStorage.removeItem(SAVED_SESSION_KEY);
-          return false;
-        }
-
         set({
-          savedSession: parsed,
-          currentQuestionIndex: parsed.currentQuestionIndex,
-          answers: parsed.answers,
-          sessionStartedAt: startedAtMs,
+          answers,
+          currentQuestionIndex: Math.max(0, progress.currentQuestionIndex),
+          filterQuestionIds:
+            progress.questionIds && progress.questionIds.length > 0
+              ? progress.questionIds
+              : null,
+          sessionStartedAt: Date.now(),
           sessionEndedAt: null,
           sessionComplete: false,
+          pendingFreshStart: false,
         });
-        return true;
       },
 
+      clearPendingFreshStart: () => set({ pendingFreshStart: false }),
+
       /**
-       * Wipe the saved session — call on quiz completion or a
-       * fresh-visit reset. Leaves the rest of the store intact.
+       * Reset the in-progress quiz state — on completion or a fresh
+       * start. Leaves the rest of the store intact.
        */
-      clearSession: () => {
-        if (typeof window !== 'undefined') {
-          try {
-            window.localStorage.removeItem(SAVED_SESSION_KEY);
-          } catch {
-            // ignore
-          }
-        }
-        set({
-          savedSession: null,
-          currentQuestionIndex: 0,
-          answers: {},
-        });
-      },
+      clearSession: () => set({ currentQuestionIndex: 0, answers: {} }),
     }),
     {
       name: 'medz-chapter-quiz-session',
@@ -267,7 +213,6 @@ export const useChapterQuizStore = create<ChapterQuizState>()(
         sessionEndedAt: state.sessionEndedAt,
         filterQuestionIds: state.filterQuestionIds,
         lastResult: state.lastResult,
-        savedSession: state.savedSession,
         mistakeQuestionIdsByChapter: state.mistakeQuestionIdsByChapter,
       }),
     }

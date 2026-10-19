@@ -43,6 +43,13 @@ export const authLimiter = buildLimiter(5, '15 m', 'rl:auth');
 // finishing the 11-question block uses ~1% of the budget.
 export const quizLimiter = buildLimiter(30, '1 h', 'rl:quiz');
 
+// Chapter-quiz progress saves: 600 per hour per user
+// One PUT per answered question plus Save & Exit, so a long chapter
+// is a few dozen calls. Deliberately separate from quizLimiter
+// (30/h, shared with the final submit) — per-answer saves must never
+// be able to exhaust the budget the submit needs.
+export const progressLimiter = buildLimiter(600, '1 h', 'rl:progress');
+
 // API general: 100 requests per minute per user
 // Mostly here as a runaway-loop circuit breaker. A real
 // dashboard load makes ~3-5 calls — 100/min has 20-30x headroom.

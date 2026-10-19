@@ -79,8 +79,29 @@ export async function GET(request: NextRequest) {
   const chapterIds = chapters.map((c) => c.id);
   const attemptedChapterIds = new Set<string>();
   let mistakesByChapter = new Map<string, number[]>();
+  // Unfinished attempts (chapter_quiz_progress, migration 032) — what
+  // the "Continue" button resumes. Separate from `attempted`, which
+  // stays "a completed quiz_sessions row exists".
+  const inProgressByChapter = new Map<string, { answered: number; total: number }>();
 
   if (chapterIds.length > 0) {
+    const progressRes = await client
+      .from('chapter_quiz_progress')
+      .select('chapter_id, answers, total_questions')
+      .eq('student_id', user.id)
+      .in('chapter_id', chapterIds);
+    for (const row of (progressRes.data as
+      | { chapter_id: string; answers: Record<string, string> | null; total_questions: number }[]
+      | null) ?? []) {
+      const answered = Object.keys(row.answers ?? {}).length;
+      if (answered > 0) {
+        inProgressByChapter.set(row.chapter_id, {
+          answered,
+          total: Number(row.total_questions) || answered,
+        });
+      }
+    }
+
     const sessionsRes = await client
       .from('quiz_sessions')
       .select('chapter_id')
@@ -112,8 +133,11 @@ export async function GET(request: NextRequest) {
         publishedCount: Number(c.published_count) || 0,
         attempted: attemptedChapterIds.has(c.id),
         mistakeQuestionIds: mistakesByChapter.get(c.id) ?? [],
+        inProgress: inProgressByChapter.get(c.id) ?? null,
       })),
     },
-    { headers: { 'Cache-Control': 'private, max-age=30' } }
+    // Not cached: "Continue" and the answered count must be correct the
+    // moment the student comes back from Save & Exit.
+    { headers: { 'Cache-Control': 'private, no-store' } }
   );
 }

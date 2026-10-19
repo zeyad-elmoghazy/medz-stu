@@ -52,6 +52,9 @@ export type CatalogueChapter = {
   // from never having attempted the chapter at all.
   attempted: boolean;
   mistakeQuestionIds: number[];
+  // An unfinished attempt the student can resume (chapter_quiz_progress,
+  // migration 032), or null. Drives the "Continue" button.
+  inProgress: { answered: number; total: number } | null;
 };
 
 export type ChaptersBySubject = {
