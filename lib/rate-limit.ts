@@ -66,3 +66,10 @@ export const adminLimiter = buildLimiter(20, '1 m', 'rl:admin');
 // 10/h covers a normal authoring session without inviting
 // pathological batches.
 export const uploadLimiter = buildLimiter(10, '1 h', 'rl:upload');
+
+// Question reports ("flag a question"): 20 per hour per user
+// Each (student, question) pair can only be reported once (UNIQUE
+// in question_flags), so this is purely a spam brake — a student
+// who genuinely finds 20 broken questions in an hour is rare and
+// can finish after the window slides.
+export const reportLimiter = buildLimiter(20, '1 h', 'rl:report');

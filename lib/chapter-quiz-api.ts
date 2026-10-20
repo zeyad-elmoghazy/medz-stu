@@ -5,6 +5,8 @@
  * Histology quiz's data path.
  */
 
+import type { FlagReason } from '@/lib/question-flags';
+
 export type ChapterQuizChoice = {
   id: string;
   text: string;
@@ -104,6 +106,47 @@ export async function removeBookmark(questionId: number): Promise<boolean> {
     credentials: 'include',
   });
   return res.ok;
+}
+
+/** Whether the signed-in student has already reported this question. */
+export async function fetchFlagStatus(questionId: number): Promise<boolean> {
+  const res = await fetch(`/api/student/questions/${questionId}/flag`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  if (!res.ok) return false;
+  const body = (await res.json()) as { flagged: boolean };
+  return body.flagged;
+}
+
+/**
+ * Reports a question to the admins. Resolves 'sent' for a new report and
+ * 'already_reported' when this student reported it before (409) — both
+ * mean "the admins have it", so callers show the same "Reported" state.
+ * Anything else throws with the server's message so the modal can show
+ * it inline instead of silently dropping the report.
+ */
+export async function reportQuestion(
+  questionId: number,
+  input: { reason: FlagReason; detail?: string }
+): Promise<'sent' | 'already_reported'> {
+  const res = await fetch(`/api/student/questions/${questionId}/flag`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (res.ok) return 'sent';
+  let msg = `HTTP ${res.status}`;
+  try {
+    const body = await res.json();
+    if (res.status === 409 && body?.error === 'already_reported') return 'already_reported';
+    if (res.status === 429) msg = 'Too many reports — please try again later.';
+    else if (body?.error) msg = body.error;
+  } catch {
+    /* ignore — keep the generic HTTP status message */
+  }
+  throw new Error(msg);
 }
 
 export type ChapterQuizResult = {

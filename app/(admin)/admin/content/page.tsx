@@ -10,10 +10,11 @@ import { AdminOverviewPanel } from '@/components/admin-content/AdminOverviewPane
 import { AdminUploadWizard } from '@/components/admin-content/AdminUploadWizard';
 import { AdminQuestionReview } from '@/components/admin-content/AdminQuestionReview';
 import { AdminModulesPanel } from '@/components/admin-content/AdminModulesPanel';
+import { AdminFlagsPanel } from '@/components/admin-content/AdminFlagsPanel';
 
-type View = 'overview' | 'upload' | 'review' | 'modules';
+type View = 'overview' | 'upload' | 'review' | 'reports' | 'modules';
 
-type NavDef = { key: View; label: string; badge?: number };
+type NavDef = { key: View; label: string; badge?: number; badgeTone?: 'info' | 'alert' };
 
 export default function AdminContentPage() {
   const router = useRouter();
@@ -79,11 +80,18 @@ export default function AdminContentPage() {
   }, [signingOut, supabase, router]);
 
   const reviewBadge = overview?.counts.questions.under_review ?? 0;
+  const reportsBadge = overview?.counts.openReports ?? 0;
 
   const navDef: NavDef[] = [
     { key: 'overview', label: 'Overview' },
     { key: 'upload', label: 'Upload Content' },
     { key: 'review', label: 'Review Queue', badge: reviewBadge > 0 ? reviewBadge : undefined },
+    {
+      key: 'reports',
+      label: 'Reports',
+      badge: reportsBadge > 0 ? reportsBadge : undefined,
+      badgeTone: 'alert',
+    },
     { key: 'modules', label: 'Modules' },
   ];
 
@@ -91,6 +99,7 @@ export default function AdminContentPage() {
     overview: ['Overview', 'Platform KPIs, daily activity, and the unified content log.'],
     upload: ['Upload Content', 'Add questions to any chapter — write them, extract from a PDF, or import a JSON batch.'],
     review: ['Review Queue', 'Browse, review, and publish every question in the bank.'],
+    reports: ['Reports', 'Questions students have flagged from the chapter quiz — review and resolve them.'],
     modules: ['Modules', 'Assign each module its reference book. Books are added directly via SQL — this is selection only.'],
   };
 
@@ -187,8 +196,9 @@ export default function AdminContentPage() {
                     style={{
                       fontSize: 10,
                       fontWeight: 700,
-                      color: '#0EA5E9',
-                      background: 'rgba(14,165,233,0.14)',
+                      color: item.badgeTone === 'alert' ? '#F97316' : '#0EA5E9',
+                      background:
+                        item.badgeTone === 'alert' ? 'rgba(249,115,22,0.14)' : 'rgba(14,165,233,0.14)',
                       padding: '2px 7px',
                       borderRadius: 10,
                     }}
@@ -331,10 +341,12 @@ export default function AdminContentPage() {
             overview={overview}
             onGoUpload={() => setView('upload')}
             onGoReview={() => setView('review')}
+            onGoReports={() => setView('reports')}
           />
         )}
         {view === 'upload' && <AdminUploadWizard onContentChanged={refreshOverview} />}
         {view === 'review' && <AdminQuestionReview onChanged={refreshOverview} />}
+        {view === 'reports' && <AdminFlagsPanel onChanged={refreshOverview} />}
         {view === 'modules' && <AdminModulesPanel />}
       </main>
     </div>
