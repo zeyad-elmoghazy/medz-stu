@@ -11,7 +11,7 @@ export function CatalogueShell({ children }: { children: React.ReactNode }) {
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', paddingBottom: 8 }}>
         <StudentNavbar activeLabel="Catalogue" />
-        <section style={{ position: 'relative', padding: '30px 44px 64px' }}>{children}</section>
+        <section className="mz-cat-section" style={{ position: 'relative', padding: '30px 44px 64px' }}>{children}</section>
       </div>
     </div>
   );

@@ -57,12 +57,12 @@ export default function CustomExamPage() {
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
       <StudentNavbar activeLabel="Custom Exam" />
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 32px 80px' }}>
+      <div className="mz-exam-wrap" style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 32px 80px' }}>
         <header style={{ marginTop: 4 }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: 'var(--accent-text)', textTransform: 'uppercase' }}>
             Custom Exam Generator
           </p>
-          <h1 style={{ margin: '10px 0 8px', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
+          <h1 className="mz-h1" style={{ margin: '10px 0 8px', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text)' }}>
             Build your own practice exam
           </h1>
           <p style={{ fontSize: 15, color: 'var(--text3)', margin: 0, maxWidth: 640, lineHeight: 1.6 }}>
@@ -73,7 +73,7 @@ export default function CustomExamPage() {
 
         {/* STEP 1 — Subject */}
         <Section title="1. Subject" hint="Only unlocked subjects can generate exams for now.">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div className="mz-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             {SUBJECTS.map((s) => {
               const selected = s.id === subjectId;
               return (
@@ -106,7 +106,7 @@ export default function CustomExamPage() {
 
         {/* STEP 2 — Module */}
         <Section title="2. Module" hint="Leave blank to include every module.">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div className="mz-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             <button
               type="button"
               onClick={() => { setModuleCode(null); setChapterIds(new Set()); }}
@@ -201,6 +201,7 @@ export default function CustomExamPage() {
 
         {/* Generate */}
         <div
+          className="mz-exam-bar"
           style={{
             marginTop: 40,
             display: 'flex',
@@ -226,6 +227,7 @@ export default function CustomExamPage() {
             type="button"
             onClick={generate}
             disabled={!canGenerate}
+            className="mz-exam-gen"
             style={{
               display: 'inline-flex',
               alignItems: 'center',

@@ -52,7 +52,7 @@ export default function CatalogueYearsPage() {
           >
             The MediZee Catalogue
           </div>
-          <h1 style={{ margin: 0, fontSize: 42, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text)' }}>
+          <h1 className="mz-h1" style={{ margin: 0, fontSize: 42, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text)' }}>
             Choose your year
           </h1>
           <p style={{ margin: '12px 0 0', fontSize: 14, color: 'var(--text3)', maxWidth: 560, lineHeight: 1.6 }}>
@@ -106,7 +106,7 @@ export default function CatalogueYearsPage() {
       )}
 
       {data && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
+        <div className="mz-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
           {data.years.map((y) => (
             <Link
               key={y.year}
