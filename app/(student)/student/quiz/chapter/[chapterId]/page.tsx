@@ -691,7 +691,7 @@ export default function ChapterQuizPage() {
                 handleQuizComplete();
               }}
               disabled={submitting}
-              className="inline-flex h-8 items-center rounded-md px-3 text-xs font-semibold text-white disabled:opacity-60"
+              className="inline-flex h-8 items-center rounded-md px-3 text-xs font-semibold text-white disabled:opacity-60 max-sm:h-10"
               style={{
                 backgroundColor: 'var(--error)',
               }}
@@ -854,7 +854,7 @@ function TopBar({
         borderBottom: '1px solid var(--line)',
       }}
     >
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-6 px-6 py-4">
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-6 sm:px-6 sm:py-4">
         <div className="hidden flex-col leading-tight md:flex">
           <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
             Active chapter
@@ -862,7 +862,7 @@ function TopBar({
           <span className="text-sm font-semibold text-text-primary">{chapterName}</span>
         </div>
 
-        <div className="flex flex-1 items-center gap-4">
+        <div className="flex items-center gap-4 max-sm:order-last max-sm:basis-full sm:flex-1">
           <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-input">
             <motion.div
               className="h-full rounded-full"
@@ -879,7 +879,7 @@ function TopBar({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-sm:ml-auto">
           {showFullscreenButton && (
             <IconButton
               label="Enter focus mode"
@@ -891,7 +891,7 @@ function TopBar({
             type="button"
             onClick={onExit}
             title="Exit the quiz"
-            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 hover:border-error/30 hover:bg-error/10 hover:text-error"
+            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 max-sm:min-h-10 hover:border-error/30 hover:bg-error/10 hover:text-error"
           >
             <LogOutIcon size={14} />
             Exit
@@ -1006,7 +1006,7 @@ function PhaseOne({
                 border: `1px solid ${isSelected ? 'var(--accent-text)' : 'var(--line)'}`,
               }}
               onMouseEnter={(e) => {
-                if (!isSelected) e.currentTarget.style.borderColor = 'var(--accent-text)';
+                if (!isSelected && window.matchMedia('(hover: hover)').matches) e.currentTarget.style.borderColor = 'var(--accent-text)';
               }}
               onMouseLeave={(e) => {
                 if (!isSelected) e.currentTarget.style.borderColor = 'var(--line)';
@@ -1264,7 +1264,7 @@ function ToolbarButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition',
+        'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition max-sm:h-10',
         active ? 'text-accent' : 'text-text-muted hover:text-text-primary'
       )}
       style={{
@@ -1359,7 +1359,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.16em] transition',
+        'flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.16em] transition max-sm:h-10',
         active ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
       )}
       style={{
@@ -1609,7 +1609,7 @@ function ExitConfirmationModal({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="relative w-full max-w-md rounded-2xl p-8 shadow-2xl mx-4"
+        className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl p-8 shadow-2xl mx-4"
         style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
       >
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-error/10">
@@ -1751,7 +1751,7 @@ function ReportQuestionModal({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="relative mx-4 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl p-6 shadow-2xl sm:p-8"
+        className="relative mx-4 max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl p-6 shadow-2xl sm:p-8"
         style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
       >
         <div
