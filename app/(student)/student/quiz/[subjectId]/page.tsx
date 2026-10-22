@@ -24,7 +24,9 @@ import {
   ShieldAlertIcon,
   SpinnerIcon,
   StickyNoteIcon,
+  ZoomInIcon,
 } from '@/components/icons';
+import { ImageZoomViewer } from '@/components/quiz/ImageZoomViewer';
 import { useQuizStore } from '@/lib/store';
 import { isDemoMode } from '@/lib/demo-profile';
 import {
@@ -1349,6 +1351,10 @@ function ReferenceCard({
   reference: string;
   imageUrl: string | null;
 }) {
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const zoomTriggerRef = useRef<HTMLButtonElement>(null);
+  const closeZoom = useCallback(() => setZoomOpen(false), []);
+
   return (
     <div
       className="relative overflow-hidden rounded-xl p-6"
@@ -1379,29 +1385,55 @@ function ReferenceCard({
       </div>
 
       {imageUrl && (
-        <div
-          className="mt-5 overflow-hidden rounded-lg"
-          style={{
-            border: '1px solid var(--reference-border)',
-            backgroundColor: 'var(--reference-bg)',
-          }}
-        >
-          {/* Plain <img> — bucket URLs aren't in next/image
-              remotePatterns for arbitrary Supabase projects, and
-              this way the browser fetches directly from the CDN. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl}
-            alt="Source page from the module reference book"
+        <>
+          <button
+            ref={zoomTriggerRef}
+            type="button"
+            onClick={() => setZoomOpen(true)}
+            aria-label="Open reference page full screen to zoom"
+            className="group relative mt-5 block w-full overflow-hidden rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
-              display: 'block',
-              width: '100%',
-              height: 'auto',
-              maxHeight: '70vh',
-              objectFit: 'contain',
+              border: '1px solid var(--reference-border)',
+              backgroundColor: 'var(--reference-bg)',
+              cursor: 'zoom-in',
+              outlineColor: 'var(--reference-accent)',
             }}
+          >
+            {/* Plain <img> — bucket URLs aren't in next/image
+                remotePatterns for arbitrary Supabase projects, and
+                this way the browser fetches directly from the CDN. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt="Source page from the module reference book"
+              style={{
+                display: 'block',
+                width: '100%',
+                height: 'auto',
+                maxHeight: '70vh',
+                objectFit: 'contain',
+              }}
+            />
+            <span
+              className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+              style={{
+                backgroundColor: 'var(--surface)',
+                color: 'var(--text2)',
+                border: '1px solid var(--line)',
+              }}
+            >
+              <ZoomInIcon size={14} />
+              Tap to zoom
+            </span>
+          </button>
+          <ImageZoomViewer
+            open={zoomOpen}
+            src={imageUrl}
+            alt="Source page from the module reference book, enlarged"
+            onClose={closeZoom}
+            returnFocusRef={zoomTriggerRef}
           />
-        </div>
+        </>
       )}
 
       <p

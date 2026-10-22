@@ -5,6 +5,9 @@ import Image from 'next/image';
 import { Activity } from 'lucide-react';
 
 type LogoSize = 'sm' | 'md' | 'lg';
+// 'auto' follows the page's text colour (dark in the light theme);
+// 'onDark' is for surfaces that are always dark (the admin sidebar).
+type LogoTone = 'auto' | 'onDark';
 
 const DIMENSIONS: Record<LogoSize, { box: number; text: number; gap: number }> = {
   sm: { box: 32, text: 22, gap: 10 },
@@ -21,9 +24,11 @@ const DIMENSIONS: Record<LogoSize, { box: number; text: number; gap: number }> =
 export function MediZeeLogo({
   size = 'md',
   showWordmark = true,
+  tone = 'auto',
 }: {
   size?: LogoSize;
   showWordmark?: boolean;
+  tone?: LogoTone;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const { box, text, gap } = DIMENSIONS[size];
@@ -55,8 +60,12 @@ export function MediZeeLogo({
       </span>
       {showWordmark && (
         <span
-          className="font-bold text-white"
-          style={{ fontSize: text, letterSpacing: '-0.5px' }}
+          className="font-bold"
+          style={{
+            fontSize: text,
+            letterSpacing: '-0.5px',
+            color: tone === 'onDark' ? '#FFFFFF' : 'var(--text)',
+          }}
         >
           MediZee
         </span>
