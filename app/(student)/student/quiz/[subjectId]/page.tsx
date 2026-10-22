@@ -29,6 +29,7 @@ import {
 import { ImageZoomViewer } from '@/components/quiz/ImageZoomViewer';
 import { useQuizStore } from '@/lib/store';
 import { isDemoMode } from '@/lib/demo-profile';
+import { isTouchDevice } from '@/lib/is-touch-device';
 import {
   histologyQuestions,
   histologySubject,
@@ -205,7 +206,9 @@ export default function QuizEnginePage() {
   // update. Flagged only because enterFullscreen's one fallback path
   // (Fullscreen API unsupported) calls setFullscreenSupported.
   useEffect(() => {
-    if (!submitted) {
+    // Phones/tablets don't get fullscreen forced on every question (it
+    // flickers on Android); the "Enter focus mode" button is still there.
+    if (!submitted && !isTouchDevice()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       enterFullscreen();
     }
@@ -239,6 +242,11 @@ export default function QuizEnginePage() {
         setShowExitModal(true);
         return;
       }
+
+      // Touch devices never accumulate strikes: a back gesture or system
+      // UI can leave fullscreen without the student meaning to, and three
+      // of those would end the exam.
+      if (isTouchDevice()) return;
 
       // Unintentional exit (Escape, browser UI, alt-tab in some
       // browsers). Count it as an integrity violation and warn.
@@ -300,7 +308,7 @@ export default function QuizEnginePage() {
     setShowExitModal(false);
     // Only re-enter fullscreen for the answer phase; the review
     // phase (submitted) is intentionally windowed.
-    if (!submittedRef.current) enterFullscreen();
+    if (!submittedRef.current && !isTouchDevice()) enterFullscreen();
   }
 
   function handleViolationDismiss() {
