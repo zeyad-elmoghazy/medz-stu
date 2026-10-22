@@ -141,7 +141,7 @@ export default function AdminContentPage() {
         }}
       >
         <div style={{ padding: '0 8px' }}>
-          <MediZeeLogo size="sm" />
+          <MediZeeLogo size="sm" tone="onDark" />
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
