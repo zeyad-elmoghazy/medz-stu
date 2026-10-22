@@ -213,7 +213,7 @@ AND slug IN ('chapter-1','chapter-2','chapter-3');
 --    Module 103's Cartilage chapter by migration 007's fallback
 --    logic. Module 207 has the chapters that actually match this
 --    content. Reattach by topic (confirmed against
---    data/histology-questions.ts topic field 2026-08-08).
+--    data/histology-questions.ts topic field 2026-08-08; file since removed).
 -- =============================================================
 DO $$
 DECLARE

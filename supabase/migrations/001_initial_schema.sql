@@ -9,7 +9,8 @@
 --   profiles     — user row keyed to auth.users, with role gate
 --   questions    — published MCQ bank (source of truth for the
 --                  quiz submit path; hard-coded histology bundle
---                  in data/histology-questions.ts is a seed target)
+--                  in data/histology-questions.ts, since removed, was
+--                  a seed target)
 --   violations   — anti-cheat events raised by the proctor overlay,
 --                  referenced by admin audit queries + 002 indexes
 --
@@ -70,7 +71,7 @@ CREATE POLICY "profiles_owner_update" ON profiles
 -- The published MCQ bank. Every subject's block lives here — no
 -- more hard-coded TS bundles in the shipping build.
 --
--- Shape mirrors HistologyQuestion in data/histology-questions.ts
+-- Shape mirrored HistologyQuestion in data/histology-questions.ts (since removed)
 -- so the seed script can transliterate 1:1:
 --   choices             JSONB  — [{id, text}, ...]
 --   choice_rationales   JSONB  — { a: "...", b: "...", ... } | null

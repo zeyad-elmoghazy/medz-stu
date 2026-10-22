@@ -54,17 +54,16 @@ import {
 } from '@/lib/question-flags';
 
 /**
- * Chapter-scoped quiz — same UI/UX as the working custom-exam quiz
- * engine (app/(student)/student/quiz/[subjectId]/page.tsx), minus
- * the AI-tutor panel (not available for this surface). That file is
- * read-only reference here, never imported: its internal
+ * Chapter-scoped quiz: the two-phase (answer, then explanation +
+ * reference) MCQ runner for one chapter's DB-backed questions. Its
  * sub-components (PhaseOne, TopBar, StructuredExplanation,
- * ReferenceCard, ExitConfirmationModal, ...) aren't exported, so
- * this page re-implements them, adapted for DB-backed chapter
- * questions instead of the static histology bank. Anti-cheat is
- * deliberately lighter than the reference (fullscreen encouraged,
- * but no violation-counting / forced session end) — this remains an
- * untimed practice surface, not a proctored challenge.
+ * ReferenceCard, ExitConfirmationModal, ...) are private to this file.
+ * Anti-cheat is deliberately light (fullscreen encouraged, but no
+ * violation-counting / forced session end) — this is an untimed
+ * practice surface, not a proctored challenge. The Custom Exam quiz
+ * (app/(student)/student/quiz/exam/[examId]/page.tsx) is a clone of
+ * this page with a different data layer; keep the two in step when
+ * changing the quiz UI.
  */
 
 // Heavy panel is dynamic-imported so its JS isn't part of the

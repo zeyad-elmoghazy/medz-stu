@@ -17,15 +17,12 @@ import { fetchChapterQuiz, type ChapterQuiz } from '@/lib/chapter-quiz-api';
 import { cn } from '@/lib/utils';
 
 /**
- * Chapter-scoped results screen — same layout/behavior as the
- * reference results/histology/page.tsx (read-only reference here,
- * never imported/edited), adapted to re-fetch the chapter's question
- * list (chapter questions aren't a static importable module like
- * histologyQuestions) and to drop the "Continue to Analytics" CTA,
- * since analytics is built from `quiz_sessions`, which this endpoint
- * deliberately doesn't write to — see
- * app/api/student/chapters/[chapterId]/submit/route.ts for why (it
- * earns XP/leaderboard credit instead of a session-history row).
+ * Chapter-scoped results screen. It renders from the submit response
+ * (app/api/student/chapters/[chapterId]/submit/route.ts, which records
+ * the attempt in `quiz_sessions` and credits XP) and re-fetches the
+ * chapter's question list for the per-question topic and preview. The
+ * Custom Exam results screen (results/exam/[examId]/page.tsx) is the
+ * sibling of this page for exams that span chapters.
  */
 export default function ChapterResultsPage() {
   const params = useParams<{ chapterId: string }>();
@@ -204,7 +201,7 @@ export default function ChapterResultsPage() {
             <button
               type="button"
               onClick={handleSolveAgain}
-              className="group inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition hover:bg-accent-glow"
+              className="group inline-flex h-12 items-center sm:flex-1 justify-center gap-2 rounded-xl text-sm font-semibold text-white transition hover:bg-accent-glow"
               style={{ backgroundColor: 'var(--accent-text)' }}
             >
               <RotateCcwIcon size={16} />
@@ -215,7 +212,7 @@ export default function ChapterResultsPage() {
               type="button"
               onClick={handleQuizMistakes}
               disabled={practiceIds.length === 0}
-              className="group inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
+              className="group inline-flex h-12 items-center sm:flex-1 justify-center gap-2 rounded-xl text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-40"
               style={{ backgroundColor: 'var(--accent-glow)' }}
             >
               <CrosshairIcon size={16} />

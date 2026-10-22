@@ -463,7 +463,7 @@ $$;
 -- =============================================================
 -- SEED: Histology modules + chapters
 -- =============================================================
--- Ports the static catalog in data/histology-catalog.ts into
+-- Ports the static catalog in data/histology-catalog.ts (since removed) into
 -- the DB so professors can immediately author against real
 -- rows. Idempotent — safe to re-run.
 INSERT INTO modules (code, subject_id, name, year_num, year_label, is_active)
@@ -512,7 +512,7 @@ ON CONFLICT (module_code, slug) DO NOTHING;
 -- =============================================================
 -- Backfill: attach seeded histology questions to the Cartilage
 -- chapter so numbers aren't stranded. (The 11 seeded
--- questions in data/histology-questions.ts have no natural
+-- questions in data/histology-questions.ts (since removed) have no natural
 -- chapter home — attach them all to the first published chapter
 -- of HIST 103 so professors see them under a real destination.)
 -- =============================================================

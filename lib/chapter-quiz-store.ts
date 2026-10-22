@@ -2,18 +2,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 /**
- * Chapter-scoped counterpart to lib/store.ts's useQuizStore — same
- * shape and actions, adapted for a `chapterId`-keyed session instead
- * of a `subjectId`-keyed one, and for mistake tracking namespaced
- * per chapter (unlike the reference store's single flat array, which
- * only ever has to disambiguate within one subject's question ids —
- * chapter question ids can collide across different chapters).
- * A new, parallel file: lib/store.ts is left untouched.
+ * Client state for the chapter quiz: a `chapterId`-keyed session, with
+ * mistake tracking namespaced per chapter (chapter question ids can
+ * collide across different chapters, so one flat array won't do).
+ * lib/custom-exam-store.ts is the Custom Exam counterpart.
  *
- * Unlike the reference store, bookmarks and notes are NOT tracked
- * here — the chapter quiz page keeps using its already-working,
- * DB-backed bookmark/notes API (lib/chapter-quiz-api.ts) instead of
- * the reference implementation's purely local, unpersisted toggle.
+ * Bookmarks and notes are NOT tracked here — the quiz page uses the
+ * DB-backed bookmark/notes API (lib/chapter-quiz-api.ts).
  */
 
 export type ChapterSubmissionResult = {

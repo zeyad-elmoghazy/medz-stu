@@ -65,15 +65,12 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 Leave the Upstash and QStash blocks empty for now — the app
 degrades gracefully (see `lib/cache.ts` and `lib/queue.ts`).
 
-**4. Seed the question bank**
+**4. Questions**
 
-```bash
-npm run seed:questions
-```
-
-Idempotent — safe to re-run. Reads from `data/histology-questions.ts`
-and INSERTs into `questions` with `ON CONFLICT (subject_id,
-subject_bundle_id) DO NOTHING`. Requires the service role key.
+The curriculum (modules, subjects, chapters) comes from the
+migrations; questions are imported and published through the admin
+content tools (and the importers under `scripts/import/`). A fresh
+database has chapters but no published questions until you add some.
 
 **5. Boot the app**
 
@@ -89,7 +86,7 @@ with a real email. Verify in the Supabase dashboard that:
   `student` — promote yourself to `admin` via
   `UPDATE profiles SET role = 'admin' WHERE email = '<you>';`)
 
-Take the histology quiz. Verify:
+Take a chapter quiz or a custom exam. Verify:
 
 - `quiz_sessions` gets a new row with your `score` and `accuracy`
 - `daily_streaks` gets a row for today with `challenges_completed = 1`
@@ -101,34 +98,34 @@ Take the histology quiz. Verify:
   You set `NEXT_PUBLIC_DEMO=0` (or unset it) without providing
   real Supabase env. Either fill in the Supabase vars or set
   `NEXT_PUBLIC_DEMO=1`.
-- **`seed:questions` fails with a permissions error:** you're
-  probably using the anon key. It has to be `service_role`.
-- **Quiz returns 400 "no published questions yet":** the
-  `questions` table is empty for that subject. Run
-  `npm run seed:questions` after applying migrations.
+- **Quiz returns 400 "no published questions yet":** the chapter has
+  no published questions. Import or publish some (see step 4).
 
 ## Surfaces
 
 - `/` — marketing landing
 - `/login`, `/signup` — Supabase-backed auth screens
 - `/dashboard` — student home (stats, weekly chart, subjects)
-- `/quiz/[subjectId]` — split/focus MCQ runner with handwritten reference notes
+- `/student/quiz/chapter/[chapterId]` — split/focus MCQ runner for one chapter, with reference notes
+- `/student/exam` — Custom Exam builder (module → subjects → chapters → number of questions);
+  the exam itself runs on `/student/quiz/exam/[examId]`, with results on `/student/results/exam/[examId]`
 - `/professor/dashboard` — cohort analytics, flagged questions, activity feed
 - `/admin/dashboard` — program-level operations, MRR, partner status
 
 ## State
 
-Quiz progress lives in `lib/store.ts` (Zustand with `localStorage` persistence):
-`currentQuestionIndex`, `answers`, `bookmarks`, `notes`, `quizMode`,
-`sessionComplete`, plus actions `answerQuestion`, `toggleBookmark`, `setNote`,
-`nextQuestion`, `prevQuestion`, `jumpToQuestion`, `setQuizMode`,
-`completeSession`, `resetSession`.
+Quiz state is client-side Zustand, and the server is the source of truth for
+anything unfinished:
+
+- `lib/chapter-quiz-store.ts` — chapter quiz (answers, position, mistakes pool),
+  persisted to `localStorage`; unfinished attempts are also saved server-side
+  in `chapter_quiz_progress`.
+- `lib/custom-exam-store.ts` — Custom Exam; only the last result is persisted
+  locally. The drawn questions and the answers so far live in
+  `custom_exam_progress` (migration 035), so Continue always resumes the same exam.
 
 ## Question bank
 
-`data/histology-questions.ts` contains 11 medically accurate MCQs covering the
-blood–brain barrier, epithelium classification, cell junctions, connective
-tissue, pemphigus/desmosome pathology, goblet cells, hyaline cartilage,
-osteoclasts, sarcomere mechanics, eosinophil identification, and germinal
-centers — each with four choices, a 3–4 sentence explanation, and a
-handwritten-style reference note attributed to Dr. Zahra.
+Questions live in the `questions` table (published ones are what students see),
+grouped by chapter. Bookmarks, notes and reports are keyed by question id, so
+they work the same in a chapter quiz and in a custom exam.

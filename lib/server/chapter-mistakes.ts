@@ -1,5 +1,6 @@
 import 'server-only';
 import { untypedFrom } from '@/lib/supabase-server';
+import { chunk } from '@/lib/server/custom-exam';
 
 /**
  * Shared derivation used by both /api/student/stats (Focus Areas +
@@ -22,6 +23,13 @@ export type QuestionAttempt = {
   correctAnswer: string;
   topic: string;
   completedAt: string;
+  /**
+   * True when the answer comes from a FINISHED attempt (a quiz_sessions
+   * row — chapter quiz or custom exam); false for an unfinished one
+   * (chapter_quiz_progress / custom_exam_progress). Lets a caller tell
+   * "has a completed attempt" from "has answers so far".
+   */
+  completed?: boolean;
 };
 
 export type ChapterMistakes = {
@@ -105,12 +113,45 @@ export async function fetchChapterQuizAttempts(
 
   const { data: sessions, error } = await query;
 
+  // `chapter_id` is null for custom-exam rows: an exam spans chapters, so
+  // each answer is credited to its question's own chapter below.
   type AttemptRow = {
-    chapter_id: string;
+    chapter_id: string | null;
     answers: Record<string, string>;
     completed_at: string;
+    /** true = a finished quiz_sessions row; false = an unfinished attempt. */
+    completed: boolean;
   };
-  const rows: AttemptRow[] = error || !sessions ? [] : (sessions as AttemptRow[]);
+  const rows: AttemptRow[] =
+    error || !sessions
+      ? []
+      : (sessions as Omit<AttemptRow, 'completed'>[]).map((r) => ({ ...r, completed: true }));
+
+  // Custom-exam sessions (quiz_sessions.exam_id, migration 035) — their
+  // `answers` keys are real questions.id values just like chapter rows.
+  // Not pre-filtered by chapter: that happens once each answer has been
+  // resolved to its chapter. Merged with the chapter sessions above and
+  // trimmed to the same recency window so `limitSessions` still means
+  // "the N most recent attempts" overall.
+  let examQuery = client
+    .from('quiz_sessions')
+    .select('answers, completed_at')
+    .eq('student_id', studentId)
+    .not('exam_id', 'is', null)
+    .order('completed_at', { ascending: false });
+  if (opts.limitSessions) {
+    examQuery = examQuery.limit(opts.limitSessions);
+  }
+  const { data: examSessions, error: examError } = await examQuery;
+  if (!examError && examSessions) {
+    for (const s of examSessions as { answers: Record<string, string>; completed_at: string }[]) {
+      rows.push({ chapter_id: null, answers: s.answers, completed_at: s.completed_at, completed: true });
+    }
+  }
+  if (opts.limitSessions) {
+    rows.sort((a, b) => (a.completed_at < b.completed_at ? 1 : a.completed_at > b.completed_at ? -1 : 0));
+    rows.splice(opts.limitSessions);
+  }
 
   // Answers from an UNFINISHED attempt (chapter_quiz_progress, migration
   // 032) count too — they are real answers the student gave — so Focus
@@ -128,7 +169,19 @@ export async function fetchChapterQuizAttempts(
   const { data: progress, error: progressError } = await progressQuery;
   if (!progressError && progress) {
     for (const p of progress as { chapter_id: string; answers: Record<string, string>; updated_at: string }[]) {
-      rows.push({ chapter_id: p.chapter_id, answers: p.answers, completed_at: p.updated_at });
+      rows.push({ chapter_id: p.chapter_id, answers: p.answers, completed_at: p.updated_at, completed: false });
+    }
+  }
+
+  // Same for an UNFINISHED custom exam (custom_exam_progress, migration
+  // 035): its answers are real too, and are credited per question below.
+  const { data: examProgress, error: examProgressError } = await client
+    .from('custom_exam_progress')
+    .select('answers, updated_at')
+    .eq('student_id', studentId);
+  if (!examProgressError && examProgress) {
+    for (const p of examProgress as { answers: Record<string, string>; updated_at: string }[]) {
+      rows.push({ chapter_id: null, answers: p.answers, completed_at: p.updated_at, completed: false });
     }
   }
   if (rows.length === 0) return [];
@@ -144,16 +197,21 @@ export async function fetchChapterQuizAttempts(
   }
   if (questionIds.size === 0) return [];
 
-  const { data: questionRows } = await client
-    .from('questions')
-    .select('id, topic, correct_answer')
-    .in('id', Array.from(questionIds));
+  // Chunked: custom exams can carry hundreds of answers, and a long
+  // `IN (...)` list in one GET query string can exceed proxy URL limits.
+  type QuestionLookup = { id: number; topic: string; correct_answer: string; chapter_id: string };
+  const lookups: QuestionLookup[] = [];
+  for (const part of chunk(Array.from(questionIds), 150)) {
+    const { data: questionRows } = await client
+      .from('questions')
+      .select('id, topic, correct_answer, chapter_id')
+      .in('id', part);
+    lookups.push(...((questionRows ?? []) as QuestionLookup[]));
+  }
+  const questionById = new Map(lookups.map((q) => [q.id, q]));
 
-  const questionById = new Map(
-    ((questionRows ?? []) as { id: number; topic: string; correct_answer: string }[]).map(
-      (q) => [q.id, q]
-    )
-  );
+  const scope =
+    opts.chapterIds && opts.chapterIds.length > 0 ? new Set(opts.chapterIds) : null;
 
   const attempts: QuestionAttempt[] = [];
   for (const row of rows) {
@@ -163,13 +221,19 @@ export async function fetchChapterQuizAttempts(
       // Question since unpublished/deleted — safe to skip, nothing
       // valid to show for it.
       if (!q) continue;
+      // Chapter-quiz rows know their chapter; exam rows credit each
+      // answer to the chapter the question actually belongs to.
+      const chapterId = row.chapter_id ?? q.chapter_id;
+      if (!chapterId) continue;
+      if (scope && !scope.has(chapterId)) continue;
       attempts.push({
-        chapterId: row.chapter_id,
+        chapterId,
         questionId,
         chosen,
         correctAnswer: q.correct_answer,
         topic: q.topic,
         completedAt: row.completed_at,
+        completed: row.completed,
       });
     }
   }

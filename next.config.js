@@ -141,10 +141,9 @@ const nextConfig = {
   // error catching in development
   reactStrictMode: true,
 
-  // The legacy Subjects flow (static data/histology-catalog.ts,
-  // Histology-only) is superseded by the DB-backed Catalogue. Route
-  // files aren't deleted yet — this redirect just stops sending
-  // anyone to them while that's confirmed safe.
+  // The legacy Subjects flow (a static, Histology-only catalogue) was
+  // superseded by the DB-backed Catalogue and its route files are gone;
+  // this redirect keeps old bookmarks/links landing somewhere useful.
   async redirects() {
     return [
       {
