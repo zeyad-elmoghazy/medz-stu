@@ -186,6 +186,7 @@ function HomeView({
             a decorative brand mark — the brief's "product is the
             centerpiece" principle. */}
         <div
+          className="mz-dash-photo"
           style={{
             position: 'relative',
             height: 380,
@@ -237,6 +238,7 @@ function HomeView({
           </div>
 
           <h1
+            className="mz-dash-h1"
             style={{
               margin: 0,
               fontSize: 56,
@@ -277,7 +279,7 @@ function HomeView({
               headline number. Published-question count is shown
               smaller and explicitly labeled rather than implying
               the whole bank is live. */}
-          <div style={{ display: 'flex', gap: 30, alignItems: 'center', margin: '30px 0 34px' }}>
+          <div className="mz-dash-micro" style={{ display: 'flex', gap: 30, alignItems: 'center', margin: '30px 0 34px' }}>
             <StatMicro
               value={catalogueStats ? String(catalogueStats.moduleCount) : '—'}
               label={<>Modules</>}
@@ -342,7 +344,7 @@ function HomeView({
       </section>
 
       {/* ================= CATALOGUE ================= */}
-      <section style={{ position: 'relative', padding: '34px 44px 30px' }}>
+      <section className="mz-dash-sec" style={{ position: 'relative', padding: '34px 44px 30px' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <h2 style={{ margin: 0, fontSize: 30, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text)' }}>
             Browse the Catalogue
@@ -474,6 +476,7 @@ function AnalyticsView({
 
   return (
     <section
+      className="mz-dash-sec"
       style={{
         position: 'relative',
         padding: '40px 44px 54px',
@@ -483,7 +486,7 @@ function AnalyticsView({
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
+      <div className="mz-dash-head" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent-text)', letterSpacing: '0.03em', marginBottom: 6 }}>
             Student Analytics
@@ -835,6 +838,7 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
         return (
           <div
             key={c.id}
+            className="mz-dash-chal"
             style={{
               display: 'grid',
               gridTemplateColumns: 'minmax(0,1fr) auto auto auto',
@@ -940,7 +944,7 @@ function StatMicro({
 }
 
 function Divider() {
-  return <div style={{ width: 1, height: 34, background: 'var(--line2)' }} />;
+  return <div className="mz-dash-div" style={{ width: 1, height: 34, background: 'var(--line2)' }} />;
 }
 
 function YearCard({ year }: { year: ModulesByYear['years'][number] }) {

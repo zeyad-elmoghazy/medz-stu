@@ -725,7 +725,7 @@ function TopBar({
         borderBottom: '1px solid var(--line)',
       }}
     >
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-6 px-6 py-4">
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-6 sm:px-6 sm:py-4">
         <div className="hidden flex-col leading-tight md:flex">
           <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
             Active block
@@ -733,7 +733,7 @@ function TopBar({
           <span className="text-sm font-semibold text-text-primary">{subjectName}</span>
         </div>
 
-        <div className="flex flex-1 items-center gap-4">
+        <div className="flex items-center gap-4 max-sm:order-last max-sm:basis-full sm:flex-1">
           <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-input">
             <motion.div
               className="h-full rounded-full"
@@ -751,7 +751,7 @@ function TopBar({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-sm:ml-auto">
           {showFullscreenButton && (
             <IconButton
               label="Enter focus mode"
@@ -763,7 +763,7 @@ function TopBar({
             type="button"
             onClick={onExit}
             title="Exit the challenge"
-            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 hover:border-error/30 hover:bg-error/10 hover:text-error"
+            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 max-sm:min-h-10 hover:border-error/30 hover:bg-error/10 hover:text-error"
           >
             <LogOutIcon size={14} />
             Exit
@@ -788,7 +788,7 @@ function TopBar({
             type="button"
             onClick={onTutorOpen}
             title="Ask the AI tutor"
-            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 hover:border-accent/30 hover:bg-accent/10 hover:text-accent"
+            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 max-sm:min-h-10 hover:border-accent/30 hover:bg-accent/10 hover:text-accent"
           >
             Tutor
           </button>
@@ -878,7 +878,7 @@ function PhaseOne({
                 border: `1px solid ${isSelected ? 'var(--accent-text)' : 'var(--line)'}`,
               }}
               onMouseEnter={(e) => {
-                if (!isSelected) {
+                if (!isSelected && window.matchMedia('(hover: hover)').matches) {
                   e.currentTarget.style.borderColor = 'var(--accent-text)';
                 }
               }}
@@ -1454,7 +1454,7 @@ function ExitConfirmationModal({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="relative w-full max-w-md rounded-2xl p-8 shadow-2xl mx-4"
+        className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl p-8 shadow-2xl mx-4"
         style={{
           backgroundColor: 'var(--surface)',
           border: '1px solid var(--line)',
@@ -1580,7 +1580,7 @@ function ViolationWarning({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="relative w-full max-w-md rounded-2xl p-8 shadow-2xl mx-4"
+        className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl p-8 shadow-2xl mx-4"
         style={{
           backgroundColor: 'var(--surface)',
           border: '1px solid rgb(var(--error-rgb) / 0.4)',

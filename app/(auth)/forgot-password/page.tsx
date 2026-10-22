@@ -45,10 +45,9 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen w-full items-center justify-center px-4 py-16">
+    <main className="relative flex min-h-dvh w-full items-center justify-center px-4 py-16">
       <div
-        style={{ padding: '40px' }}
-        className="animate-fade-in-up w-full max-w-md rounded-2xl border border-border bg-surface"
+        className="animate-fade-in-up w-full max-w-md rounded-2xl border border-border bg-surface p-6 sm:p-10"
       >
         <Link
           href="/"

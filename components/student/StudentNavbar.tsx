@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LogOutIcon, MoonIcon, SpinnerIcon, SunIcon } from '@/components/icons';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { NavToast, useNavToast } from '@/components/ui/NavToast';
@@ -31,7 +31,20 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
 
   const displayName = useDisplayName();
   const [signingOut, setSigningOut] = useState(false);
+  // Phone/tablet drawer (<=1024px). Desktop never renders it; the
+  // menu button and drawer are display:none above that width
+  // (see the mz-snav-* rules in app/globals.css).
+  const [menuOpen, setMenuOpen] = useState(false);
   const { theme, toggleTheme } = useStudentTheme();
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   // Sticky header with a subtle background/shadow that fades in once the
   // page has scrolled — same treatment as dashboard's inline Navbar.
@@ -63,7 +76,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
   return (
     <>
       <nav
-        className={`mz-nav-scroll${scrolled ? ' is-scrolled' : ''}`}
+        className={`mz-nav-scroll mz-snav${scrolled ? ' is-scrolled' : ''}`}
         style={{
           position: 'sticky',
           top: 0,
@@ -77,7 +90,10 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
       >
         <MediZeeLogo size="sm" />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 13.5, fontWeight: 500 }}>
+        <div
+          className="mz-snav-links"
+          style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 13.5, fontWeight: 500 }}
+        >
           {links.map((link) => {
             if (link.href) {
               return (
@@ -128,6 +144,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Link
             href="/student/dashboard?view=analytics"
+            className="mz-snav-desk"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -148,6 +165,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
             type="button"
             onClick={toggleTheme}
             aria-label="Toggle theme"
+            className="mz-snav-theme"
             style={{
               width: 34,
               height: 34,
@@ -166,6 +184,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
 
           <Link
             href="/student/profile"
+            className="mz-snav-desk"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -198,6 +217,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
             type="button"
             onClick={handleLogout}
             disabled={signingOut}
+            className="mz-snav-desk"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -218,7 +238,100 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
             )}
             Log out
           </button>
+
+          {/* Phone/tablet menu button — display:none above 1024px. */}
+          <button
+            type="button"
+            className="mz-snav-menu"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            aria-controls="mz-snav-drawer"
+            onClick={() => setMenuOpen((o) => !o)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              {menuOpen ? (
+                <path d="M6 6l12 12M18 6L6 18" />
+              ) : (
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              )}
+            </svg>
+          </button>
         </div>
+
+        {menuOpen && (
+          <>
+            {/* Tap-outside catcher; sits under the drawer inside the nav's stacking context. */}
+            <div className="mz-snav-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+            <div id="mz-snav-drawer" className="mz-snav-drawer">
+              {links.map((link) => {
+                if (link.href) {
+                  return (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      className="mz-snav-item"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                }
+                if (link.toast) {
+                  return (
+                    <button
+                      key={link.label}
+                      type="button"
+                      className="mz-snav-item"
+                      onClick={() => {
+                        showToast(link.toast!);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      {link.label}
+                    </button>
+                  );
+                }
+                return (
+                  <span
+                    key={link.label}
+                    className={`mz-snav-item${link.active ? ' is-active' : ''}`}
+                    aria-current={link.active ? 'page' : undefined}
+                  >
+                    {link.label}
+                  </span>
+                );
+              })}
+              <Link
+                href="/student/dashboard?view=analytics"
+                className="mz-snav-item mz-snav-item--accent"
+                onClick={() => setMenuOpen(false)}
+              >
+                My Progress
+              </Link>
+              <Link
+                href="/student/profile"
+                className="mz-snav-item"
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="mz-snav-avatar">{initials || 'ME'}</span>
+                <span className="mz-snav-name">{displayName || 'Guest'}</span>
+              </Link>
+              <button
+                type="button"
+                className="mz-snav-item"
+                onClick={handleLogout}
+                disabled={signingOut}
+              >
+                {signingOut ? (
+                  <SpinnerIcon size={15} className="animate-spin" />
+                ) : (
+                  <LogOutIcon size={15} />
+                )}
+                Log out
+              </button>
+            </div>
+          </>
+        )}
       </nav>
       <NavToast message={message} />
     </>

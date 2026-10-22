@@ -241,6 +241,7 @@ export default function CatalogueChaptersPage() {
                 return (
                   <span
                     key={t}
+                    className="mz-chip"
                     onClick={() => setTopicFilter(t)}
                     style={
                       active
@@ -312,6 +313,7 @@ export default function CatalogueChaptersPage() {
                       return (
                         <div
                           key={c.id}
+                          className="mz-chrow"
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -342,6 +344,7 @@ export default function CatalogueChaptersPage() {
                             {String(c.ordinal).padStart(2, '0')}
                           </div>
                           <div
+                            className="mz-chname"
                             style={{
                               flex: 1,
                               minWidth: 0,
@@ -390,6 +393,7 @@ export default function CatalogueChaptersPage() {
                                   saved attempt, not reset it. */}
                               <Link
                                 href={`/student/quiz/chapter/${c.id}`}
+                                className="mz-chact"
                                 style={{
                                   flex: 'none',
                                   fontSize: 11,
@@ -408,6 +412,7 @@ export default function CatalogueChaptersPage() {
                                 type="button"
                                 onClick={() => handleStartOver(c.id)}
                                 disabled={restartingId === c.id}
+                                className="mz-chact"
                                 style={{
                                   flex: 'none',
                                   fontSize: 11,
@@ -430,6 +435,7 @@ export default function CatalogueChaptersPage() {
                             <Link
                               href={`/student/quiz/chapter/${c.id}`}
                               onClick={() => useChapterQuizStore.getState().startSession()}
+                              className="mz-chact"
                               style={{
                                 flex: 'none',
                                 fontSize: 11,
@@ -450,6 +456,7 @@ export default function CatalogueChaptersPage() {
                               <Link
                                 href={`/student/quiz/chapter/${c.id}`}
                                 onClick={() => useChapterQuizStore.getState().startSession()}
+                                className="mz-chact"
                                 style={{
                                   flex: 'none',
                                   fontSize: 11,
@@ -472,6 +479,7 @@ export default function CatalogueChaptersPage() {
                                       .getState()
                                       .startMistakeSession(c.id, c.mistakeQuestionIds)
                                   }
+                                  className="mz-chact"
                                   style={{
                                     flex: 'none',
                                     fontSize: 11,

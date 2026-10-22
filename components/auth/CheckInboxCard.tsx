@@ -25,7 +25,7 @@ export function CheckInboxCard({
       </h1>
       <p className="mt-2 text-sm leading-relaxed text-text-muted">
         {body} We sent a link to{' '}
-        <span className="font-medium text-text-primary">{email}</span>.
+        <span className="break-words font-medium text-text-primary">{email}</span>.
       </p>
       <p className="mt-1 text-xs text-text-muted">
         No email yet? Check your spam folder, or try again in a minute.

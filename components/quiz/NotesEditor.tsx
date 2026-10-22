@@ -145,7 +145,7 @@ export default function NotesEditor({
           type="button"
           onClick={onClose}
           aria-label="Close notes"
-          className="grid h-9 w-9 place-items-center rounded-lg text-text-muted transition hover:text-text-primary"
+          className="grid h-9 w-9 place-items-center rounded-lg text-text-muted transition hover:text-text-primary max-sm:h-10 max-sm:w-10"
           style={{ border: '1px solid var(--line)', backgroundColor: 'var(--fill)' }}
         >
           <CloseIcon size={16} />
@@ -215,7 +215,7 @@ function ToolbarButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="grid h-8 w-8 place-items-center rounded-md text-text-muted transition hover:text-text-primary"
+      className="grid h-8 w-8 place-items-center rounded-md text-text-muted transition hover:text-text-primary max-sm:h-10 max-sm:w-10"
       style={{ border: '1px solid var(--line)', backgroundColor: 'var(--fill)' }}
     >
       {icon}

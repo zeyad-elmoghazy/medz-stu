@@ -94,10 +94,10 @@ export default function LeaderboardPage() {
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
-      <div style={canvasBg}>
+      <div className="mz-lb-canvas" style={canvasBg}>
         <StudentNavbar activeLabel="Leaderboard" />
 
-        <div style={{ maxWidth: 760, margin: '0 auto', padding: '44px 34px 0' }}>
+        <div className="mz-lb-wrap" style={{ maxWidth: 760, margin: '0 auto', padding: '44px 34px 0' }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--accent-text)' }}>
             Leaderboard
           </div>
@@ -110,6 +110,7 @@ export default function LeaderboardPage() {
           </p>
 
           <div
+            className="mz-lb-card"
             style={{
               marginTop: 28,
               background: 'var(--surface)',
@@ -183,6 +184,7 @@ function LeaderboardList({
         return (
           <div
             key={row.id}
+            className="mz-lb-row"
             style={{
               display: 'grid',
               gridTemplateColumns: '28px 1fr auto auto',

@@ -83,7 +83,7 @@ export default function AITutorPanel({
           type="button"
           onClick={onClose}
           aria-label="Close tutor"
-          className="grid h-8 w-8 place-items-center rounded-lg text-text-muted transition hover:text-text-primary"
+          className="grid h-8 w-8 place-items-center rounded-lg text-text-muted transition hover:text-text-primary max-sm:h-10 max-sm:w-10"
           style={{ border: '1px solid var(--line)', backgroundColor: 'var(--fill)' }}
         >
           <CloseIcon size={14} />

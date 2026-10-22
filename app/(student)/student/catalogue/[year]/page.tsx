@@ -70,7 +70,7 @@ export default function CatalogueModulesPage() {
           >
             {yearData?.label ?? ''}
           </div>
-          <h1 style={{ margin: 0, fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text)' }}>
+          <h1 className="mz-h1" style={{ margin: 0, fontSize: 38, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text)' }}>
             Year {year} Modules
           </h1>
           <p style={{ margin: '12px 0 0', fontSize: 13.5, color: 'var(--text3)', maxWidth: 560, lineHeight: 1.6 }}>
@@ -109,7 +109,7 @@ export default function CatalogueModulesPage() {
       )}
 
       {yearData && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
+        <div className="mz-grid3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
           {yearData.modules.map((m) => (
             <div
               key={m.code}

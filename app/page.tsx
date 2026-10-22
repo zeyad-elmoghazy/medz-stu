@@ -82,6 +82,24 @@ const PAGE_CSS = `
   [data-mz-root] .mz-grid-3,[data-mz-root] .mz-grid-subjects{grid-template-columns:1fr!important}
   [data-mz-root] .mz-final-h2{font-size:34px!important}
 }
+@media (max-width:640px){
+  [data-mz-root] .mz-nav{padding:12px 16px!important}
+  [data-mz-root] .mz-nav-right{gap:8px!important}
+  [data-mz-root] .mz-nav-btn{padding:9px 12px!important}
+  [data-mz-root] section:not(#catalogue){padding-left:20px!important;padding-right:20px!important;padding-top:56px!important;padding-bottom:56px!important}
+  [data-mz-root] #catalogue{padding-top:56px!important;padding-bottom:56px!important}
+  [data-mz-root] #catalogue>div{padding-left:20px!important;padding-right:20px!important}
+  [data-mz-root] .mz-subj{max-width:86vw!important}
+  [data-mz-root] .mz-hero-h1{font-size:36px!important}
+  [data-mz-root] .mz-h2{font-size:26px!important}
+  [data-mz-root] .mz-final-h2{font-size:28px!important}
+  [data-mz-root] .mz-price-card{padding:28px 20px!important}
+  [data-mz-root] footer{padding:28px 20px!important}
+  [data-mz-root] footer>div:last-child{flex-wrap:wrap!important;gap:10px 16px!important}
+}
+@media (max-width:400px){
+  [data-mz-root] .mz-brand-word{display:none!important}
+}
 `;
 
 const NAV_SECTIONS = ['features', 'how', 'catalogue', 'pricing'] as const;
@@ -178,7 +196,7 @@ export default function MediZeeHome() {
           <span style={{ width: 32, height: 32, borderRadius: 9, display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
             <Image src="/medizee-logo.webp" alt="MediZee" width={32} height={32} style={{ objectFit: 'cover' }} />
           </span>
-          <span style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--text)' }}>MediZee</span>
+          <span className="mz-brand-word" style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-.5px', color: 'var(--text)' }}>MediZee</span>
         </Link>
         <div className="mz-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
           {NAV_SECTIONS.map(id => (
@@ -187,7 +205,7 @@ export default function MediZeeHome() {
             </a>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div className="mz-nav-right" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <button type="button" onClick={toggleTheme} aria-label="Toggle theme" className="mz-ghost" style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, flex: 'none', borderRadius: 10, border: '1px solid var(--line2)', background: 'transparent', color: 'var(--text2)', cursor: 'pointer' }}>
             {isLight ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" /></svg>
@@ -195,8 +213,8 @@ export default function MediZeeHome() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5z" /></svg>
             )}
           </button>
-          <Link href="/login" className="mz-ghost" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text3)', padding: '9px 16px', borderRadius: 10, border: '1px solid var(--line2)', background: 'transparent' }}>Log in</Link>
-          <Link href="/signup" className="mz-cta" style={{ fontSize: 13.5, fontWeight: 700, color: '#F7F9FA', padding: '10px 18px', borderRadius: 10, background: 'var(--accent-text)' }}>Sign up</Link>
+          <Link href="/login" className="mz-ghost mz-nav-btn" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text3)', padding: '9px 16px', borderRadius: 10, border: '1px solid var(--line2)', background: 'transparent' }}>Log in</Link>
+          <Link href="/signup" className="mz-cta mz-nav-btn" style={{ fontSize: 13.5, fontWeight: 700, color: '#F7F9FA', padding: '10px 18px', borderRadius: 10, background: 'var(--accent-text)' }}>Sign up</Link>
         </div>
       </nav>
 
@@ -321,7 +339,7 @@ export default function MediZeeHome() {
         <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent-text)' }}>Pricing</div>
           <h2 className="mz-h2" style={{ margin: '14px 0 0', fontSize: 40, lineHeight: 1.1, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)' }}>Free for now.</h2>
-          <div style={{ marginTop: 34, background: 'var(--price-card)', border: '1px solid var(--line)', borderRadius: 20, padding: '38px 34px' }}>
+          <div style={{ marginTop: 34, background: 'var(--price-card)', border: '1px solid var(--line)', borderRadius: 20, padding: '38px 34px' }} className="mz-price-card">
             <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-text)' }}>Student</div>
             <div style={{ marginTop: 14, display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 8 }}>
               <span style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text)' }}>0 EGP</span>

@@ -108,7 +108,7 @@ export default function BookmarksPage() {
     <main style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans), system-ui, sans-serif' }}>
       <StudentNavbar activeLabel="Bookmarks" />
 
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '44px 34px 80px' }}>
+      <div className="mz-page-pad" style={{ maxWidth: 860, margin: '0 auto', padding: '44px 34px 80px' }}>
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--accent-text)' }}>
           Saved
         </div>
@@ -148,6 +148,7 @@ export default function BookmarksPage() {
                       e.stopPropagation();
                       handleRemoveBookmark(b.questionId);
                     }}
+                    className="mz-tap"
                     style={removeButtonStyle}
                   >
                     Remove
