@@ -4,7 +4,7 @@
 -- Chapter-quiz completions (app/api/student/chapters/[chapterId]/
 -- submit/route.ts) have never written to quiz_sessions — that
 -- table was deliberately scoped to the old proctored subject-quiz
--- flow (app/api/quiz/submit/route.ts). Since quiz_sessions is what
+-- flow (app/api/quiz/submit/route.ts, since removed). Since quiz_sessions is what
 -- backs the student Analytics view's "Recent Challenges", "Accuracy
 -- Trend", and per-subject numbers, and the chapter-quiz flow is now
 -- the app's real/primary quiz surface, that view has been blind to

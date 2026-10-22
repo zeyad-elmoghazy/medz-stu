@@ -10,7 +10,6 @@ import {
   type SetStateAction,
 } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -20,128 +19,176 @@ import {
   CloseIcon,
   CopyIcon,
   ExpandIcon,
+  FlagIcon,
   LogOutIcon,
-  ShieldAlertIcon,
   SpinnerIcon,
   StickyNoteIcon,
   ZoomInIcon,
 } from '@/components/icons';
 import { ImageZoomViewer } from '@/components/quiz/ImageZoomViewer';
-import { useQuizStore } from '@/lib/store';
-import { isDemoMode } from '@/lib/demo-profile';
 import { isTouchDevice } from '@/lib/is-touch-device';
+import { useCustomExamStore } from '@/lib/custom-exam-store';
 import {
-  histologyQuestions,
-  histologySubject,
-  type HistologyQuestion,
-} from '@/data/histology-questions';
+  fetchChapterReferenceImage,
+  fetchBookmarkStatus,
+  addBookmark,
+  removeBookmark,
+  fetchFlagStatus,
+  reportQuestion,
+  fetchNote,
+  saveNote,
+  type ChapterQuizQuestion,
+} from '@/lib/chapter-quiz-api';
+import {
+  CustomExamApiError,
+  fetchCustomExam,
+  saveCustomExamProgress,
+  submitCustomExam,
+  type CustomExam,
+} from '@/lib/custom-exam-api';
+import { moduleLabel } from '@/lib/dashboard-data';
 import { cn, letterFor } from '@/lib/utils';
-import { AITutorSkeleton } from '@/components/skeletons/AITutorSkeleton';
+import {
+  FLAG_DETAIL_MAX,
+  FLAG_REASONS,
+  FLAG_REASON_LABELS,
+  type FlagReason,
+} from '@/lib/question-flags';
 
-// Heavy panels are dynamic-imported so their JS isn't part of the
-// initial quiz bundle. The user only ever opens them on demand.
-const RichTextEditor = dynamic(
-  () => import('@/components/quiz/NotesEditor'),
-  {
-    loading: () => (
-      <div className="fixed right-0 top-0 z-50 h-full w-full max-w-md p-5 text-sm text-text-muted"
-        style={{ backgroundColor: 'var(--surface)', borderLeft: '1px solid var(--line)' }}
-      >
-        Loading editor...
-      </div>
-    ),
-    ssr: false,
-  }
-);
+/**
+ * Custom Exam quiz — an exact clone of the chapter quiz
+ * (app/(student)/student/quiz/chapter/[chapterId]/page.tsx): the same
+ * two-phase UI, explanation / reference panels, bookmark, notes,
+ * report, fullscreen focus mode and touch behaviour. Only the data
+ * layer differs: the questions are a fixed mixed set drawn from several
+ * chapters when the exam was created, and the server
+ * (custom_exam_progress, migration 035) is the source of truth for the
+ * answers so far — so there is no "fresh start" handshake and nothing
+ * about the attempt is kept in the browser. The chapter page itself is
+ * deliberately left untouched. Like it, this stays an untimed practice
+ * surface: fullscreen is encouraged, never enforced, and there is no
+ * violation counting.
+ */
 
-const AITutorPanel = dynamic(
-  () => import('@/components/quiz/AITutor'),
-  {
-    loading: () => <AITutorSkeleton />,
-    ssr: false,
-  }
-);
+// Heavy panel is dynamic-imported so its JS isn't part of the
+// initial quiz bundle — same reasoning as the reference page.
+const RichTextEditor = dynamic(() => import('@/components/quiz/NotesEditor'), {
+  loading: () => (
+    <div
+      className="fixed right-0 top-0 z-50 h-full w-full max-w-md p-5 text-sm text-text-muted"
+      style={{ backgroundColor: 'var(--surface)', borderLeft: '1px solid var(--line)' }}
+    >
+      Loading editor...
+    </div>
+  ),
+  ssr: false,
+});
 
-export default function QuizEnginePage() {
+export default function CustomExamQuizPage() {
   const router = useRouter();
-  const params = useParams<{ subjectId: string }>();
+  const params = useParams<{ examId: string }>();
+  const examId = params.examId;
 
-  const currentQuestionIndex = useQuizStore((s) => s.currentQuestionIndex);
-  const answers = useQuizStore((s) => s.answers);
-  const bookmarks = useQuizStore((s) => s.bookmarks);
-  const notes = useQuizStore((s) => s.notes);
-  const filterQuestionIds = useQuizStore((s) => s.filterQuestionIds);
-  const sessionStartedAt = useQuizStore((s) => s.sessionStartedAt);
-  const answerQuestion = useQuizStore((s) => s.answerQuestion);
-  const toggleBookmark = useQuizStore((s) => s.toggleBookmark);
-  const setNote = useQuizStore((s) => s.setNote);
-  const nextQuestion = useQuizStore((s) => s.nextQuestion);
-  const completeSession = useQuizStore((s) => s.completeSession);
-  const setLastResult = useQuizStore((s) => s.setLastResult);
-  const recordMistakes = useQuizStore((s) => s.recordMistakes);
-  const clearMistakes = useQuizStore((s) => s.clearMistakes);
-  const saveSession = useQuizStore((s) => s.saveSession);
-  const clearSession = useQuizStore((s) => s.clearSession);
-  const jumpToQuestion = useQuizStore((s) => s.jumpToQuestion);
-  const startSession = useQuizStore((s) => s.startSession);
+  const [data, setData] = useState<CustomExam | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const questions = useMemo(() => {
-    if (filterQuestionIds && filterQuestionIds.length > 0) {
-      const idSet = new Set(filterQuestionIds);
-      return histologyQuestions.filter((q) => idSet.has(q.id));
-    }
-    return histologyQuestions;
-  }, [filterQuestionIds]);
+  const currentQuestionIndex = useCustomExamStore((s) => s.currentQuestionIndex);
+  const answers = useCustomExamStore((s) => s.answers);
+  const answerQuestion = useCustomExamStore((s) => s.answerQuestion);
+  const nextQuestion = useCustomExamStore((s) => s.nextQuestion);
+  const completeSession = useCustomExamStore((s) => s.completeSession);
+  const setLastResult = useCustomExamStore((s) => s.setLastResult);
+  const hydrateFromServer = useCustomExamStore((s) => s.hydrateFromServer);
+  const clearSession = useCustomExamStore((s) => s.clearSession);
+  const jumpToQuestion = useCustomExamStore((s) => s.jumpToQuestion);
+
+  const questions = useMemo(() => data?.questions ?? [], [data]);
 
   const totalQuestions = Math.max(questions.length, 1);
   const safeIndex = Math.min(Math.max(currentQuestionIndex, 0), totalQuestions - 1);
-  const currentQuestion = questions[safeIndex] ?? histologyQuestions[0];
+  const currentQuestion = questions[safeIndex] ?? null;
 
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(false);
-  const [showTutorPanel, setShowTutorPanel] = useState(false);
   const [activeTab, setActiveTab] = useState<'explanation' | 'reference'>('explanation');
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isResuming, setIsResuming] = useState(false);
-  const [violationsCount, setViolationsCount] = useState(0);
-  const [showViolationWarning, setShowViolationWarning] = useState(false);
+  // False until the saved-attempt check below has settled, so the
+  // student can't answer a question that is about to be replaced by
+  // the restored state.
+  const [progressChecked, setProgressChecked] = useState(false);
+  const [savingExit, setSavingExit] = useState(false);
+  const [exitError, setExitError] = useState<string | null>(null);
+  // Tail of the queue of progress saves. Saves run one after another
+  // so a slow earlier request can never land after a later one, and
+  // Save & Exit / submit can wait for everything in flight.
+  const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
 
-  // Tracks whether the most recent fullscreen exit was the user
-  // pressing the Exit button (intentional) vs an Escape/browser
-  // event (unintentional, counts as a violation).
-  const intentionalExit = useRef(false);
   const [fullscreenSupported, setFullscreenSupported] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const intentionalExitRef = useRef(false);
+
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  // "Report this question to the admins" — ids of the questions THIS
+  // student already has a question_flags row for. Keyed by question id
+  // (rather than a single boolean) so moving to the next question can
+  // never show the previous one's "Reported" state. The modal keeps its
+  // own form state.
+  const [reportedIds, setReportedIds] = useState<ReadonlySet<number>>(() => new Set());
+  const reported = currentQuestion ? reportedIds.has(currentQuestion.id) : false;
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [noteContent, setNoteContent] = useState('');
+
+  const [referenceImageUrl, setReferenceImageUrl] = useState<string | null>(null);
+  const [referenceImageLoading, setReferenceImageLoading] = useState(false);
 
   const submittedRef = useRef(false);
-  const intentionalExitRef = useRef(false);
-  const wasFullscreenRef = useRef(false);
 
   useEffect(() => {
-    // If the store already has answers, the user is resuming a
-    // saved session — show the toast and keep the state as-is.
-    // Otherwise this is a fresh visit: wipe any stale saved
-    // session and start the timer. useQuizStore is backed by
-    // localStorage (see lib/store.ts's persist middleware), so this
-    // read is SSR-unsafe and can only happen post-mount.
-    const existingAnswers = useQuizStore.getState().answers;
-    if (Object.keys(existingAnswers).length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsResuming(true);
-    } else {
-      clearSession();
-      if (!sessionStartedAt) {
-        startSession();
+    let cancelled = false;
+
+    // The server (custom_exam_progress) is the source of truth: the exam's
+    // questions are fixed when it is created, and the answers so far and
+    // the position come back with them. Whether this is a brand-new exam,
+    // a Continue, a reload or another device, the page always starts from
+    // exactly this — never from leftover browser state. Hydrating the
+    // store BEFORE `data` is set means the first render with questions
+    // already has the restored answers.
+    async function init() {
+      try {
+        const exam = await fetchCustomExam(examId);
+        if (cancelled) return;
+        hydrateFromServer(exam.examId, exam.progress);
+        setData(exam);
+        if (Object.keys(exam.progress.answers).length > 0) setIsResuming(true);
+        setProgressChecked(true);
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof CustomExamApiError && err.status === 404) {
+          setLoadError(
+            'This exam is no longer available — it may already have been submitted or discarded. You can start a new one from Custom Exam.'
+          );
+        } else {
+          setLoadError(
+            err instanceof Error
+              ? `Couldn't load your exam: ${err.message}. Check your connection and refresh to try again.`
+              : "Couldn't load your exam. Check your connection and refresh to try again."
+          );
+        }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void init();
 
-  // Auto-dismiss the resume toast after 2s.
+    return () => {
+      cancelled = true;
+    };
+  }, [examId, hydrateFromServer]);
+
   useEffect(() => {
     if (!isResuming) return;
     const t = setTimeout(() => setIsResuming(false), 2000);
@@ -154,12 +201,8 @@ export default function QuizEnginePage() {
     }
   }, [currentQuestionIndex, totalQuestions, jumpToQuestion]);
 
-  // selectedChoice is also directly set by PhaseOne while the user is
-  // mid-selection (before submit), so it can't be replaced by a value
-  // derived from `answers` alone — this only needs to resync it when
-  // navigating to a different question or after a real answer commit,
-  // which is exactly what the dependency array below scopes it to.
   useEffect(() => {
+    if (!currentQuestion) return;
     const persisted = answers[currentQuestion.id];
     if (persisted) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -171,7 +214,92 @@ export default function QuizEnginePage() {
       setSubmitted(false);
       submittedRef.current = false;
     }
-  }, [currentQuestion.id, answers]);
+    setActiveTab('explanation');
+    setReferenceImageUrl(null);
+    setReferenceImageLoading(false);
+    // Intentionally scoped to the id, not the whole `currentQuestion`
+    // object — a new array reference from `questions` shouldn't
+    // re-run this on every render, only an actual question change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.id, answers]);
+
+  // Fetch the source-page image whenever the current question is
+  // answered. Keyed on the persisted answer (not the transient
+  // `submitted` flag) so it also runs when a question is already
+  // answered on arrival — a resumed session, a page refresh, or
+  // stepping back to an earlier question — not only inside
+  // handleSubmit. Declared after the reset effect above so that, on
+  // the commit where an answer lands, the reset runs first and the
+  // fetch starts from a clean slate.
+  const currentIsAnswered = !!currentQuestion && answers[currentQuestion.id] != null;
+  const currentReferencePage = currentQuestion?.referencePage ?? null;
+  // An exam spans chapters, so the page image is resolved through the
+  // chapter THIS question belongs to (the route checks the question is
+  // published there and cites that page).
+  const currentChapterId = currentQuestion?.chapterId ?? null;
+  useEffect(() => {
+    if (!currentIsAnswered || currentReferencePage == null || currentChapterId == null) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReferenceImageLoading(true);
+    fetchChapterReferenceImage(currentChapterId, currentReferencePage)
+      .then((url) => {
+        if (!cancelled) setReferenceImageUrl(url);
+      })
+      .finally(() => {
+        if (!cancelled) setReferenceImageLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentChapterId, currentQuestion?.id, currentIsAnswered, currentReferencePage]);
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    let cancelled = false;
+    fetchBookmarkStatus(currentQuestion.id).then((b) => {
+      if (!cancelled) setBookmarked(b);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.id]);
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    let cancelled = false;
+    const questionId = currentQuestion.id;
+    fetchFlagStatus(questionId).then((flagged) => {
+      if (!cancelled && flagged) setReportedIds((prev) => new Set(prev).add(questionId));
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.id]);
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    let cancelled = false;
+    fetchNote(currentQuestion.id).then((content) => {
+      if (!cancelled) setNoteContent(content);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.id]);
+
+  async function toggleBookmark() {
+    if (!currentQuestion || bookmarkLoading) return;
+    setBookmarkLoading(true);
+    const ok = bookmarked
+      ? await removeBookmark(currentQuestion.id)
+      : await addBookmark(currentQuestion.id);
+    if (ok) setBookmarked((b) => !b);
+    setBookmarkLoading(false);
+  }
 
   const enterFullscreen = useCallback(async () => {
     if (typeof document === 'undefined') return;
@@ -185,7 +313,8 @@ export default function QuizEnginePage() {
         await el.requestFullscreen();
       }
     } catch {
-      // Browser requires user gesture — the manual "Enter focus mode" button covers this.
+      // Browser requires a user gesture — the manual "Enter focus
+      // mode" button covers this, same fallback as the reference page.
     }
   }, []);
 
@@ -201,119 +330,93 @@ export default function QuizEnginePage() {
     }
   }, []);
 
-  // Synchronizes the browser's Fullscreen API with question/submit
-  // state — a genuine external-system side effect, not a state
-  // update. Flagged only because enterFullscreen's one fallback path
-  // (Fullscreen API unsupported) calls setFullscreenSupported.
   useEffect(() => {
     // Phones/tablets don't get fullscreen forced on every question (it
     // flickers on Android); the "Enter focus mode" button is still there.
-    if (!submitted && !isTouchDevice()) {
+    if (!submitted && currentQuestion && !isTouchDevice()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       enterFullscreen();
     }
-  }, [submitted, currentQuestion.id, enterFullscreen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitted, currentQuestion?.id, enterFullscreen]);
 
+  // Lighter than the reference page's handler on purpose: tracks
+  // fullscreen state for the UI, but never counts violations or
+  // force-ends the session — this is an untimed practice quiz, not
+  // a proctored challenge (see the file-level comment).
   useEffect(() => {
     function onChange() {
-      const fs = !!document.fullscreenElement;
-      setIsFullscreen(fs);
-      if (fs) {
-        wasFullscreenRef.current = true;
-        return;
-      }
-
-      // Silent programmatic exit (e.g. after submit) — never
-      // shows any modal. The submit flow flips this flag.
-      if (intentionalExitRef.current) {
-        intentionalExitRef.current = false;
-        return;
-      }
-
-      // Already past the Phase-1 fullscreen — split view doesn't
-      // need fullscreen, so no warning here.
-      if (submittedRef.current || !wasFullscreenRef.current) {
-        return;
-      }
-
-      // User clicked the Exit button — show the save modal.
-      if (intentionalExit.current) {
-        intentionalExit.current = false;
-        setShowExitModal(true);
-        return;
-      }
-
-      // Touch devices never accumulate strikes: a back gesture or system
-      // UI can leave fullscreen without the student meaning to, and three
-      // of those would end the exam.
-      if (isTouchDevice()) return;
-
-      // Unintentional exit (Escape, browser UI, alt-tab in some
-      // browsers). Count it as an integrity violation and warn.
-      incrementViolations();
-      setShowViolationWarning(true);
+      setIsFullscreen(!!document.fullscreenElement);
+      intentionalExitRef.current = false;
     }
-
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  function incrementViolations() {
-    setViolationsCount((prev) => {
-      const next = prev + 1;
-      if (next >= 3) {
-        // Anti-cheat force-end. Wipe the saved session — we don't
-        // want the student to resume after being flagged.
-        clearSession();
-        intentionalExitRef.current = true;
-        if (typeof document !== 'undefined' && document.fullscreenElement) {
-          document.exitFullscreen().catch(() => {});
-        }
-        completeSession();
-        router.push('/student/dashboard');
-      }
-      return next;
-    });
-  }
 
   function handleExitButtonClick() {
     if (submitting) return;
-    intentionalExit.current = true;
+    intentionalExitRef.current = true;
     if (typeof document !== 'undefined' && document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {
-        // If the browser refuses the exit, fall back to showing
-        // the modal anyway so the student isn't trapped.
-        intentionalExit.current = false;
-        setShowExitModal(true);
-      });
-    } else {
-      // Not in fullscreen — just show the modal directly.
-      setShowExitModal(true);
+      document.exitFullscreen().catch(() => {});
     }
+    setShowExitModal(true);
   }
 
-  function handleSaveAndExit() {
-    const subjectId = (params.subjectId as string) ?? histologySubject.id;
-    saveSession(subjectId);
+  /**
+   * Saves the attempt (every answer so far + where the student is) to
+   * the server, queued behind any save already in flight. Resolves to
+   * whether the server confirmed THIS save — the queue is serial, so a
+   * confirmed save also means every earlier one has landed.
+   */
+  function persistProgress(
+    answersToSave: Record<number, string>,
+    index: number
+  ): Promise<boolean> {
+    const stringKeyed: Record<string, string> = {};
+    for (const [k, v] of Object.entries(answersToSave)) {
+      stringKeyed[String(k)] = v;
+    }
+    const run = saveQueueRef.current.then(() =>
+      saveCustomExamProgress(examId, {
+        answers: stringKeyed,
+        currentQuestionIndex: index,
+      })
+    );
+    saveQueueRef.current = run;
+    return run;
+  }
+
+  async function handleSaveAndExit() {
+    if (savingExit) return;
+    setExitError(null);
+    setSavingExit(true);
+
+    // Leave only once the server has confirmed the save. On failure
+    // stay put, keep the answers, and say so — never claim "saved"
+    // when it wasn't.
+    const saved = await persistProgress(answers, safeIndex);
+    if (!saved) {
+      setSavingExit(false);
+      setExitError(
+        "We couldn't save your progress. Check your connection and try again — your answers are still here."
+      );
+      return;
+    }
+
     if (typeof document !== 'undefined' && document.fullscreenElement) {
       intentionalExitRef.current = true;
       document.exitFullscreen().catch(() => {});
     }
     setShowExitModal(false);
-    router.push('/student/dashboard');
+    // Back to the builder, which offers Continue for the saved exam.
+    router.push('/student/exam');
   }
 
   function handleContinueChallenge() {
+    if (savingExit) return;
+    setExitError(null);
     setShowExitModal(false);
-    // Only re-enter fullscreen for the answer phase; the review
-    // phase (submitted) is intentionally windowed.
     if (!submittedRef.current && !isTouchDevice()) enterFullscreen();
-  }
-
-  function handleViolationDismiss() {
-    setShowViolationWarning(false);
-    enterFullscreen();
   }
 
   useEffect(() => {
@@ -326,26 +429,47 @@ export default function QuizEnginePage() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && showNotesPanel) {
+      if (e.key === 'Escape' && showReportModal) {
+        setShowReportModal(false);
+      } else if (e.key === 'Escape' && showNotesPanel) {
         setShowNotesPanel(false);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showNotesPanel]);
+  }, [showNotesPanel, showReportModal]);
 
-  const isCorrect = submitted && selectedChoice === currentQuestion.correctAnswer;
+  // Sends the report. Throws on failure so the modal can show the
+  // message inline; 'already_reported' counts as success — the admins
+  // already have this student's report.
+  async function handleReportSubmit(reason: FlagReason, detail: string) {
+    if (!currentQuestion) return;
+    const questionId = currentQuestion.id;
+    await reportQuestion(questionId, {
+      reason,
+      detail: detail.trim() || undefined,
+    });
+    setReportedIds((prev) => new Set(prev).add(questionId));
+  }
+
+  const isCorrect = !!currentQuestion && submitted && selectedChoice === currentQuestion.correctAnswer;
   const isLastQuestion = safeIndex === totalQuestions - 1;
   const progressPct = Math.round(((safeIndex + (submitted ? 1 : 0)) / totalQuestions) * 100);
-  const isBookmarked = bookmarks.includes(currentQuestion.id);
-  const currentNote = notes[currentQuestion.id] ?? '';
 
   function handleSubmit() {
-    if (!selectedChoice || submitted) return;
+    if (!selectedChoice || submitted || !currentQuestion) return;
     submittedRef.current = true;
     answerQuestion(currentQuestion.id, selectedChoice);
     setSubmitted(true);
     exitFullscreen();
+    // Record this answer on the server right away, so it counts toward
+    // the Progress dashboard and survives a closed tab even if the
+    // student never reaches Save & Exit. Fire-and-forget: a failure
+    // here is retried by the next answer's full snapshot and, finally,
+    // by Save & Exit, which blocks until a save is confirmed.
+    void persistProgress({ ...answers, [currentQuestion.id]: selectedChoice }, safeIndex);
+    // The reference image is fetched by the effect keyed on the
+    // persisted answer, so it isn't started here.
   }
 
   async function handleNext() {
@@ -360,109 +484,48 @@ export default function QuizEnginePage() {
   }
 
   /**
-   * Finalize the quiz: in demo mode we score locally and pass
-   * the score in the URL; in real mode we POST to /api/quiz/submit,
-   * stash the per-question result in the store for the results
-   * page, and route. Errors set `submitError` so the student can
-   * retry without losing their answers.
+   * Finalize the exam: POSTs to the custom-exam submit endpoint (scored
+   * server-side, recorded as one quiz_sessions row, XP / streak credited
+   * — see app/api/student/custom-exam/[examId]/submit/route.ts), then
+   * stashes the per-question result in the store for the results page
+   * and routes. Errors set `submitError` so the student can retry
+   * without losing their answers. If the exam is already gone (submitted
+   * from another tab, or discarded) there is nothing left to retry, so
+   * the student is taken to Progress, where a submitted exam is listed.
    */
   async function handleQuizComplete() {
-    if (submitting) return;
+    if (submitting || !data) return;
     setSubmitError(null);
 
-    const subjectId = (params.subjectId as string) ?? histologySubject.id;
-    const startedAt = new Date(
-      sessionStartedAt ?? Date.now()
-    ).toISOString();
-
-    // String-keyed payload — the server schema validates it
-    // with z.record(z.string(), z.string()).
     const stringKeyedAnswers: Record<string, string> = {};
     for (const [k, v] of Object.entries(answers)) {
       stringKeyedAnswers[String(k)] = v;
     }
 
-    if (isDemoMode()) {
-      // Build a full result snapshot BEFORE clearSession() wipes
-      // `answers` — otherwise the results page reads nothing and
-      // shows every question as skipped.
-      const scoredQuestions = questions;
-      const results = scoredQuestions.map((q) => {
-        const chosen = answers[q.id] ?? null;
-        return {
-          questionId: q.id,
-          isCorrect: chosen === q.correctAnswer,
-          chosen,
-          correct: q.correctAnswer,
-        };
-      });
-      const score = results.filter((r) => r.isCorrect).length;
-      const total = scoredQuestions.length;
-      const attempted = results.filter((r) => r.chosen !== null).length;
-
-      setLastResult({
-        sessionId: `demo-${Date.now()}`,
-        score,
-        total,
-        accuracy: attempted === 0 ? 0 : Math.round((score / attempted) * 100),
-        results,
-      });
-
-      const wrongIds = results.filter((r) => r.chosen !== null && !r.isCorrect).map((r) => r.questionId);
-      const correctIds = results.filter((r) => r.isCorrect).map((r) => r.questionId);
-      recordMistakes(wrongIds);
-      clearMistakes(correctIds);
-
-      completeSession();
-      clearSession();
-      router.push(
-        `/student/results/${subjectId}?score=${score}&total=${total}`
-      );
-      return;
-    }
-
     setSubmitting(true);
     try {
-      const res = await fetch('/api/quiz/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          subjectId,
-          answers: stringKeyedAnswers,
-          questionIds: questions.map((q) => q.id),
-          startedAt,
-          violationsCount,
-        }),
+      // Let any in-flight progress save land BEFORE submitting: the
+      // submit route deletes the saved exam, and a save arriving after
+      // that would be rejected with a 404 and look like a failure.
+      await saveQueueRef.current.catch(() => undefined);
+      const resultData = await submitCustomExam(examId, stringKeyedAnswers);
+
+      setLastResult({
+        ...resultData,
+        examId: data.examId,
+        moduleCode: data.moduleCode,
+        moduleName: data.moduleName,
+        chapterIds: data.chapterIds,
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `Submission failed (${res.status})`);
-      }
-
-      const data = (await res.json()) as {
-        sessionId: string;
-        score: number;
-        total: number;
-        accuracy: number;
-        results: Array<{
-          questionId: number;
-          isCorrect: boolean;
-          chosen: string | null;
-          correct: string;
-        }>;
-      };
-
-      setLastResult(data);
-      const wrongIds = data.results.filter((r) => r.chosen !== null && !r.isCorrect).map((r) => r.questionId);
-      const correctIds = data.results.filter((r) => r.isCorrect).map((r) => r.questionId);
-      recordMistakes(wrongIds);
-      clearMistakes(correctIds);
       completeSession();
       clearSession();
-      router.push(`/student/results/${subjectId}`);
+      router.push(`/student/results/exam/${examId}`);
     } catch (err) {
+      if (err instanceof CustomExamApiError && (err.status === 404 || err.status === 409)) {
+        clearSession();
+        router.push('/student/dashboard?view=analytics');
+        return;
+      }
       setSubmitError(
         err instanceof Error
           ? err.message
@@ -474,6 +537,7 @@ export default function QuizEnginePage() {
   }
 
   async function handleCopy() {
+    if (!currentQuestion) return;
     const lines: string[] = [currentQuestion.question, ''];
     currentQuestion.choices.forEach((c, idx) => {
       lines.push(`${letterFor(idx)}. ${c.text}`);
@@ -493,19 +557,58 @@ export default function QuizEnginePage() {
     }
   }
 
+  if (loadError) {
+    return (
+      <main
+        className="flex min-h-screen w-full items-center justify-center px-6 text-center"
+        style={{ backgroundColor: 'var(--bg)' }}
+      >
+        <p className="text-sm text-error">{loadError}</p>
+      </main>
+    );
+  }
+
+  if (!data || !progressChecked) {
+    return (
+      <main
+        className="flex min-h-screen w-full items-center justify-center gap-2 text-sm text-text-muted"
+        style={{ backgroundColor: 'var(--bg)' }}
+      >
+        <SpinnerIcon size={16} className="animate-spin" />
+        Loading quiz…
+      </main>
+    );
+  }
+
+  if (data.questions.length === 0) {
+    return (
+      <main
+        className="flex min-h-screen w-full items-center justify-center px-6 text-center"
+        style={{ backgroundColor: 'var(--bg)' }}
+      >
+        <p className="text-sm text-text-muted">None of this exam’s questions are available any more.</p>
+      </main>
+    );
+  }
+
+  if (!currentQuestion) {
+    return null;
+  }
+
   return (
     <main className="relative min-h-screen w-full" style={{ backgroundColor: 'var(--bg)' }}>
       <TopBar
         currentIndex={safeIndex}
         total={totalQuestions}
         progressPct={progressPct}
-        isBookmarked={isBookmarked}
-        onBookmarkToggle={() => toggleBookmark(currentQuestion.id)}
+        isBookmarked={bookmarked}
+        bookmarkLoading={bookmarkLoading}
+        onBookmarkToggle={toggleBookmark}
         onNotesOpen={() => setShowNotesPanel(true)}
-        onTutorOpen={() => setShowTutorPanel(true)}
         showFullscreenButton={!isFullscreen && fullscreenSupported && !submitted}
         onRequestFullscreen={enterFullscreen}
-        subjectName={histologySubject.name}
+        label="Custom exam"
+        title={moduleLabel(data.moduleCode, data.moduleName)}
         onExit={handleExitButtonClick}
       />
 
@@ -554,7 +657,7 @@ export default function QuizEnginePage() {
                 handleQuizComplete();
               }}
               disabled={submitting}
-              className="inline-flex h-8 items-center rounded-md px-3 text-xs font-semibold text-white disabled:opacity-60"
+              className="inline-flex h-8 items-center rounded-md px-3 text-xs font-semibold text-white disabled:opacity-60 max-sm:h-10"
               style={{
                 backgroundColor: 'var(--error)',
               }}
@@ -600,9 +703,11 @@ export default function QuizEnginePage() {
                 question={currentQuestion}
                 selectedChoice={selectedChoice}
                 isCorrect={isCorrect}
-                isBookmarked={isBookmarked}
-                onBookmarkToggle={() => toggleBookmark(currentQuestion.id)}
+                isBookmarked={bookmarked}
+                onBookmarkToggle={toggleBookmark}
                 onNotesOpen={() => setShowNotesPanel(true)}
+                isReported={reported}
+                onReportOpen={() => setShowReportModal(true)}
                 onCopy={handleCopy}
                 copied={copied}
                 onNext={handleNext}
@@ -620,6 +725,8 @@ export default function QuizEnginePage() {
                 question={currentQuestion}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+                referenceImageUrl={referenceImageUrl}
+                referenceImageLoading={referenceImageLoading}
               />
             </motion.div>
           </motion.section>
@@ -638,38 +745,12 @@ export default function QuizEnginePage() {
               className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
             />
             <RichTextEditor
-              // Remounts on question change instead of resetting via an
-              // effect — see NotesEditor.tsx. Also means a pending debounced
-              // save flushes through its unmount cleanup rather than being
-              // silently discarded.
               key={currentQuestion.id}
               topic={currentQuestion.topic}
-              initialValue={currentNote}
-              onChange={(value) => setNote(currentQuestion.id, value)}
+              initialValue={noteContent}
+              onChange={(value) => saveNote(currentQuestion.id, value)}
               onClose={() => setShowNotesPanel(false)}
             />
-          </>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showTutorPanel && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setShowTutorPanel(false)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-            />
-            <div className="fixed right-0 top-0 z-50 h-full w-full max-w-md p-4">
-              <AITutorPanel
-                questionStem={currentQuestion.question}
-                topic={currentQuestion.topic}
-                onClose={() => setShowTutorPanel(false)}
-              />
-            </div>
           </>
         )}
       </AnimatePresence>
@@ -684,6 +765,8 @@ export default function QuizEnginePage() {
               return q && q.correctAnswer === choice ? sum + 1 : sum;
             }, 0)}
             currentIndex={safeIndex}
+            saving={savingExit}
+            error={exitError}
             onSaveAndExit={handleSaveAndExit}
             onContinue={handleContinueChallenge}
           />
@@ -691,10 +774,12 @@ export default function QuizEnginePage() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showViolationWarning && (
-          <ViolationWarning
-            violations={violationsCount}
-            onDismiss={handleViolationDismiss}
+        {showReportModal && (
+          <ReportQuestionModal
+            key={currentQuestion.id}
+            alreadyReported={reported}
+            onSubmit={handleReportSubmit}
+            onClose={() => setShowReportModal(false)}
           />
         )}
       </AnimatePresence>
@@ -707,24 +792,26 @@ function TopBar({
   total,
   progressPct,
   isBookmarked,
+  bookmarkLoading,
   onBookmarkToggle,
   onNotesOpen,
-  onTutorOpen,
   showFullscreenButton,
   onRequestFullscreen,
-  subjectName,
+  label,
+  title,
   onExit,
 }: {
   currentIndex: number;
   total: number;
   progressPct: number;
   isBookmarked: boolean;
+  bookmarkLoading: boolean;
   onBookmarkToggle: () => void;
   onNotesOpen: () => void;
-  onTutorOpen: () => void;
   showFullscreenButton: boolean;
   onRequestFullscreen: () => void;
-  subjectName: string;
+  label: string;
+  title: string;
   onExit: () => void;
 }) {
   return (
@@ -738,9 +825,9 @@ function TopBar({
       <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-6 sm:px-6 sm:py-4">
         <div className="hidden flex-col leading-tight md:flex">
           <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
-            Active block
+            {label}
           </span>
-          <span className="text-sm font-semibold text-text-primary">{subjectName}</span>
+          <span className="text-sm font-semibold text-text-primary">{title}</span>
         </div>
 
         <div className="flex items-center gap-4 max-sm:order-last max-sm:basis-full sm:flex-1">
@@ -756,8 +843,7 @@ function TopBar({
             />
           </div>
           <span className="shrink-0 text-xs font-medium text-text-muted">
-            Question{' '}
-            <span className="text-text-primary">{currentIndex + 1}</span> of {total}
+            Question <span className="text-text-primary">{currentIndex + 1}</span> of {total}
           </span>
         </div>
 
@@ -772,7 +858,7 @@ function TopBar({
           <button
             type="button"
             onClick={onExit}
-            title="Exit the challenge"
+            title="Exit the quiz"
             className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 max-sm:min-h-10 hover:border-error/30 hover:bg-error/10 hover:text-error"
           >
             <LogOutIcon size={14} />
@@ -787,21 +873,20 @@ function TopBar({
             label={isBookmarked ? 'Remove bookmark' : 'Bookmark this question'}
             onClick={onBookmarkToggle}
             active={isBookmarked}
-            icon={<BookmarkIcon size={16} filled={isBookmarked} />}
+            disabled={bookmarkLoading}
+            icon={
+              bookmarkLoading ? (
+                <SpinnerIcon size={16} className="animate-spin" />
+              ) : (
+                <BookmarkIcon size={16} filled={isBookmarked} />
+              )
+            }
           />
           <IconButton
             label="Open notes"
             onClick={onNotesOpen}
             icon={<StickyNoteIcon size={16} />}
           />
-          <button
-            type="button"
-            onClick={onTutorOpen}
-            title="Ask the AI tutor"
-            className="flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-1.5 text-xs font-medium text-text-muted transition-all duration-200 max-sm:min-h-10 hover:border-accent/30 hover:bg-accent/10 hover:text-accent"
-          >
-            Tutor
-          </button>
         </div>
       </div>
     </header>
@@ -813,23 +898,24 @@ function IconButton({
   onClick,
   icon,
   active,
+  disabled,
 }: {
   label: string;
   onClick: () => void;
   icon: React.ReactNode;
   active?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={label}
       title={label}
       className={cn(
-        'grid h-10 w-10 place-items-center rounded-lg transition',
-        active
-          ? 'text-accent'
-          : 'text-text-muted hover:text-text-primary'
+        'grid h-10 w-10 place-items-center rounded-lg transition disabled:cursor-default',
+        active ? 'text-accent' : 'text-text-muted hover:text-text-primary'
       )}
       style={{
         border: '1px solid var(--line)',
@@ -847,7 +933,7 @@ function PhaseOne({
   setSelectedChoice,
   onSubmit,
 }: {
-  question: HistologyQuestion;
+  question: ChapterQuizQuestion;
   selectedChoice: string | null;
   setSelectedChoice: Dispatch<SetStateAction<string | null>>;
   onSubmit: () => void;
@@ -888,14 +974,10 @@ function PhaseOne({
                 border: `1px solid ${isSelected ? 'var(--accent-text)' : 'var(--line)'}`,
               }}
               onMouseEnter={(e) => {
-                if (!isSelected && window.matchMedia('(hover: hover)').matches) {
-                  e.currentTarget.style.borderColor = 'var(--accent-text)';
-                }
+                if (!isSelected && window.matchMedia('(hover: hover)').matches) e.currentTarget.style.borderColor = 'var(--accent-text)';
               }}
               onMouseLeave={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.borderColor = 'var(--line)';
-                }
+                if (!isSelected) e.currentTarget.style.borderColor = 'var(--line)';
               }}
             >
               <span
@@ -918,10 +1000,7 @@ function PhaseOne({
         type="button"
         onClick={onSubmit}
         disabled={!selectedChoice}
-        className={cn(
-          'inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition',
-          'disabled:cursor-not-allowed disabled:opacity-50'
-        )}
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
         style={{
           backgroundColor: 'var(--accent-text)',
         }}
@@ -940,18 +1019,22 @@ function PhaseTwoLeft({
   isBookmarked,
   onBookmarkToggle,
   onNotesOpen,
+  isReported,
+  onReportOpen,
   onCopy,
   copied,
   onNext,
   isLastQuestion,
   submitting,
 }: {
-  question: HistologyQuestion;
+  question: ChapterQuizQuestion;
   selectedChoice: string | null;
   isCorrect: boolean;
   isBookmarked: boolean;
   onBookmarkToggle: () => void;
   onNotesOpen: () => void;
+  isReported: boolean;
+  onReportOpen: () => void;
   onCopy: () => void;
   copied: boolean;
   onNext: () => void;
@@ -1038,7 +1121,8 @@ function PhaseTwoLeft({
         })}
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-5"
+      <div
+        className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-5"
         style={{ borderColor: 'var(--line)' }}
       >
         <div className="flex flex-wrap items-center gap-2">
@@ -1052,6 +1136,12 @@ function PhaseTwoLeft({
             label="Notes"
             onClick={onNotesOpen}
             icon={<StickyNoteIcon size={14} />}
+          />
+          <ToolbarButton
+            label={isReported ? 'Reported' : 'Report'}
+            onClick={onReportOpen}
+            active={isReported}
+            icon={<FlagIcon size={14} filled={isReported} />}
           />
           <ToolbarButton
             label={copied ? 'Copied!' : 'Copy'}
@@ -1142,7 +1232,7 @@ function ToolbarButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition',
+        'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition max-sm:h-10',
         active ? 'text-accent' : 'text-text-muted hover:text-text-primary'
       )}
       style={{
@@ -1160,20 +1250,21 @@ function PhaseTwoRight({
   question,
   activeTab,
   setActiveTab,
+  referenceImageUrl,
+  referenceImageLoading,
 }: {
-  question: HistologyQuestion;
+  question: ChapterQuizQuestion;
   activeTab: 'explanation' | 'reference';
   setActiveTab: Dispatch<SetStateAction<'explanation' | 'reference'>>;
+  referenceImageUrl: string | null;
+  referenceImageLoading: boolean;
 }) {
   return (
     <div
       className="flex h-full flex-col rounded-2xl"
       style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
     >
-      <div
-        className="flex items-center gap-1 p-2"
-        style={{ borderBottom: '1px solid var(--line)' }}
-      >
+      <div className="flex items-center gap-1 p-2" style={{ borderBottom: '1px solid var(--line)' }}>
         <TabButton
           active={activeTab === 'explanation'}
           onClick={() => setActiveTab('explanation')}
@@ -1206,10 +1297,14 @@ function PhaseTwoRight({
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25 }}
             >
-              <ReferenceCard
-                reference={question.reference}
-                imageUrl={question.referenceImageUrl ?? null}
-              />
+              {referenceImageLoading ? (
+                <div className="flex items-center gap-2 text-xs text-text-muted">
+                  <SpinnerIcon size={14} className="animate-spin" />
+                  Loading reference image…
+                </div>
+              ) : (
+                <ReferenceCard reference={question.reference} imageUrl={referenceImageUrl} />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1232,7 +1327,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.16em] transition',
+        'flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.16em] transition max-sm:h-10',
         active ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
       )}
       style={{
@@ -1244,7 +1339,7 @@ function TabButton({
   );
 }
 
-function StructuredExplanation({ question }: { question: HistologyQuestion }) {
+function StructuredExplanation({ question }: { question: ChapterQuizQuestion }) {
   const sentences = useMemo(
     () =>
       question.explanation
@@ -1256,9 +1351,7 @@ function StructuredExplanation({ question }: { question: HistologyQuestion }) {
 
   const summary = sentences[0] ?? question.explanation;
   const details = sentences.slice(1);
-  const correctChoice = question.choices.find(
-    (c) => c.id === question.correctAnswer
-  );
+  const correctChoice = question.choices.find((c) => c.id === question.correctAnswer);
 
   return (
     <div className="space-y-6">
@@ -1288,27 +1381,23 @@ function StructuredExplanation({ question }: { question: HistologyQuestion }) {
             {question.choices.map((c) => {
               const raw = question.choiceRationales?.[c.id];
               if (!raw) return null;
-              const isCorrect = c.id === question.correctAnswer;
+              const isCorrectChoice = c.id === question.correctAnswer;
               return (
                 <li
                   key={c.id}
                   className="rounded-lg p-3"
                   style={{
-                    backgroundColor: isCorrect
+                    backgroundColor: isCorrectChoice
                       ? 'rgb(var(--success-rgb) / 0.08)'
                       : 'var(--fill)',
-                    border: `1px solid ${
-                      isCorrect ? 'rgb(var(--success-rgb) / 0.35)' : 'var(--line)'
-                    }`,
+                    border: `1px solid ${isCorrectChoice ? 'rgb(var(--success-rgb) / 0.35)' : 'var(--line)'}`,
                   }}
                 >
                   <p
                     className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                    style={{
-                      color: isCorrect ? 'var(--success)' : 'var(--error)',
-                    }}
+                    style={{ color: isCorrectChoice ? 'var(--success)' : 'var(--error)' }}
                   >
-                    {c.id.toUpperCase()} · {isCorrect ? 'Correct' : 'Wrong'}
+                    {c.id.toUpperCase()} · {isCorrectChoice ? 'Correct' : 'Wrong'}
                   </p>
                   <p className="mt-1 text-xs leading-relaxed text-text-primary">
                     {stripPrefix(raw)}
@@ -1383,10 +1472,7 @@ function ReferenceCard({
           >
             Reference
           </span>
-          <span
-            className="text-sm font-semibold"
-            style={{ color: 'var(--reference-accent)' }}
-          >
+          <span className="text-sm font-semibold" style={{ color: 'var(--reference-accent)' }}>
             From the Module Reference Book
           </span>
         </div>
@@ -1399,6 +1485,7 @@ function ReferenceCard({
             type="button"
             onClick={() => setZoomOpen(true)}
             aria-label="Open reference page full screen to zoom"
+            data-testid="reference-zoom-trigger"
             className="group relative mt-5 block w-full overflow-hidden rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               border: '1px solid var(--reference-border)',
@@ -1407,9 +1494,7 @@ function ReferenceCard({
               outlineColor: 'var(--reference-accent)',
             }}
           >
-            {/* Plain <img> — bucket URLs aren't in next/image
-                remotePatterns for arbitrary Supabase projects, and
-                this way the browser fetches directly from the CDN. */}
+            {/* Plain <img> — bucket URLs aren't in next/image's remotePatterns. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
@@ -1444,17 +1529,11 @@ function ReferenceCard({
         </>
       )}
 
-      <p
-        className="mt-5 font-handwritten leading-relaxed"
-        style={{ fontSize: '1.4rem', color: 'var(--reference-text)' }}
-      >
+      <p className="mt-5 font-handwritten leading-relaxed" style={{ fontSize: '1.4rem', color: 'var(--reference-text)' }}>
         {reference}
       </p>
 
-      <p
-        className="mt-6 text-right text-xs italic"
-        style={{ color: 'var(--reference-accent)' }}
-      >
+      <p className="mt-6 text-right text-xs italic" style={{ color: 'var(--reference-accent)' }}>
         Module Reference Book
       </p>
     </div>
@@ -1466,6 +1545,8 @@ function ExitConfirmationModal({
   totalCount,
   correctCount,
   currentIndex,
+  saving,
+  error,
   onSaveAndExit,
   onContinue,
 }: {
@@ -1473,6 +1554,8 @@ function ExitConfirmationModal({
   totalCount: number;
   correctCount: number;
   currentIndex: number;
+  saving: boolean;
+  error: string | null;
   onSaveAndExit: () => void;
   onContinue: () => void;
 }) {
@@ -1495,33 +1578,21 @@ function ExitConfirmationModal({
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
         className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl p-8 shadow-2xl mx-4"
-        style={{
-          backgroundColor: 'var(--surface)',
-          border: '1px solid var(--line)',
-        }}
+        style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
       >
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-error/10">
           <LogOutIcon size={24} className="text-error" />
         </div>
 
-        <h2
-          id="exit-confirmation-title"
-          className="mb-2 text-center text-xl font-bold text-text-primary"
-        >
-          Exit Challenge?
+        <h2 id="exit-confirmation-title" className="mb-2 text-center text-xl font-bold text-text-primary">
+          Exit Quiz?
         </h2>
         <p className="mb-2 text-center text-sm text-text-muted">
-          Your progress will be saved automatically.
+          Your answers so far will be saved, and you can pick up where you left off.
         </p>
 
-        <div
-          className="mb-6 mt-4 rounded-xl p-4"
-          style={{ backgroundColor: 'var(--fill)' }}
-        >
-          <ExitProgressRow
-            label="Questions answered"
-            value={`${answeredCount} of ${totalCount}`}
-          />
+        <div className="mb-6 mt-4 rounded-xl p-4" style={{ backgroundColor: 'var(--fill)' }}>
+          <ExitProgressRow label="Questions answered" value={`${answeredCount} of ${totalCount}`} />
           <ExitProgressRow
             label="Correct so far"
             value={String(correctCount)}
@@ -1535,34 +1606,34 @@ function ExitConfirmationModal({
           />
         </div>
 
+        {error && (
+          <p role="alert" className="mb-4 text-center text-sm text-error">
+            {error}
+          </p>
+        )}
+
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onSaveAndExit}
-            className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
+            disabled={saving}
+            className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200 disabled:opacity-60"
             style={{ backgroundColor: 'var(--error)' }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = 'var(--error)')
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = 'var(--error)')
-            }
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--error)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--error)')}
           >
-            Save &amp; Exit
+            {saving ? 'Saving…' : error ? 'Try again' : 'Save & Exit'}
           </button>
           <button
             type="button"
             onClick={onContinue}
-            className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
+            disabled={saving}
+            className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200 disabled:opacity-60"
             style={{ backgroundColor: 'var(--accent-text)' }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = 'var(--accent-text)')
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = 'var(--accent-text)')
-            }
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-text)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-text)')}
           >
-            Continue Challenge
+            Continue Quiz
           </button>
         </div>
       </motion.div>
@@ -1584,11 +1655,7 @@ function ExitProgressRow({
   return (
     <div
       className="flex items-center justify-between py-2 text-sm text-text-muted"
-      style={
-        last
-          ? undefined
-          : { borderBottom: '1px solid var(--line)' }
-      }
+      style={last ? undefined : { borderBottom: '1px solid var(--line)' }}
     >
       <span>{label}</span>
       <span className={valueClass ?? 'text-text-primary font-semibold'}>{value}</span>
@@ -1596,14 +1663,44 @@ function ExitProgressRow({
   );
 }
 
-function ViolationWarning({
-  violations,
-  onDismiss,
+/**
+ * "Report this question" dialog. Collects a reason (required) and an
+ * optional note, hands them to `onSubmit` (which throws on failure so
+ * the message can be shown here) and then switches to a thank-you
+ * state. Purely additive: it never touches answers, progress or the
+ * Save & Exit flow.
+ */
+function ReportQuestionModal({
+  alreadyReported,
+  onSubmit,
+  onClose,
 }: {
-  violations: number;
-  onDismiss: () => void;
+  alreadyReported: boolean;
+  onSubmit: (reason: FlagReason, detail: string) => Promise<void>;
+  onClose: () => void;
 }) {
-  const remaining = Math.max(0, 3 - violations);
+  const [reason, setReason] = useState<FlagReason | null>(null);
+  const [detail, setDetail] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  async function handleSend() {
+    if (!reason || sending) return;
+    setSending(true);
+    setError(null);
+    try {
+      await onSubmit(reason, detail);
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send your report. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const showForm = !done && !alreadyReported;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <motion.div
@@ -1612,60 +1709,134 @@ function ViolationWarning({
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
       />
       <motion.div
-        role="alertdialog"
+        role="dialog"
         aria-modal="true"
+        aria-labelledby="report-question-title"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl p-8 shadow-2xl mx-4"
-        style={{
-          backgroundColor: 'var(--surface)',
-          border: '1px solid rgb(var(--error-rgb) / 0.4)',
-        }}
+        className="relative mx-4 max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl p-6 shadow-2xl sm:p-8"
+        style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--line)' }}
       >
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-error/15">
-          <ShieldAlertIcon size={24} className="text-error" />
-        </div>
-        <h2 className="mb-2 text-center text-xl font-bold text-text-primary">
-          Focus mode interrupted
-        </h2>
-        <p className="mb-2 text-center text-sm text-text-muted">
-          You left the focused challenge view. To keep the session
-          honest, this counts as a violation.
-        </p>
         <div
-          className="my-4 rounded-xl p-4 text-center"
-          style={{ backgroundColor: 'var(--fill)' }}
+          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full"
+          style={{ backgroundColor: 'rgb(var(--accent-text-rgb) / 0.15)' }}
         >
-          <p className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-            Violations
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-error">
-            {violations} / 3
-          </p>
-          <p className="mt-1 text-xs text-text-muted">
-            {remaining === 0
-              ? 'Session will end now.'
-              : `${remaining} more will end the session automatically.`}
-          </p>
+          {showForm ? (
+            <FlagIcon size={22} className="text-accent" />
+          ) : (
+            <CheckIcon size={22} className="text-success" />
+          )}
         </div>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="w-full rounded-xl py-3 text-sm font-semibold text-white transition-colors duration-200"
-          style={{ backgroundColor: 'var(--accent-text)' }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = 'var(--accent-text)')
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = 'var(--accent-text)')
-          }
+
+        <h2
+          id="report-question-title"
+          className="mb-2 text-center text-xl font-bold text-text-primary"
         >
-          Resume in focus mode
-        </button>
+          {done ? 'Report sent' : alreadyReported ? 'Already reported' : 'Report this question'}
+        </h2>
+
+        {!showForm ? (
+          <>
+            <p className="mb-6 text-center text-sm text-text-muted">
+              {done
+                ? 'Thanks — an admin will review this question.'
+                : 'You have already reported this question. An admin will review it.'}
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-xl py-3 text-sm font-semibold text-white transition"
+              style={{ backgroundColor: 'var(--accent-text)' }}
+            >
+              Back to quiz
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="mb-5 text-center text-sm text-text-muted">
+              Spotted a problem? Tell the admins what is wrong and they will take a look.
+            </p>
+
+            <fieldset className="mb-4 flex flex-col gap-2" disabled={sending}>
+              <legend className="sr-only">What is wrong with this question?</legend>
+              {FLAG_REASONS.map((r) => {
+                const selected = reason === r;
+                return (
+                  <label
+                    key={r}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-text-primary transition"
+                    style={{
+                      border: `1px solid ${selected ? 'var(--accent-text)' : 'var(--line)'}`,
+                      backgroundColor: selected
+                        ? 'rgb(var(--accent-text-rgb) / 0.12)'
+                        : 'var(--bg)',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="report-reason"
+                      value={r}
+                      checked={selected}
+                      onChange={() => setReason(r)}
+                      className="h-4 w-4 accent-[var(--accent-text)]"
+                    />
+                    {FLAG_REASON_LABELS[r]}
+                  </label>
+                );
+              })}
+            </fieldset>
+
+            <label className="mb-1 block text-xs font-medium text-text-muted" htmlFor="report-detail">
+              Details (optional)
+            </label>
+            <textarea
+              id="report-detail"
+              value={detail}
+              onChange={(e) => setDetail(e.target.value.slice(0, FLAG_DETAIL_MAX))}
+              maxLength={FLAG_DETAIL_MAX}
+              rows={3}
+              disabled={sending}
+              placeholder="e.g. the explanation says B but the key is C"
+              className="w-full resize-none rounded-xl px-3 py-2 text-sm text-text-primary outline-none"
+              style={{ border: '1px solid var(--line)', backgroundColor: 'var(--bg)' }}
+            />
+            <p className="mb-4 mt-1 text-right text-xs text-text-muted">
+              {detail.length}/{FLAG_DETAIL_MAX}
+            </p>
+
+            {error && (
+              <p role="alert" className="mb-4 text-center text-sm text-error">
+                {error}
+              </p>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={sending}
+                className="flex-1 rounded-xl py-3 text-sm font-semibold text-text-primary transition disabled:opacity-60"
+                style={{ border: '1px solid var(--line)', backgroundColor: 'var(--bg)' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!reason || sending}
+                className="flex-1 rounded-xl py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ backgroundColor: 'var(--accent-text)' }}
+              >
+                {sending ? 'Sending…' : error ? 'Try again' : 'Send report'}
+              </button>
+            </div>
+          </>
+        )}
       </motion.div>
     </div>
   );
@@ -1675,7 +1846,7 @@ function stripPrefix(raw: string): string {
   return raw.replace(/^\s*(CORRECT|WRONG)\s*[—:-]\s*/i, '').trim();
 }
 
-function whyDistractorIsWrong(question: HistologyQuestion, choiceId: string): string {
+function whyDistractorIsWrong(question: ChapterQuizQuestion, choiceId: string): string {
   const choice = question.choices.find((c) => c.id === choiceId);
   if (!choice) return '';
 

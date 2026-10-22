@@ -14,7 +14,7 @@
 -- directly through PostgREST with an arbitrary student_id and XP
 -- delta and corrupt another student's stats/leaderboard position.
 --
--- Both real call sites (app/api/quiz/submit/route.ts,
+-- Both real call sites (app/api/quiz/submit/route.ts, since removed,
 -- app/api/student/chapters/[chapterId]/submit/route.ts) already
 -- invoke this exclusively through the service-role client — never
 -- the user-scoped one — so the function needs no `authenticated`

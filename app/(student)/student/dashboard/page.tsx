@@ -857,6 +857,19 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
               {c.chapterName && (
                 <ChapterPath moduleCode={c.moduleCode} moduleName={c.moduleName} subjectName={c.subjectName} />
               )}
+              {/* A Custom Exam spans chapters, so it is named by its module and
+                  how many chapters it drew from instead of one chapter. */}
+              {c.kind === 'custom_exam' && (
+                <ChapterPath
+                  moduleCode={c.moduleCode}
+                  moduleName={c.moduleName}
+                  subjectName={
+                    c.chapterCount
+                      ? `${c.chapterCount} chapter${c.chapterCount === 1 ? '' : 's'}`
+                      : null
+                  }
+                />
+              )}
               <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>
                 {c.inProgress && c.questionTotal
                   ? `In progress · ${c.total} of ${c.questionTotal} answered · ${relativeTime(c.completedAt)}`

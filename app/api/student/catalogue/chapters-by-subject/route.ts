@@ -112,6 +112,13 @@ export async function GET(request: NextRequest) {
     }
 
     const attempts = await fetchChapterQuizAttempts(supabase, user.id, { chapterIds });
+    // A chapter answered through a FINISHED Custom Exam counts as attempted
+    // too (those sessions have no chapter_id, so the query above can't see
+    // them) — which is what offers "Solve Again" / "Practice mistakes" for
+    // it. Unfinished exam answers don't, same as an unfinished chapter.
+    for (const a of attempts) {
+      if (a.completed) attemptedChapterIds.add(a.chapterId);
+    }
     mistakesByChapter = new Map(
       deriveChapterMistakes(attempts).map((cm) => [cm.chapterId, cm.questionIds])
     );

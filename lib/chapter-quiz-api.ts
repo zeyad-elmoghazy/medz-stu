@@ -1,8 +1,9 @@
 /**
- * Fetcher for the chapter-scoped quiz surface —
- * /api/student/chapters/[chapterId]/questions. Parallel to
- * lib/catalogue-api.ts's pattern; not related to the static
- * Histology quiz's data path.
+ * Fetchers for the chapter-scoped quiz surface —
+ * /api/student/chapters/[chapterId]/questions and friends. Parallel to
+ * lib/catalogue-api.ts's pattern. The question-level helpers here
+ * (bookmark, notes, report, reference image) are also used by the
+ * Custom Exam quiz; lib/custom-exam-api.ts holds the exam-specific calls.
  */
 
 import type { FlagReason } from '@/lib/question-flags';

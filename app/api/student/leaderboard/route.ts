@@ -18,8 +18,8 @@ const TOP_N = 10;
  * students by `profiles.total_xp`, plus the caller's own rank if
  * they're outside the top 10. `total_xp` is maintained
  * incrementally by `record_quiz_result()` (see
- * supabase/migrations/025_leaderboard_xp.sql and
- * app/api/quiz/submit/route.ts) rather than recomputed here, so
+ * supabase/migrations/025_leaderboard_xp.sql, called by the chapter
+ * and Custom Exam submit routes) rather than recomputed here, so
  * this route is just two cheap indexed reads behind a short cache.
  */
 export async function GET() {
@@ -78,8 +78,8 @@ async function fetchLeaderboard(service: ServiceRpcClient): Promise<{ top10: Lea
 }
 
 // ============== Service-role client typing ==============
-// Same rationale as app/api/quiz/submit/route.ts — the auth-helpers
-// client doesn't propagate the Database generic through .rpc().
+// The auth-helpers client doesn't propagate the Database generic
+// through .rpc() (same reason the submit routes type theirs by hand).
 type ServiceRpcClient = {
   rpc: (
     name: string,

@@ -44,6 +44,11 @@ export type ChallengeResult = {
   // `questionTotal` is how many questions the whole attempt has.
   inProgress?: boolean;
   questionTotal?: number;
+  // A Custom Exam (migration 035) spans several chapters, so it has no
+  // chapterId/chapterName: it is one "Custom Exam" entry for its module,
+  // covering `chapterCount` chapters. Absent for chapter-quiz and legacy rows.
+  kind?: 'custom_exam';
+  chapterCount?: number;
 };
 
 export type ProgressDataPoint = {

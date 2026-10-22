@@ -9,12 +9,9 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/student/chapters/[chapterId]/questions
  *
- * Published questions for one chapter — the chapter-scoped
- * counterpart to /api/questions/[subjectId] (which returns a whole
- * subject's bank, and today only feeds the static Histology page).
- * Powers the new chapter-scoped quiz route
- * (student/quiz/chapter/[chapterId]); does not touch or replace the
- * subject-scoped static quiz path or its data.
+ * Published questions for one chapter. Powers the chapter-scoped quiz
+ * route (student/quiz/chapter/[chapterId]); the Custom Exam, whose
+ * questions span chapters, is served by /api/student/custom-exam/[examId].
  *
  * status='published' is filtered explicitly in the query below
  * rather than relying on RLS alone — RLS (questions_read_published)

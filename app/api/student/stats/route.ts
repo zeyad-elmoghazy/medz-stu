@@ -21,6 +21,7 @@ import {
   fetchInProgressChapters,
   mergeInProgressIntoSubject,
 } from '@/lib/server/chapter-quiz-progress';
+import { fetchInProgressExam } from '@/lib/server/custom-exam-progress';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -131,6 +132,7 @@ export async function GET() {
     subjectsForCountsRes,
     chaptersForCountsRes,
     inProgressChapters,
+    inProgressExam,
   ] = await Promise.all([
     // (b/c) per-subject aggregates — also feeds the overall totals.
     // Reads the matview via the service-role client because API access
@@ -145,7 +147,9 @@ export async function GET() {
     // (d) recent 5 sessions
     supabase
       .from('quiz_sessions')
-      .select('id, subject_id, chapter_id, score, total_questions, accuracy, completed_at')
+      .select(
+        'id, subject_id, chapter_id, score, total_questions, accuracy, completed_at, exam_id, exam_module_code, exam_chapter_ids'
+      )
       .eq('student_id', user.id)
       .order('completed_at', { ascending: false })
       .limit(5),
@@ -179,6 +183,10 @@ export async function GET() {
     // (chapter_quiz_progress) — their answers count toward the
     // totals below even though the chapter isn't submitted yet.
     fetchInProgressChapters(service, user.id),
+
+    // (k) the student's unfinished Custom Exam (custom_exam_progress),
+    // if any — counted the same way as an unfinished chapter.
+    fetchInProgressExam(service, user.id),
   ]);
 
   // Aggregate published_count by subject slug — keyed by slug (not
@@ -222,6 +230,10 @@ export async function GET() {
     total_questions: number;
     accuracy: number;
     completed_at: string;
+    // Set only for a Custom Exam session (migration 035).
+    exam_id: string | null;
+    exam_module_code: string | null;
+    exam_chapter_ids: string[] | null;
   };
 
   type ProgressRow = { accuracy: number; completed_at: string };
@@ -251,12 +263,17 @@ export async function GET() {
   // the answers given so far in unfinished chapters. Finishing a
   // chapter deletes its progress row in the same request that writes
   // the completed quiz_sessions row, so no answer is counted twice.
+  // A finished Custom Exam is a quiz_sessions row, so the matview already
+  // has it (under the 'custom-exam' pseudo-subject, which no subject card
+  // shows). An unfinished one is added here, like an unfinished chapter.
   const totalQuestionsAnswered =
     subjectStats.reduce((sum, s) => sum + s.total_answered, 0) +
-    inProgressChapters.reduce((sum, i) => sum + i.answered, 0);
+    inProgressChapters.reduce((sum, i) => sum + i.answered, 0) +
+    (inProgressExam?.answered ?? 0);
   const totalCorrectAnswers =
     subjectStats.reduce((sum, s) => sum + s.total_correct, 0) +
-    inProgressChapters.reduce((sum, i) => sum + i.correct, 0);
+    inProgressChapters.reduce((sum, i) => sum + i.correct, 0) +
+    (inProgressExam?.correct ?? 0);
   const overallAccuracy =
     totalQuestionsAnswered > 0
       ? Math.round((totalCorrectAnswers / totalQuestionsAnswered) * 1000) / 10
@@ -308,7 +325,11 @@ export async function GET() {
   // Latest activity: a finished quiz, or the last answer in an
   // unfinished chapter — whichever is newer.
   const lastActiveDate =
-    [recentSessions[0]?.completed_at, ...inProgressChapters.map((i) => i.updatedAt)]
+    [
+      recentSessions[0]?.completed_at,
+      ...inProgressChapters.map((i) => i.updatedAt),
+      inProgressExam?.updatedAt,
+    ]
       .filter((d): d is string => !!d)
       .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? new Date().toISOString();
 
@@ -352,7 +373,43 @@ export async function GET() {
     }
   }
 
+  // Custom Exams have no single chapter to name them by, so they are
+  // labelled by their module: look up the names of the modules involved.
+  const examModuleCodes = Array.from(
+    new Set([
+      ...recentSessions
+        .filter((s) => s.exam_id && s.exam_module_code)
+        .map((s) => s.exam_module_code as string),
+      ...(inProgressExam ? [inProgressExam.moduleCode] : []),
+    ])
+  );
+  const moduleNameByCode = new Map<string, string>();
+  if (examModuleCodes.length > 0) {
+    const modulesRes = (await untypedFrom(supabase)
+      .from('modules')
+      .select('code, name')
+      .in('code', examModuleCodes)) as { data: { code: string; name: string }[] | null };
+    for (const m of modulesRes.data ?? []) moduleNameByCode.set(m.code, m.name);
+  }
+
   const completedChallenges: ChallengeResult[] = recentSessions.map((s) => {
+    if (s.exam_id) {
+      return {
+        id: s.id,
+        subjectId: s.subject_id,
+        subjectName: 'Custom Exam',
+        chapterId: null,
+        chapterName: null,
+        moduleCode: s.exam_module_code,
+        moduleName: s.exam_module_code ? (moduleNameByCode.get(s.exam_module_code) ?? null) : null,
+        score: s.score,
+        total: s.total_questions,
+        accuracy: Number(s.accuracy),
+        completedAt: s.completed_at,
+        kind: 'custom_exam' as const,
+        chapterCount: s.exam_chapter_ids?.length ?? 0,
+      };
+    }
     const info = s.chapter_id ? chapterInfoById.get(s.chapter_id) : undefined;
     return {
       id: s.id,
@@ -397,7 +454,34 @@ export async function GET() {
     };
   });
 
-  const recentChallenges: ChallengeResult[] = [...completedChallenges, ...unfinishedChallenges]
+  // An unfinished Custom Exam is shown the same way (flagged in-progress).
+  const unfinishedExamChallenges: ChallengeResult[] = inProgressExam
+    ? [
+        {
+          id: `in-progress:exam:${inProgressExam.examId}`,
+          subjectId: 'custom-exam',
+          subjectName: 'Custom Exam',
+          chapterId: null,
+          chapterName: null,
+          moduleCode: inProgressExam.moduleCode,
+          moduleName: moduleNameByCode.get(inProgressExam.moduleCode) ?? null,
+          score: inProgressExam.correct,
+          total: inProgressExam.answered,
+          accuracy: Math.round((inProgressExam.correct / inProgressExam.answered) * 1000) / 10,
+          completedAt: inProgressExam.updatedAt,
+          inProgress: true,
+          questionTotal: inProgressExam.total,
+          kind: 'custom_exam',
+          chapterCount: inProgressExam.chapterCount,
+        },
+      ]
+    : [];
+
+  const recentChallenges: ChallengeResult[] = [
+    ...completedChallenges,
+    ...unfinishedChallenges,
+    ...unfinishedExamChallenges,
+  ]
     .sort((a, b) => Date.parse(b.completedAt) - Date.parse(a.completedAt))
     .slice(0, 5);
 
