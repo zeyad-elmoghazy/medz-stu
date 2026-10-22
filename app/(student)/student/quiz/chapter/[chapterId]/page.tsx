@@ -26,6 +26,7 @@ import {
   ZoomInIcon,
 } from '@/components/icons';
 import { ImageZoomViewer } from '@/components/quiz/ImageZoomViewer';
+import { isTouchDevice } from '@/lib/is-touch-device';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import {
   fetchChapterQuiz,
@@ -367,7 +368,9 @@ export default function ChapterQuizPage() {
   }, []);
 
   useEffect(() => {
-    if (!submitted && currentQuestion) {
+    // Phones/tablets don't get fullscreen forced on every question (it
+    // flickers on Android); the "Enter focus mode" button is still there.
+    if (!submitted && currentQuestion && !isTouchDevice()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       enterFullscreen();
     }
@@ -452,7 +455,7 @@ export default function ChapterQuizPage() {
     if (savingExit) return;
     setExitError(null);
     setShowExitModal(false);
-    if (!submittedRef.current) enterFullscreen();
+    if (!submittedRef.current && !isTouchDevice()) enterFullscreen();
   }
 
   useEffect(() => {
