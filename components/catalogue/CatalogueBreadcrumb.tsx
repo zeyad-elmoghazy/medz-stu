@@ -22,7 +22,7 @@ export function CatalogueBreadcrumb({ crumbs }: { crumbs: Crumb[] }) {
         return (
           <span key={`${c.label}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {c.href && !isLast ? (
-              <Link href={c.href} style={{ color: 'var(--text3)', textDecoration: 'none' }}>
+              <Link href={c.href} className="mz-crumb" style={{ color: 'var(--text3)', textDecoration: 'none' }}>
                 {c.label}
               </Link>
             ) : (
