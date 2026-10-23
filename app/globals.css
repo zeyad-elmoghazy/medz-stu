@@ -76,6 +76,39 @@ html[data-mz-theme="dark"] [data-mz-root]{--bg:#0F1B22;--bg2:#0F1B22;--surface:#
     100% { background-position: 200% 0; }
   }
 
+  /* Top-of-viewport progress bar while a <Link> navigation is pending (LinkPending).
+     Fades in after 120ms so fast navigations never flash it. */
+  .mz-nav-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 200;
+    overflow: hidden;
+    pointer-events: none;
+    animation: mz-nav-progress-fade 150ms linear 120ms both;
+  }
+  .mz-nav-progress::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 35%;
+    border-radius: 3px;
+    background: var(--accent-glow);
+    animation: mz-nav-progress-slide 1.1s ease-in-out infinite;
+  }
+  @keyframes mz-nav-progress-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes mz-nav-progress-slide {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(285%); }
+  }
+
   /* Slow rotation behind the dashboard's featured-subject photo.
      Kept here (still consumed by dashboard/page.tsx) pending that
      page's own redesign pass. */
@@ -143,6 +176,11 @@ html[data-mz-theme="dark"] [data-mz-root]{--bg:#0F1B22;--bg2:#0F1B22;--surface:#
     }
     .skeleton-shimmer {
       animation-duration: 3s;
+    }
+    .mz-nav-progress::after {
+      animation: none;
+      width: 100%;
+      opacity: 0.6;
     }
   }
 }

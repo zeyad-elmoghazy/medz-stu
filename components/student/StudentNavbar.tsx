@@ -11,6 +11,7 @@ import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabas
 import { useDisplayName } from '@/lib/use-display-name';
 import { useScrollShadow } from '@/lib/use-scroll-shadow';
 import { useStudentTheme } from '@/lib/use-student-theme';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 // framer-motion lives in this chunk only; load it after hydration, off the critical path.
 const NavToast = dynamic(() => import('@/components/ui/NavToast').then((m) => m.NavToast), {
@@ -109,6 +110,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                   style={{ color: 'var(--text3)', textDecoration: 'none', cursor: 'pointer' }}
                 >
                   {link.label}
+                  <LinkPending />
                 </Link>
               );
             }
@@ -165,6 +167,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
             }}
           >
             My Progress
+            <LinkPending />
           </Link>
 
           <button
@@ -217,6 +220,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               {initials || 'ME'}
             </span>
             {displayName || 'Guest'}
+            <LinkPending />
           </Link>
 
           <button
@@ -279,6 +283,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                       onClick={() => setMenuOpen(false)}
                     >
                       {link.label}
+                      <LinkPending />
                     </Link>
                   );
                 }
@@ -313,6 +318,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
                 onClick={() => setMenuOpen(false)}
               >
                 My Progress
+                <LinkPending />
               </Link>
               <Link
                 href="/student/profile"
@@ -321,6 +327,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
               >
                 <span className="mz-snav-avatar">{initials || 'ME'}</span>
                 <span className="mz-snav-name">{displayName || 'Guest'}</span>
+                <LinkPending />
               </Link>
               <button
                 type="button"
