@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { z } from 'zod';
 import { progressLimiter } from '@/lib/rate-limit';
 import { orderByIds } from '@/lib/server/custom-exam';
@@ -159,7 +160,7 @@ export async function DELETE(
     .eq('id', params.data.examId)
     .eq('student_id', auth.user.id);
   if (del.error) {
-    return NextResponse.json({ error: del.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(del.error) }, { status: 500 });
   }
   return NextResponse.json({ deleted: true }, { headers: NO_STORE });
 }

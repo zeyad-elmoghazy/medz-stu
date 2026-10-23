@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
@@ -63,7 +64,7 @@ export async function GET(
     .order('id', { ascending: true });
 
   if (questionsRes.error) {
-    return NextResponse.json({ error: questionsRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(questionsRes.error) }, { status: 500 });
   }
 
   type QuestionRow = {

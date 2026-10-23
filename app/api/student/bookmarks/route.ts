@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
     );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(error) }, { status: 500 });
   }
   return NextResponse.json({ bookmarked: true });
 }
@@ -195,7 +196,7 @@ export async function DELETE(request: NextRequest) {
     .eq('question_id', questionId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(error) }, { status: 500 });
   }
   return NextResponse.json({ bookmarked: false });
 }

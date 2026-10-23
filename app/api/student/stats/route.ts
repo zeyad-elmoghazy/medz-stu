@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
@@ -207,7 +208,7 @@ export async function GET() {
 
   if (subjectStatsRes.error) {
     return NextResponse.json(
-      { error: subjectStatsRes.error.message },
+      { error: publicDbError(subjectStatsRes.error) },
       { status: 500 }
     );
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
@@ -85,7 +86,7 @@ export async function GET(
     .eq('student_id', auth.user.id)
     .maybeSingle();
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE });
+    return NextResponse.json({ error: publicDbError(error) }, { status: 500, headers: NO_STORE });
   }
 
   return NextResponse.json({ flagged: data !== null }, { headers: NO_STORE });
@@ -134,7 +135,7 @@ export async function POST(
     .eq('id', questionId)
     .maybeSingle();
   if (questionRes.error) {
-    return NextResponse.json({ error: questionRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(questionRes.error) }, { status: 500 });
   }
   if (!questionRes.data) {
     return NextResponse.json({ error: 'Question not found' }, { status: 404 });
@@ -151,7 +152,7 @@ export async function POST(
     if (insertRes.error.code === '23505') {
       return NextResponse.json({ error: 'already_reported' }, { status: 409 });
     }
-    return NextResponse.json({ error: insertRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(insertRes.error) }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true }, { status: 201 });

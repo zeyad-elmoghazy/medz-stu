@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
@@ -115,7 +116,7 @@ export async function POST(
     .eq('status', 'published');
 
   if (questionsRes.error) {
-    return NextResponse.json({ error: questionsRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(questionsRes.error) }, { status: 500 });
   }
   const allQuestions =
     (questionsRes.data as { id: number; correct_answer: string; subject_id: string }[] | null) ?? [];
