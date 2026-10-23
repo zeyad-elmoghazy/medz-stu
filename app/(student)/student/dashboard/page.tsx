@@ -21,6 +21,7 @@ import {
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
 import { fetchModulesByYear, type ModulesByYear } from '@/lib/catalogue-api';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 // =============================================================
 // Page
@@ -327,6 +328,7 @@ function HomeView({
               }}
             >
               Browse the Catalogue <span style={{ fontSize: 17 }}>→</span>
+              <LinkPending />
             </Link>
 
             <button
@@ -403,6 +405,7 @@ function HomeView({
             }}
           >
             View full Catalogue →
+            <LinkPending />
           </Link>
         </div>
       </section>
@@ -1009,6 +1012,7 @@ function YearCard({ year }: { year: ModulesByYear['years'][number] }) {
       <div style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 12 }}>
         {year.moduleCount} modules · {year.chapterCount} chapters
       </div>
+      <LinkPending />
     </Link>
   );
 }

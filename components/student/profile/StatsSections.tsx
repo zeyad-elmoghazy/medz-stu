@@ -6,6 +6,7 @@ import type { StudentBadge } from '@/lib/student-profile';
 import type { LeaderboardRow } from '@/lib/supabase';
 import { formatRelativeDate } from '@/lib/streak-utils';
 import { Card } from './ui';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 const tile = {
   padding: '14px 16px',
@@ -95,6 +96,7 @@ export function SubjectProgress({ stats }: { stats: StudentStats | null }) {
           Nothing here yet.{' '}
           <Link href="/student/catalogue" style={{ color: 'var(--accent-text)', fontWeight: 700 }}>
             Start your first quiz
+            <LinkPending />
           </Link>{' '}
           to see how you&apos;re doing in each subject.
         </p>
@@ -213,6 +215,7 @@ export function QuickLinks({ bookmarksCount }: { bookmarksCount: number | null }
           <Link key={l.href} href={l.href} style={{ ...tile, textDecoration: 'none' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{l.label}</div>
             <div style={{ marginTop: 2, fontSize: 11, color: 'var(--text3)' }}>{l.hint}</div>
+            <LinkPending />
           </Link>
         ))}
       </div>

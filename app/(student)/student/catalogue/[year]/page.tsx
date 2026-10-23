@@ -7,6 +7,7 @@ import { SpinnerIcon } from '@/components/icons';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchModulesByYear, type CatalogueYear } from '@/lib/catalogue-api';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 export default function CatalogueModulesPage() {
   const params = useParams<{ year: string }>();
@@ -224,6 +225,7 @@ export default function CatalogueModulesPage() {
                   }}
                 >
                   View Subjects →
+                  <LinkPending />
                 </Link>
               </div>
             </div>

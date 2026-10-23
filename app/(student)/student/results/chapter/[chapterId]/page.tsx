@@ -15,6 +15,7 @@ import {
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchChapterQuiz, type ChapterQuiz } from '@/lib/chapter-quiz-api';
 import { cn } from '@/lib/utils';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 /**
  * Chapter-scoped results screen. It renders from the submit response
@@ -234,6 +235,7 @@ export default function ChapterResultsPage() {
             >
               <ArrowLeftIcon size={16} />
               Back to Catalogue
+              <LinkPending />
             </Link>
           </div>
         </FadeUp>
@@ -336,6 +338,7 @@ function Header() {
           <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
             · Results
           </span>
+          <LinkPending />
         </Link>
       </div>
     </header>

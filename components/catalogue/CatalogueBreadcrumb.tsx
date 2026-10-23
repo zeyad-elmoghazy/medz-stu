@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 export type Crumb = { label: string; href?: string };
 
@@ -24,6 +25,7 @@ export function CatalogueBreadcrumb({ crumbs }: { crumbs: Crumb[] }) {
             {c.href && !isLast ? (
               <Link href={c.href} className="mz-crumb" style={{ color: 'var(--text3)', textDecoration: 'none' }}>
                 {c.label}
+                <LinkPending />
               </Link>
             ) : (
               <span style={{ color: isLast ? 'var(--accent-text)' : 'var(--text3)', fontWeight: isLast ? 600 : 400 }}>

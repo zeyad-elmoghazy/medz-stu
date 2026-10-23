@@ -23,6 +23,7 @@ import {
   pruneChapterSelection,
   quickCountOptions,
 } from '@/lib/custom-exam-rules';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 /**
  * Custom Exam builder. Four sections, always visible: Module (one),
@@ -336,6 +337,7 @@ export default function CustomExamPage() {
               >
                 Continue
                 <ArrowRightIcon size={14} />
+                <LinkPending />
               </Link>
               <button
                 type="button"

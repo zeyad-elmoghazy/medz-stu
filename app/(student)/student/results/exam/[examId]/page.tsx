@@ -20,6 +20,7 @@ import {
 } from '@/lib/custom-exam-api';
 import { moduleLabel } from '@/lib/dashboard-data';
 import { cn } from '@/lib/utils';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 /**
  * Custom Exam results screen — the same layout/behavior as the chapter
@@ -150,6 +151,7 @@ export default function CustomExamResultsPage() {
             >
               View Progress
               <ArrowRightIcon size={16} />
+              <LinkPending />
             </Link>
             <Link
               href="/student/exam"
@@ -158,6 +160,7 @@ export default function CustomExamResultsPage() {
             >
               <ArrowLeftIcon size={16} />
               Back to Custom Exam
+              <LinkPending />
             </Link>
           </div>
         </div>
@@ -284,6 +287,7 @@ export default function CustomExamResultsPage() {
             >
               <ArrowLeftIcon size={16} />
               Back to Custom Exam
+              <LinkPending />
             </Link>
           </div>
           {startError && (
@@ -407,6 +411,7 @@ function Header() {
           <span className="text-[10px] uppercase tracking-[0.22em] text-text-muted">
             · Results
           </span>
+          <LinkPending />
         </Link>
       </div>
     </header>

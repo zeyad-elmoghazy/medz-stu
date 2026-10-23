@@ -9,6 +9,7 @@ import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb'
 import { fetchChaptersBySubject, type ChaptersBySubject } from '@/lib/catalogue-api';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { deleteChapterProgress } from '@/lib/chapter-quiz-api';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 export default function CatalogueChaptersPage() {
   const params = useParams<{ year: string; moduleCode: string; subjectSlug: string }>();
@@ -407,6 +408,7 @@ export default function CatalogueChaptersPage() {
                                 }}
                               >
                                 Continue
+                                <LinkPending />
                               </Link>
                               <button
                                 type="button"
@@ -449,6 +451,7 @@ export default function CatalogueChaptersPage() {
                               }}
                             >
                               Start Quiz
+                              <LinkPending />
                             </Link>
                           )}
                           {published && !c.inProgress && c.attempted && (
@@ -470,6 +473,7 @@ export default function CatalogueChaptersPage() {
                                 }}
                               >
                                 Solve Again
+                                <LinkPending />
                               </Link>
                               {c.mistakeQuestionIds.length > 0 && (
                                 <Link
@@ -493,6 +497,7 @@ export default function CatalogueChaptersPage() {
                                   }}
                                 >
                                   Practice mistakes ({c.mistakeQuestionIds.length})
+                                  <LinkPending />
                                 </Link>
                               )}
                             </>

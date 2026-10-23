@@ -6,6 +6,7 @@ import { SpinnerIcon } from '@/components/icons';
 import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchModulesByYear, type ModulesByYear } from '@/lib/catalogue-api';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 export default function CatalogueYearsPage() {
   const [data, setData] = useState<ModulesByYear | null>(null);
@@ -171,6 +172,7 @@ export default function CatalogueYearsPage() {
               >
                 Browse Modules →
               </div>
+              <LinkPending />
             </Link>
           ))}
         </div>

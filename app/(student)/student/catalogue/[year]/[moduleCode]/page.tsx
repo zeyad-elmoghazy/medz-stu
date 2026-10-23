@@ -9,6 +9,7 @@ import { CatalogueShell } from '@/components/catalogue/CatalogueShell';
 import { CatalogueBreadcrumb } from '@/components/catalogue/CatalogueBreadcrumb';
 import { fetchSubjectsByModule, type SubjectsByModule } from '@/lib/catalogue-api';
 import { getSubjectImage } from '@/lib/subject-images';
+import { LinkPending } from '@/components/ui/LinkPending';
 
 function initialsOf(name: string): string {
   const words = name.replace(/&/g, ' ').split(/\s+/).filter(Boolean);
@@ -185,6 +186,7 @@ export default function CatalogueSubjectsPage() {
                 >
                   View Chapters →
                 </div>
+                <LinkPending />
               </Link>
             ))}
           </div>
