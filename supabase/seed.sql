@@ -27,15 +27,23 @@
 -- database ends up with the same privileges as a hosted one.
 -- =============================================================
 
-GRANT ALL ON ALL TABLES    IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+-- anon is deliberately NOT granted here: migration 038 took every table
+-- privilege away from anon on hosted (bar two column-limited landing-page
+-- SELECTs it grants itself), and this seed runs after migrations, so
+-- granting anon again would undo 038 locally and hide regressions.
+GRANT ALL ON ALL TABLES    IN SCHEMA public TO authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
 
 -- Same grants for tables/sequences created by migrations applied
 -- later with `supabase migration up` (seed.sql only re-runs on reset).
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  GRANT ALL ON TABLES    TO anon, authenticated, service_role;
+  GRANT ALL ON TABLES    TO authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+  GRANT ALL ON SEQUENCES TO authenticated, service_role;
+
+-- 038 mirror: authenticated has no TRUNCATE/TRIGGER/REFERENCES on hosted
+-- after 038, and the blanket GRANT ALL above would hand them back.
+REVOKE TRUNCATE, TRIGGER, REFERENCES ON ALL TABLES IN SCHEMA public FROM authenticated;
 
 -- Put back 012's revoke: GRANT ALL ON ALL TABLES above also granted these
 -- two materialized views to anon / authenticated, exposing every

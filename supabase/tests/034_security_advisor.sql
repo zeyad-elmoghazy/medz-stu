@@ -127,11 +127,14 @@ BEGIN
     pg_temp.as_role_val('authenticated', adm, 'SELECT private.is_admin()'));
 END $$;
 
--- The reason 017 exists: policy evaluation for anon must not error.
+-- 017 needed anon policy evaluation not to error, back when anon held
+-- table privileges. Migration 038 removed them, so anon is now stopped
+-- earlier, with permission denied (42501) — still no rows, and still no
+-- is_admin() evaluation error. 038_anon_lockdown.sql covers the detail.
 DO $$
 DECLARE a UUID := (SELECT a FROM t_ids); adm UUID := (SELECT adm FROM t_ids);
 BEGIN
-  PERFORM pg_temp.chk('anon reading profiles gets 0 rows, no permission error', 'val:0',
+  PERFORM pg_temp.chk('anon reading profiles is refused outright (038)', 'blocked:42501',
     pg_temp.as_role_val('anon', NULL, 'SELECT count(*) FROM public.profiles'));
   PERFORM pg_temp.chk('a student sees only their own profile', 'val:1',
     pg_temp.as_role_val('authenticated', a, 'SELECT count(*) FROM public.profiles'));
