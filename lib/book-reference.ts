@@ -5,7 +5,8 @@ import type { Database } from '@/lib/supabase';
 // Same service-role client pattern as getSignedNotesPageUrl() in
 // lib/ocr/notes-upload.ts — bypasses RLS, so no client-facing SELECT
 // policy is needed on chapters/modules/reference_pages for this.
-function serviceRoleClient() {
+let cachedClient: ReturnType<typeof createServiceClient> | null = null;
+function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
@@ -16,6 +17,33 @@ function serviceRoleClient() {
   return createClient<Database>(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+}
+// One client per server instance — it holds no per-user state.
+function serviceRoleClient() {
+  return (cachedClient ??= createServiceClient());
+}
+
+// chapter -> book and (book, page) -> storage path almost never change, but
+// resolving them costs 3 sequential queries per request. Remember non-null
+// results briefly per warm instance; misses are never cached, and the signed
+// URL itself is always minted fresh. An admin re-pointing a chapter's book can
+// take up to LOOKUP_TTL_MS to show up.
+const LOOKUP_TTL_MS = 5 * 60 * 1000;
+const LOOKUP_MAX_ENTRIES = 5000;
+const lookupCache = new Map<string, { value: string; expires: number }>();
+
+async function memoLookup(
+  key: string,
+  load: () => Promise<string | null>
+): Promise<string | null> {
+  const hit = lookupCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.value;
+  const value = await load();
+  if (value) {
+    if (lookupCache.size >= LOOKUP_MAX_ENTRIES) lookupCache.clear();
+    lookupCache.set(key, { value, expires: Date.now() + LOOKUP_TTL_MS });
+  }
+  return value;
 }
 
 /**
@@ -58,16 +86,14 @@ export async function getSignedBookPageUrl(
 
   const supabase = serviceRoleClient();
 
-  const { data: chapter } = await untypedFrom(supabase)
-    .from('chapters')
-    .select('module_code, default_book_id')
-    .eq('id', chapterId)
-    .single();
-  if (!chapter) return null;
-
-  let bookId: string | null = chapter.default_book_id ?? null;
-
-  if (!bookId) {
+  const bookId = await memoLookup(`book:${chapterId}`, async () => {
+    const { data: chapter } = await untypedFrom(supabase)
+      .from('chapters')
+      .select('module_code, default_book_id')
+      .eq('id', chapterId)
+      .single();
+    if (!chapter) return null;
+    if (chapter.default_book_id) return chapter.default_book_id as string;
     if (!chapter.module_code) return null;
 
     const { data: mod } = await untypedFrom(supabase)
@@ -75,22 +101,24 @@ export async function getSignedBookPageUrl(
       .select('book_id')
       .eq('code', chapter.module_code)
       .single();
-    if (!mod?.book_id) return null;
+    return (mod?.book_id as string | null | undefined) ?? null;
+  });
+  if (!bookId) return null;
 
-    bookId = mod.book_id;
-  }
-
-  const { data: page } = await untypedFrom(supabase)
-    .from('reference_pages')
-    .select('image_url')
-    .eq('book_id', bookId)
-    .eq('page_number', referencePage)
-    .single();
-  if (!page?.image_url) return null;
+  const imagePath = await memoLookup(`page:${bookId}:${referencePage}`, async () => {
+    const { data: page } = await untypedFrom(supabase)
+      .from('reference_pages')
+      .select('image_url')
+      .eq('book_id', bookId)
+      .eq('page_number', referencePage)
+      .single();
+    return (page?.image_url as string | null | undefined) ?? null;
+  });
+  if (!imagePath) return null;
 
   const { data, error } = await supabase.storage
     .from('notes-pages')
-    .createSignedUrl(page.image_url, 900);
+    .createSignedUrl(imagePath, 900);
 
   if (error || !data) {
     console.error('[book-reference] createSignedUrl failed:', error?.message);

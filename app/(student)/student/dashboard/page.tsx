@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SpinnerIcon } from '@/components/icons';
+import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
 import { getSubjectImage } from '@/lib/subject-images';
 import { isDemoMode } from '@/lib/supabase';
@@ -27,7 +28,15 @@ import { fetchModulesByYear, type ModulesByYear } from '@/lib/catalogue-api';
 
 export default function StudentDashboardPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <main style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+          <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
+            <DashboardSkeleton />
+          </div>
+        </main>
+      }
+    >
       <StudentDashboardInner />
     </Suspense>
   );

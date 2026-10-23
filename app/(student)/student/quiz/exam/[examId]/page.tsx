@@ -1498,6 +1498,7 @@ function ReferenceCard({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageUrl}
+              decoding="async"
               alt="Source page from the module reference book"
               style={{
                 display: 'block',

@@ -78,12 +78,11 @@ const nextConfig = {
 
   // Modularize barrel imports so `import { Foo } from 'lucide-react'`
   // pulls just Foo, not every icon in the library. Same for framer /
-  // recharts / radix — huge wins on First Load JS.
+  // radix — huge wins on First Load JS.
   experimental: {
     optimizePackageImports: [
       'lucide-react',
       'framer-motion',
-      'recharts',
       '@radix-ui/react-label',
       '@radix-ui/react-progress',
       '@radix-ui/react-slot',
@@ -158,23 +157,22 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Cache static assets for 1 year
-        source: '/static/:path*',
+        // Brand/subject art in public/ — not all filenames are versioned,
+        // so revalidate daily instead of marking immutable.
+        source: '/:file(medizee-logo.webp|favicon.png|dr-zahra.jpg)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=86400, stale-while-revalidate=604800',
           },
         ],
       },
       {
-        // Cache API responses for subject list
-        // (changes rarely)
-        source: '/api/subjects',
+        source: '/subjects/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+            value: 'public, max-age=86400, stale-while-revalidate=604800',
           },
         ],
       },
