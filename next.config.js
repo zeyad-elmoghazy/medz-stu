@@ -7,6 +7,22 @@
 // entry hardens a specific browser surface — kept here so the
 // config block is single-source-of-truth instead of split between
 // next.config.js and middleware.
+const isDev = process.env.NODE_ENV !== 'production';
+
+// Pin the CSP (and next/image) to OUR Supabase project instead of
+// every *.supabase.co tenant — otherwise any attacker-owned Supabase
+// project is a valid exfiltration target. Falls back to the wildcard
+// only if the env var is unset/invalid (the app can't boot then anyway).
+let supabaseOrigin = null;
+try {
+  supabaseOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin;
+} catch {
+  /* env not set at config-load time */
+}
+const supabaseConnect = supabaseOrigin
+  ? [supabaseOrigin, supabaseOrigin.replace(/^http/, 'ws')]
+  : ['https://*.supabase.co', 'wss://*.supabase.co'];
+
 const securityHeaders = [
   // HSTS — force HTTPS for 2 years, include subdomains. Only
   // applies after the first https hit; harmless on http localhost.
@@ -25,21 +41,28 @@ const securityHeaders = [
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
   },
-  // Restrict cross-origin script loading. Vercel/Next inline a
-  // tiny amount of script for hydration, so 'unsafe-inline' is
-  // required until we move to CSP nonces.
+  // Isolate our browsing context from cross-origin windows.
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  // Restrict cross-origin script loading. Next inlines a little script
+  // for hydration, so 'unsafe-inline' stays until we move to CSP
+  // nonces — which force every page to render dynamically (no static
+  // landing page), so it is a deliberate trade-off, not an oversight.
+  // 'unsafe-eval' is dev-only: React uses eval for debug stacks, but
+  // neither React nor Next does in production.
   {
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "img-src 'self' data: https: blob:",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co https://*.upstash.io wss://*.supabase.co",
+      `img-src 'self' data: blob:${supabaseOrigin ? ` ${supabaseOrigin}` : ' https://*.supabase.co'}`,
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self' data:",
+      `connect-src 'self' ${supabaseConnect.join(' ')}`,
+      "object-src 'none'",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
+      ...(isDev ? [] : ['upgrade-insecure-requests']),
     ].join('; '),
   },
 ];
@@ -119,12 +142,14 @@ const nextConfig = {
 
   // Optimize images via Vercel's CDN
   images: {
-    // remotePatterns is the modern replacement for `domains` — the
-    // wildcard hostname lets every Supabase project work without
-    // hardcoding a slug, but is still narrowed by protocol.
+    // Only our own Supabase project may be proxied through the image
+    // optimizer (a wildcard host made it an open fetch-proxy for any
+    // Supabase tenant). Falls back to the wildcard only if env is unset.
     remotePatterns: [
-      { protocol: 'https', hostname: '*.supabase.co' },
-      { protocol: 'https', hostname: 'cdn.medz.app' }, // future CDN domain
+      {
+        protocol: 'https',
+        hostname: supabaseOrigin ? new URL(supabaseOrigin).hostname : '*.supabase.co',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
     // Cache images for 1 year on CDN

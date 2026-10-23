@@ -18,10 +18,13 @@ export function dashboardPathForRole(role: UserRole | null | undefined) {
 
 /**
  * Demo mode: profile lives in localStorage, middleware waves
- * everything through. Explicit opt-in via NEXT_PUBLIC_DEMO=1.
+ * everything through. Explicit opt-in via NEXT_PUBLIC_DEMO=1, and
+ * hard-disabled in production builds: NEXT_PUBLIC_* is inlined into the
+ * bundle, so a stray flag in the host env must never be able to switch
+ * off the auth gate on the live site.
  */
 export function isDemoMode(): boolean {
-  return process.env.NEXT_PUBLIC_DEMO === '1';
+  return process.env.NODE_ENV !== 'production' && process.env.NEXT_PUBLIC_DEMO === '1';
 }
 
 export const DEMO_PROFILE_KEY = 'medz-demo-profile';
