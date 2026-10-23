@@ -2,7 +2,7 @@ import { processPdf } from '@/lib/ocr/pipeline';
 import path from 'path';
 import fs from 'fs';
 
-const DEMO_PDF = path.join(process.cwd(), 'public/test-data/demo-questions.pdf');
+const DEMO_PDF = path.join(process.cwd(), '__tests__/fixtures/demo-questions.pdf');
 
 const describeIfPdf = fs.existsSync(DEMO_PDF) ? describe : describe.skip;
 

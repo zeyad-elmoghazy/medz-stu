@@ -1,4 +1,4 @@
-// Build public/test-data/demo-questions.pdf — an 11-page MCQ
+// Build __tests__/fixtures/demo-questions.pdf — an 11-page MCQ
 // fixture matching Dr. Ahmed Zahra's format, used by the OCR
 // integration test in __tests__/ocr/pipeline.integration.test.ts.
 import PDFDocument from 'pdfkit';
@@ -279,7 +279,7 @@ function renderPage(doc: PDFKit.PDFDocument, q: Question) {
 }
 
 async function main() {
-  const outDir = path.join(process.cwd(), 'public/test-data');
+  const outDir = path.join(process.cwd(), '__tests__/fixtures');
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, 'demo-questions.pdf');
 
