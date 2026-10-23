@@ -35,7 +35,10 @@ export async function GET() {
     moduleCountRes,
     subjectCountRes,
     chapterCountRes,
-    questionRowsRes,
+    publishedCountRes,
+    underReviewCountRes,
+    draftCountRes,
+    archivedCountRes,
     recentSessionsRes,
     recentActivityRes,
     openReportsRes,
@@ -45,7 +48,14 @@ export async function GET() {
     untypedFrom(supabase).from('modules').select('code', { count: 'exact', head: true }),
     untypedFrom(supabase).from('subjects').select('id', { count: 'exact', head: true }),
     untypedFrom(supabase).from('chapters').select('id', { count: 'exact', head: true }),
-    untypedFrom(supabase).from('questions').select('id, status, flag_count, created_at'),
+    // Head-only counts per status: a full-table select would be capped at
+    // PostgREST's 1,000-row limit and under-report a 5k+ question bank.
+    ...(['published', 'under_review', 'draft', 'archived'] as const).map((status) =>
+      untypedFrom(supabase)
+        .from('questions')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', status)
+    ),
     untypedFrom(supabase)
       .from('quiz_sessions')
       .select('student_id, completed_at')
@@ -64,19 +74,18 @@ export async function GET() {
       .eq('resolved', false),
   ]);
 
-  const questionRows = (questionRowsRes.data ?? []) as {
-    id: number;
-    status: string;
-    flag_count: number;
-    created_at: string;
-  }[];
   const questionCounts = {
-    published: questionRows.filter((q) => q.status === 'published').length,
-    under_review: questionRows.filter((q) => q.status === 'under_review').length,
-    draft: questionRows.filter((q) => q.status === 'draft').length,
-    archived: questionRows.filter((q) => q.status === 'archived').length,
-    total: questionRows.length,
+    published: publishedCountRes.count ?? 0,
+    under_review: underReviewCountRes.count ?? 0,
+    draft: draftCountRes.count ?? 0,
+    archived: archivedCountRes.count ?? 0,
+    total: 0,
   };
+  questionCounts.total =
+    questionCounts.published +
+    questionCounts.under_review +
+    questionCounts.draft +
+    questionCounts.archived;
 
   const authorActivity: {
     id: string;

@@ -82,9 +82,10 @@ async function json<T>(res: Response): Promise<T> {
 }
 
 export async function fetchModulesByYear(): Promise<ModulesByYear> {
+  // No `cache: 'no-store'`: the route sends `private, max-age=60`, so the
+  // browser can reuse it while students move between catalogue screens.
   const res = await fetch('/api/student/catalogue/modules-by-year', {
     credentials: 'include',
-    cache: 'no-store',
   });
   return json(res);
 }
@@ -92,7 +93,7 @@ export async function fetchModulesByYear(): Promise<ModulesByYear> {
 export async function fetchSubjectsByModule(code: string): Promise<SubjectsByModule> {
   const res = await fetch(
     `/api/student/catalogue/subjects-by-module?code=${encodeURIComponent(code)}`,
-    { credentials: 'include', cache: 'no-store' }
+    { credentials: 'include' }
   );
   return json(res);
 }

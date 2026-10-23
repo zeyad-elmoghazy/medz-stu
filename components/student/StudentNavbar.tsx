@@ -1,15 +1,21 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { LogOutIcon, MoonIcon, SpinnerIcon, SunIcon } from '@/components/icons';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
-import { NavToast, useNavToast } from '@/components/ui/NavToast';
+import { useNavToast } from '@/components/ui/use-nav-toast';
 import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabase';
 import { useDisplayName } from '@/lib/use-display-name';
 import { useScrollShadow } from '@/lib/use-scroll-shadow';
 import { useStudentTheme } from '@/lib/use-student-theme';
+
+// framer-motion lives in this chunk only; load it after hydration, off the critical path.
+const NavToast = dynamic(() => import('@/components/ui/NavToast').then((m) => m.NavToast), {
+  ssr: false,
+});
 
 // Single source of truth for the student top bar. Every /student
 // page renders this so the header stays identical.

@@ -345,6 +345,7 @@ function ViewerDialog({
           <img
             ref={imgRef}
             src={src}
+            decoding="async"
             alt={alt}
             draggable={false}
             onError={() => setFailed(true)}

@@ -1,29 +1,6 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-
-/**
- * Tiny nav-only toast. Used for "not built yet" affordances on
- * links like `Pricing` and `AI Tutor` — showing a floating chip
- * beats a modal or a route change to a stub page.
- *
- * The hook holds a single message string + auto-clears it after
- * `duration` ms. Two independent nav items firing in quick
- * succession just replace the message; the timer resets because
- * the effect depends on `message`.
- */
-export function useNavToast(duration = 2500) {
-  const [message, setMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!message) return;
-    const t = setTimeout(() => setMessage(null), duration);
-    return () => clearTimeout(t);
-  }, [message, duration]);
-
-  return { message, showToast: setMessage };
-}
 
 export function NavToast({ message }: { message: string | null }) {
   return (

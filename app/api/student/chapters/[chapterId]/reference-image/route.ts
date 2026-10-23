@@ -48,21 +48,25 @@ export async function GET(
   }
 
   const client = untypedFrom(supabase);
-  const { data: match } = await client
-    .from('questions')
-    .select('id')
-    .eq('chapter_id', params.chapterId)
-    .eq('reference_page', page)
-    .eq('status', 'published')
-    .limit(1)
-    .maybeSingle();
+  const { getSignedBookPageUrl } = await import('@/lib/book-reference');
+
+  // The access check and the URL resolution don't depend on each other, so
+  // run them together. The URL is only returned if the check passes.
+  const [{ data: match }, url] = await Promise.all([
+    client
+      .from('questions')
+      .select('id')
+      .eq('chapter_id', params.chapterId)
+      .eq('reference_page', page)
+      .eq('status', 'published')
+      .limit(1)
+      .maybeSingle(),
+    getSignedBookPageUrl(params.chapterId, page),
+  ]);
 
   if (!match) {
     return NextResponse.json({ url: null });
   }
-
-  const { getSignedBookPageUrl } = await import('@/lib/book-reference');
-  const url = await getSignedBookPageUrl(params.chapterId, page);
 
   return NextResponse.json({ url });
 }
