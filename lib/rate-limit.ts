@@ -37,6 +37,17 @@ function buildLimiter(
 // at scale, so this is the "credential stuffing" line of defense.
 export const authLimiter = buildLimiter(5, '15 m', 'rl:auth');
 
+// Login, per target account: 10 attempts / 15 min per email.
+// Stops targeted password guessing from any number of IPs without
+// punishing a lecture hall behind one campus NAT (a flat per-IP
+// limit of 5 would lock out every student sharing that address).
+export const loginEmailLimiter = buildLimiter(10, '15 m', 'rl:login-email');
+
+// Login, per source IP: 300 / 15 min. Credential-stuffing brake —
+// one IP walking a leaked email list burns through this fast, while
+// ~200 students logging in once each stay far below it.
+export const loginIpLimiter = buildLimiter(300, '15 m', 'rl:login-ip');
+
 // Quiz submission: 30 per hour per user
 // (max ~30 questions per hour is reasonable)
 // Caps a buggy client or malicious replay; a real student

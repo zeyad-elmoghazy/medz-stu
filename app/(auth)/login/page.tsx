@@ -83,24 +83,51 @@ function LoginPageInner() {
 
     // Defer the ~90 KB supabase-js payload until the user actually
     // submits the form. Keeps First Load JS on /login tiny.
+    // Sign in through our server route, NOT supabase.auth directly from
+    // the browser: only the route applies the per-email / per-IP rate
+    // limits, and it sets the session cookie the browser client reads.
+    let res: Response;
+    try {
+      res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      setLoading(false);
+      setError('Network error. Check your connection and try again.');
+      return;
+    }
+
+    if (!res.ok) {
+      setLoading(false);
+      if (res.status === 429) {
+        const mins = Math.max(1, Math.ceil((Number(res.headers.get('Retry-After')) || 0) / 60));
+        setError(
+          `Too many sign-in attempts. Try again in about ${mins} minute${mins === 1 ? '' : 's'}.`
+        );
+      } else {
+        setError('Invalid email or password.');
+      }
+      return;
+    }
+
     const { createBrowserClient } = await import('@/lib/supabase');
     const supabase = createBrowserClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError || !data.user) {
+    if (!user) {
       setLoading(false);
-      setError(signInError?.message ?? 'Unable to sign in. Check your credentials.');
+      setError('Unable to sign in. Check your credentials.');
       return;
     }
 
     const profileQuery = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', data.user.id)
+      .eq('id', user.id)
       .single();
 
     const profile = profileQuery.data as { role: UserRole } | null;
