@@ -7,7 +7,8 @@ import type { NextRequest, NextResponse } from 'next/server';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
-const demoFlag = process.env.NEXT_PUBLIC_DEMO === '1';
+const demoFlag =
+  process.env.NODE_ENV !== 'production' && process.env.NEXT_PUBLIC_DEMO === '1';
 
 if ((!supabaseUrl || !supabaseAnonKey) && !demoFlag) {
   // Not in explicit demo mode and Supabase creds are missing: fail

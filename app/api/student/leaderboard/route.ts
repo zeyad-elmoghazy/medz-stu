@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
@@ -62,7 +63,7 @@ export async function GET() {
 
   const rankRes = await service.rpc('get_student_rank', { p_student_id: user.id });
   if (rankRes.error) {
-    return NextResponse.json({ error: rankRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(rankRes.error) }, { status: 500 });
   }
   const myRow = (rankRes.data as LeaderboardRow[] | null)?.[0] ?? null;
 

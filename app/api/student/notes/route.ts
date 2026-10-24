@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const MAX_NOTE_CHARS = 10_000;
 
 /**
  * GET /api/student/notes?questionId=N
@@ -141,6 +144,11 @@ export async function PUT(request: NextRequest) {
   if (!Number.isInteger(questionId) || content === null) {
     return NextResponse.json({ error: 'Invalid questionId or content' }, { status: 400 });
   }
+  // Notes are free text stored per question; cap it so one account
+  // can't use the endpoint as bulk storage.
+  if (content.length > MAX_NOTE_CHARS) {
+    return NextResponse.json({ error: 'Note is too long' }, { status: 413 });
+  }
 
   const client = untypedFrom(supabase);
   const { data: question, error: questionError } = await client
@@ -165,7 +173,7 @@ export async function PUT(request: NextRequest) {
   );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(error) }, { status: 500 });
   }
   return NextResponse.json({ saved: true });
 }

@@ -18,6 +18,18 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Log a database / PostgREST error server-side and return the generic
+ * message that is safe to send to a client. Raw `error.message` text
+ * reveals table, column and constraint names — never forward it.
+ */
+export function publicDbError(
+  error: { message?: string; code?: string } | null | undefined,
+): string {
+  console.error('[db-error]', error?.code, error?.message);
+  return 'Internal server error';
+}
+
 export function handleApiError(error: unknown): NextResponse {
   if (error instanceof ApiError) {
     if (error.internal !== undefined) {

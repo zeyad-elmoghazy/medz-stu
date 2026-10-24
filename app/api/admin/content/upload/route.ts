@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/require-admin';
+import { applyRateLimit } from '@/lib/apply-rate-limit';
+import { uploadLimiter } from '@/lib/rate-limit';
 import { untypedFrom } from '@/lib/supabase-server';
 import {
   extractPdfPages,
@@ -46,9 +48,13 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
  * Extracted rows land with status='under_review' in the Review
  * Queue, not published directly.
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const { user, supabase, error } = await requireAdmin();
   if (error) return error;
+
+  // Each upload runs pdf-parse + Tesseract OCR for minutes of CPU.
+  const limited = await applyRateLimit(request, uploadLimiter, user.id);
+  if (limited) return limited;
 
   const form = await request.formData().catch(() => null);
   if (!form) {
@@ -71,6 +77,10 @@ export async function POST(request: Request) {
   }
   if (notesFile instanceof File && notesFile.size > MAX_FILE_BYTES) {
     return NextResponse.json({ error: 'notes file exceeds 10 MB limit' }, { status: 413 });
+  }
+  // Filename/MIME are client-controlled; the %PDF- header is the real check.
+  if (!(await looksLikePdf(questionsFile)) || (notesFile instanceof File && !(await looksLikePdf(notesFile)))) {
+    return NextResponse.json({ error: 'Files must be valid PDFs' }, { status: 415 });
   }
 
   // Resolve chapter -> subject slug (chapters.subject_id is a
@@ -241,6 +251,11 @@ export async function POST(request: Request) {
     const msg = err instanceof Error ? err.message : 'Extraction failed';
     return NextResponse.json({ error: msg, jobId }, { status: 500 });
   }
+}
+
+async function looksLikePdf(file: File): Promise<boolean> {
+  const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+  return head.length === 5 && String.fromCharCode(...head) === '%PDF-';
 }
 
 function parseRefPageFromString(ref: string | undefined): number | null {

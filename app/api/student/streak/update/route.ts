@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { serviceRoleClient } from '@/lib/supabase-service';
@@ -73,7 +74,7 @@ export async function POST() {
   );
 
   if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(upsertError) }, { status: 500 });
   }
 
   const { data: streak, error: streakError } = await sb.rpc(
@@ -82,7 +83,7 @@ export async function POST() {
   );
 
   if (streakError) {
-    return NextResponse.json({ error: streakError.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(streakError) }, { status: 500 });
   }
 
   return NextResponse.json({

@@ -176,6 +176,7 @@ export default function NotesEditor({
           ref={textareaRef}
           value={draft}
           onChange={(e) => handleChange(e.target.value)}
+          maxLength={10000} // mirrors MAX_NOTE_CHARS in app/api/student/notes/route.ts
           placeholder="Mnemonics, slide cues, links to lecture clips…"
           className="flex-1 w-full resize-none rounded-xl p-4 text-sm leading-relaxed text-text-primary placeholder:text-text-muted/60 focus:outline-none scrollbar-thin"
           style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--line)' }}

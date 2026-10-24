@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { serviceRoleClient } from '@/lib/supabase-service';
@@ -74,7 +75,7 @@ export async function POST() {
     .maybeSingle();
 
   if (selectError) {
-    return NextResponse.json({ error: selectError.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(selectError) }, { status: 500 });
   }
 
   if (existing) {
@@ -87,7 +88,7 @@ export async function POST() {
       .eq('streak_date', today);
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return NextResponse.json({ error: publicDbError(updateError) }, { status: 500 });
     }
   } else {
     const { error: insertError } = await service.from('daily_streaks').insert({
@@ -97,7 +98,7 @@ export async function POST() {
     });
 
     if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      return NextResponse.json({ error: publicDbError(insertError) }, { status: 500 });
     }
   }
 
@@ -107,7 +108,7 @@ export async function POST() {
   );
 
   if (streakError) {
-    return NextResponse.json({ error: streakError.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(streakError) }, { status: 500 });
   }
 
   return NextResponse.json({

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createMiddlewareSupabase, isDemoMode, type UserRole } from '@/lib/supabase';
 import { apiLimiter } from '@/lib/rate-limit';
+import { isCrossSiteWrite } from '@/lib/csrf';
 
 // The '/professor' page-role gate is removed: profiles.role no
 // longer permits 'professor' (015_b2c_pivot_rebuild.sql), so that
@@ -85,6 +86,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Reject cross-site state-changing API calls before they cost a
+  // rate-limit token or reach a handler (CSRF defence in depth).
+  if (pathname.startsWith('/api') && isCrossSiteWrite(request.method, request.headers)) {
+    return NextResponse.json({ error: 'Cross-site request blocked' }, { status: 403 });
+  }
+
   // Narrow the rate-limit to API traffic. Page navigations are
   // (a) usually cheap static HTML, (b) already protected by
   // per-route limiters on the sensitive endpoints (login, quiz
@@ -157,16 +164,22 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.next();
   const supabase = createMiddlewareSupabase(request, response);
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // getClaims() verifies the JWT signature (locally, via the project's
+  // cached ES256 JWKS — no network hop) and still refreshes an expired
+  // token. getSession() trusts the cookie contents unverified; it was
+  // only safe here because the role lookup below failed closed on a
+  // forged token (PostgREST rejects it). Verifying up front rejects
+  // forgeries without that DB round trip and stops depending on that
+  // incidental check. Defence in depth, not a fix for an open hole.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub ?? null;
 
   const required = PROTECTED_PREFIXES.find(({ prefix }) =>
     pathname.startsWith(prefix)
   );
 
   if (!required) {
-    if (session && (pathname === '/login' || pathname === '/signup')) {
+    if (userId && (pathname === '/login' || pathname === '/signup')) {
       // A session from clicking a password-recovery email link is a
       // real, valid session — but the student hasn't actually set a
       // new password yet. Without this check, visiting /login with
@@ -176,7 +189,6 @@ export async function proxy(request: NextRequest) {
       // the password reset entirely. Route that case to
       // /reset-password instead so the reset always has to complete.
       if (pathname === '/login') {
-        const { data: claimsData } = await supabase.auth.getClaims();
         const amr = claimsData?.claims?.amr as
           | { method: string }[]
           | undefined;
@@ -191,7 +203,7 @@ export async function proxy(request: NextRequest) {
       const profileQuery = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', session.user.id)
+        .eq('id', userId)
         .single();
       const loginProfile = profileQuery.data as { role: UserRole } | null;
       const role = loginProfile?.role ?? 'student';
@@ -201,7 +213,7 @@ export async function proxy(request: NextRequest) {
     return withRateHeaders(response);
   }
 
-  if (!session) {
+  if (!userId) {
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('redirectedFrom', pathname);
     return withRateHeaders(NextResponse.redirect(redirectUrl));
@@ -210,7 +222,7 @@ export async function proxy(request: NextRequest) {
   const profileQuery = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', userId)
     .single();
   const profile = profileQuery.data as { role: UserRole } | null;
 

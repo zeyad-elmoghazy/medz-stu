@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
@@ -122,7 +123,7 @@ export async function GET(
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE });
+    return NextResponse.json({ error: publicDbError(error) }, { status: 500, headers: NO_STORE });
   }
   const row = data as ProgressRow | null;
   if (!row) {
@@ -181,7 +182,7 @@ export async function PUT(
     .eq('chapter_id', chapterId)
     .eq('status', 'published');
   if (questionsRes.error) {
-    return NextResponse.json({ error: questionsRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(questionsRes.error) }, { status: 500 });
   }
   const bank = (questionsRes.data ?? []) as { id: number; subject_id: string }[];
   if (bank.length === 0) {
@@ -219,7 +220,7 @@ export async function PUT(
     .eq('chapter_id', chapterId)
     .maybeSingle();
   if (existingRes.error) {
-    return NextResponse.json({ error: existingRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(existingRes.error) }, { status: 500 });
   }
   const existing = (existingRes.data as { answers: Record<string, string> | null } | null)
     ?.answers ?? {};
@@ -242,7 +243,7 @@ export async function PUT(
       .eq('student_id', auth.user.id)
       .eq('chapter_id', chapterId);
     if (del.error) {
-      return NextResponse.json({ error: del.error.message }, { status: 500 });
+      return NextResponse.json({ error: publicDbError(del.error) }, { status: 500 });
     }
     return NextResponse.json({ saved: false, answered: 0, total }, { headers: NO_STORE });
   }
@@ -261,7 +262,7 @@ export async function PUT(
     { onConflict: 'student_id,chapter_id' }
   );
   if (upsert.error) {
-    return NextResponse.json({ error: upsert.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(upsert.error) }, { status: 500 });
   }
 
   return NextResponse.json(
@@ -288,7 +289,7 @@ export async function DELETE(
     .eq('student_id', auth.user.id)
     .eq('chapter_id', params.data.chapterId);
   if (del.error) {
-    return NextResponse.json({ error: del.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(del.error) }, { status: 500 });
   }
   return NextResponse.json({ deleted: true }, { headers: NO_STORE });
 }

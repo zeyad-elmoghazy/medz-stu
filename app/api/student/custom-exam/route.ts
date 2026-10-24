@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { z } from 'zod';
 import { untypedFrom } from '@/lib/supabase-server';
 import { quizLimiter } from '@/lib/rate-limit';
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     .eq('student_id', auth.user.id)
     .maybeSingle();
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_STORE });
+    return NextResponse.json({ error: publicDbError(error) }, { status: 500, headers: NO_STORE });
   }
   if (!data) return NextResponse.json({ exam: null }, { headers: NO_STORE });
 
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
     const found: { id: string; module_code: string }[] = [];
     for (const part of chunk(chapterIds, 40)) {
       const res = await service.from('chapters').select('id, module_code').in('id', part);
-      if (res.error) return NextResponse.json({ error: res.error.message }, { status: 500 });
+      if (res.error) return NextResponse.json({ error: publicDbError(res.error) }, { status: 500 });
       found.push(...((res.data ?? []) as { id: string; module_code: string }[]));
     }
     if (
@@ -207,7 +208,7 @@ export async function POST(request: NextRequest) {
     { onConflict: 'student_id' }
   );
   if (upsert.error) {
-    return NextResponse.json({ error: upsert.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(upsert.error) }, { status: 500 });
   }
 
   return NextResponse.json({ examId, total: drawn.length }, { headers: NO_STORE });

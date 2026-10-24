@@ -13,15 +13,12 @@ export type CatalogueStats = {
  * from the database.
  *
  * Uses the anon-scoped browser client deliberately, not a
- * service-role query behind an API route: modules_public_read,
- * chapters_public_read, and questions_read_published are all
- * `public`-role RLS policies with no auth requirement — confirmed
- * both by reading pg_policies and with a live unauthenticated REST
- * call before writing this — so the same function works
- * identically for a signed-in student and an anonymous landing-page
- * visitor. `status = 'published'` is still filtered explicitly
- * below rather than relied on via RLS alone, matching this
- * codebase's existing convention elsewhere.
+ * service-role query behind an API route: modules_public_read and
+ * chapters_public_read are `public`-role RLS policies, and migration
+ * 038 leaves anon column-limited SELECT on exactly those two tables
+ * (and nothing else), so the same function works identically for a
+ * signed-in student and an anonymous landing-page visitor. Do NOT add
+ * reads of other tables here — anon can't see them.
  */
 export async function fetchCatalogueStats(): Promise<CatalogueStats> {
   const supabase = createBrowserClient();
@@ -36,16 +33,27 @@ export async function fetchCatalogueStats(): Promise<CatalogueStats> {
     from: (table: string) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
   };
 
-  const [modulesRes, chaptersRes, questionsRes] = await Promise.all([
+  // The published-question total is the sum of chapters.published_count
+  // (a trigger-maintained rollup, equal to count(published questions) —
+  // 5447 = 5447 when checked) rather than a count over `questions`:
+  // anon must not be able to read that table (migration 038), and the
+  // public landing page calls this with the anon key.
+  // ponytail: PostgREST returns at most 1000 rows, so the sum is exact
+  // up to 1000 chapters (234 today); move to an aggregate RPC beyond that.
+  const [modulesRes, chaptersRes] = await Promise.all([
     client.from('modules').select('code', { count: 'exact', head: true }),
-    client.from('chapters').select('id', { count: 'exact', head: true }),
-    client.from('questions').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+    client.from('chapters').select('published_count', { count: 'exact' }),
   ]);
+
+  const publishedQuestionCount = ((chaptersRes.data ?? []) as { published_count: number }[]).reduce(
+    (sum, row) => sum + (Number(row.published_count) || 0),
+    0
+  );
 
   return {
     moduleCount: modulesRes.count ?? 0,
     chapterCount: chaptersRes.count ?? 0,
-    publishedQuestionCount: questionsRes.count ?? 0,
+    publishedQuestionCount,
   };
 }
 

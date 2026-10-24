@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
     .order('ordinal', { ascending: true });
 
   if (chaptersRes.error) {
-    return NextResponse.json({ error: chaptersRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(chaptersRes.error) }, { status: 500 });
   }
 
   type ChapterRow = { id: string; slug: string; name: string; ordinal: number; published_count: number; topic: string | null };

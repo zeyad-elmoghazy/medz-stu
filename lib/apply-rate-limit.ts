@@ -33,7 +33,16 @@ export async function applyRateLimit(
     getClientIp(request) ||
     'anonymous';
 
-  const { success, limit, remaining, reset } = await limiter.limit(id);
+  let result;
+  try {
+    result = await limiter.limit(id);
+  } catch (err) {
+    // A Redis outage must not take login/quiz down with it — same
+    // fail-open stance as proxy.ts. Supabase's own auth limits remain.
+    console.error('[rate-limit] check failed, allowing request:', err);
+    return null;
+  }
+  const { success, limit, remaining, reset } = result;
 
   if (!success) {
     const retryAfter = Math.ceil((reset - Date.now()) / 1000);
@@ -65,7 +74,7 @@ export async function applyRateLimit(
  * client. `x-real-ip` is a single value set by Nginx-style
  * reverse proxies.
  */
-function getClientIp(request: NextRequest): string | null {
+export function getClientIp(request: NextRequest): string | null {
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     const first = forwarded.split(',')[0]?.trim();

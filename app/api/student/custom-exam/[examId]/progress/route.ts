@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { z } from 'zod';
 import { progressLimiter } from '@/lib/rate-limit';
 import { mergeExamAnswers } from '@/lib/server/custom-exam';
@@ -86,7 +87,7 @@ export async function PUT(
     .eq('id', exam.id)
     .eq('student_id', auth.user.id);
   if (update.error) {
-    return NextResponse.json({ error: update.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(update.error) }, { status: 500 });
   }
 
   return NextResponse.json(

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
@@ -49,7 +50,7 @@ export async function GET() {
   ]);
 
   for (const res of [modulesRes, moduleSubjectsRes, chaptersRes, subjectsRes]) {
-    if (res.error) return NextResponse.json({ error: res.error.message }, { status: 500 });
+    if (res.error) return NextResponse.json({ error: publicDbError(res.error) }, { status: 500 });
   }
 
   type ModuleRow = { code: string; name: string; year_num: string };

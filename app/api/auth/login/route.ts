@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@/lib/supabase-server';
-import { applyRateLimit } from '@/lib/apply-rate-limit';
-import { authLimiter } from '@/lib/rate-limit';
+import { z } from 'zod';
+import { applyRateLimit, getClientIp } from '@/lib/apply-rate-limit';
+import { loginEmailLimiter, loginIpLimiter } from '@/lib/rate-limit';
 import type { Database } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -18,10 +19,19 @@ export const dynamic = 'force-dynamic';
 // exist by watching for different error messages or response sizes.
 const GENERIC_AUTH_ERROR = 'Invalid email or password.';
 
-type LoginPayload = {
-  email?: string;
-  password?: string;
-};
+// Length caps stop a multi-megabyte "password" from being hashed by
+// the rate limiter or forwarded to the auth service.
+const LoginSchema = z.object({
+  email: z.string().min(1).max(254),
+  password: z.string().min(1).max(1024),
+});
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 /**
  * POST /api/auth/login
@@ -41,26 +51,35 @@ type LoginPayload = {
  *      with the same generic message.
  */
 export async function POST(request: NextRequest) {
-  // IP-based limiter: identifier is left undefined so applyRateLimit
-  // pulls it from x-forwarded-for / x-real-ip.
-  const limited = await applyRateLimit(request, authLimiter);
-  if (limited) return limited;
+  // Per-IP brake first (cheap, before we touch the body), then a
+  // per-account limiter once we know which email is being tried.
+  const ipLimited = await applyRateLimit(
+    request,
+    loginIpLimiter,
+    `ip:${getClientIp(request) ?? 'anonymous'}`
+  );
+  if (ipLimited) return ipLimited;
 
-  let payload: LoginPayload;
+  let raw: unknown;
   try {
-    payload = (await request.json()) as LoginPayload;
+    raw = await request.json();
   } catch {
     return NextResponse.json({ error: GENERIC_AUTH_ERROR }, { status: 400 });
   }
 
-  if (
-    typeof payload.email !== 'string' ||
-    typeof payload.password !== 'string' ||
-    payload.email.length === 0 ||
-    payload.password.length === 0
-  ) {
+  const parsed = LoginSchema.safeParse(raw);
+  if (!parsed.success) {
     return NextResponse.json({ error: GENERIC_AUTH_ERROR }, { status: 400 });
   }
+  const payload = parsed.data;
+
+  // Key on a hash of the email so Redis never stores addresses.
+  const emailLimited = await applyRateLimit(
+    request,
+    loginEmailLimiter,
+    `email:${await sha256Hex(payload.email.trim().toLowerCase())}`
+  );
+  if (emailLimited) return emailLimited;
 
   const supabase = await createRouteHandlerClient<Database>({ cookies });
   const { data, error } = await supabase.auth.signInWithPassword({

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
@@ -46,10 +47,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 });
   }
   if (moduleSubjectsRes.error) {
-    return NextResponse.json({ error: moduleSubjectsRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(moduleSubjectsRes.error) }, { status: 500 });
   }
   if (chaptersRes.error) {
-    return NextResponse.json({ error: chaptersRes.error.message }, { status: 500 });
+    return NextResponse.json({ error: publicDbError(chaptersRes.error) }, { status: 500 });
   }
 
   type ModuleSubjectRow = {
