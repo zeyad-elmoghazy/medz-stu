@@ -175,6 +175,18 @@ const nextConfig = {
         destination: '/student/catalogue',
         permanent: false,
       },
+      // /admin/dashboard was retired for /admin/content; bare /admin never
+      // had a page. Both 404'd for signed-in admins with old bookmarks.
+      {
+        source: '/admin',
+        destination: '/admin/content',
+        permanent: false,
+      },
+      {
+        source: '/admin/dashboard',
+        destination: '/admin/content',
+        permanent: false,
+      },
     ];
   },
 
