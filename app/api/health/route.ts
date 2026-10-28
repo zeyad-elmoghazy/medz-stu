@@ -45,8 +45,10 @@ export async function GET() {
   } else {
     try {
       await redis.set('health:ping', '1', { ex: 10 });
-      const value = await redis.get<string>('health:ping');
-      checks.redis = value === '1' ? 'ok' : 'error';
+      // The client JSON-decodes replies, so the stored "1" reads back as
+      // the number 1 — compare as strings or a healthy Redis reports error.
+      const value = await redis.get<string | number>('health:ping');
+      checks.redis = String(value) === '1' ? 'ok' : 'error';
     } catch {
       checks.redis = 'error';
     }
