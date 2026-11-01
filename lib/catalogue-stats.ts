@@ -1,5 +1,21 @@
 import { createBrowserClient } from '@/lib/supabase';
 
+// modules/chapters/questions aren't in the typed Database shape
+// (lib/supabase.ts) — the same untyped-client workaround used by
+// every admin/student API route (lib/supabase-server.ts's
+// untypedFrom), duplicated narrowly here rather than imported:
+// that file is server-only (next/headers) and can't be pulled
+// into this client-callable module.
+export type AnonCatalogueClient = {
+  from: (table: string) => any;
+};
+
+// Default is the browser client (client-side callers). The public
+// landing page's server component passes a cookie-free anon client
+// instead (lib/landing-data.ts) so the same queries run at build/ISR
+// time without calling cookies() and making the page dynamic.
+const browserAnon = (): AnonCatalogueClient => createBrowserClient() as unknown as AnonCatalogueClient;
+
 export type CatalogueStats = {
   moduleCount: number;
   chapterCount: number;
@@ -20,19 +36,9 @@ export type CatalogueStats = {
  * signed-in student and an anonymous landing-page visitor. Do NOT add
  * reads of other tables here — anon can't see them.
  */
-export async function fetchCatalogueStats(): Promise<CatalogueStats> {
-  const supabase = createBrowserClient();
-
-  // modules/chapters/questions aren't in the typed Database shape
-  // (lib/supabase.ts) — the same untyped-client workaround used by
-  // every admin/student API route (lib/supabase-server.ts's
-  // untypedFrom), duplicated narrowly here rather than imported:
-  // that file is server-only (next/headers) and can't be pulled
-  // into this client-callable module.
-  const client = supabase as unknown as {
-    from: (table: string) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  };
-
+export async function fetchCatalogueStats(
+  client: AnonCatalogueClient = browserAnon(),
+): Promise<CatalogueStats> {
   // The published-question total is the sum of chapters.published_count
   // (a trigger-maintained rollup, equal to count(published questions) —
   // 5447 = 5447 when checked) rather than a count over `questions`:
@@ -57,6 +63,13 @@ export async function fetchCatalogueStats(): Promise<CatalogueStats> {
   };
 }
 
+// The specific modules shown on the landing page's catalogue strip —
+// one per year group is Anatomy/Spinal Cord's own module (205); the
+// rest are real neighboring modules, published or not. Names come
+// from the database (fetchLandingModules), not hardcoded — this array
+// is only the set of codes to ask for.
+export const LANDING_MODULE_CODES = ['101', '102', '103', '205', '206', '309', '310'];
+
 export type LandingModuleCard = {
   code: string;
   name: string;
@@ -74,12 +87,10 @@ export type LandingModuleCard = {
  * authenticated route, and scoped to the requested codes instead of
  * every module.
  */
-export async function fetchLandingModules(codes: string[]): Promise<LandingModuleCard[]> {
-  const supabase = createBrowserClient();
-  const client = supabase as unknown as {
-    from: (table: string) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  };
-
+export async function fetchLandingModules(
+  codes: string[],
+  client: AnonCatalogueClient = browserAnon(),
+): Promise<LandingModuleCard[]> {
   const [modulesRes, chaptersRes] = await Promise.all([
     client.from('modules').select('code, name, year_num').in('code', codes),
     client.from('chapters').select('module_code, published_count').in('module_code', codes),

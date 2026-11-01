@@ -258,6 +258,16 @@ export default function SignupPage() {
                 Log In
               </Link>
             </p>
+
+            <p className="mt-4 text-center text-xs text-text-muted">
+              <Link href="/terms" className="underline-offset-2 transition hover:text-text-primary hover:underline">
+                Terms of Service
+              </Link>
+              {' · '}
+              <Link href="/privacy" className="underline-offset-2 transition hover:text-text-primary hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
           </>
         )}
       </div>
