@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { AuthCardFallback } from '@/components/auth/AuthCardFallback';
 import { ArrowRightIcon, SpinnerIcon, LockIcon } from '@/components/icons';
 import { isDemoMode } from '@/lib/demo-profile';
 import { clearLocalQuizState } from '@/lib/client-session';
@@ -11,7 +12,9 @@ export default function ResetPasswordPage() {
   // useSearchParams must live inside a Suspense boundary, matching
   // the pattern already used on /login.
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={<AuthCardFallback heading="Reset your password" subheading="Verifying your reset link…" />}
+    >
       <ResetPasswordPageInner />
     </Suspense>
   );
@@ -124,6 +127,7 @@ function ResetPasswordPageInner() {
 
         {status === 'verifying' && (
           <div className="mt-10 flex flex-col items-center gap-3 text-sm text-text-muted">
+            <h1 className="sr-only">Reset your password</h1>
             <SpinnerIcon size={20} className="animate-spin text-accent" />
             Verifying your reset link&hellip;
           </div>

@@ -3,6 +3,7 @@ import { Public_Sans, Caveat } from 'next/font/google';
 import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { PAGES, SITE_NAME, SITE_URL } from '@/lib/seo';
 import './globals.css';
 
 const publicSans = Public_Sans({
@@ -15,14 +16,26 @@ const caveat = Caveat({
   subsets: ['latin'],
   variable: '--font-caveat',
   display: 'swap',
+  // Only the two student quiz pages use `font-handwritten`. Without
+  // this, every route — the public landing page included — preloaded
+  // the font file for nothing. It still loads on demand when used.
+  preload: false,
 });
 
+// Site-wide defaults. Public pages set their own full title,
+// description and self-canonical through pageMetadata() in lib/seo.ts —
+// deliberately NO `alternates.canonical` here: it would be inherited by
+// every child route and point them all at `/`.
 export const metadata: Metadata = {
-  title: 'MediZee — Medical exam prep',
-  description:
-    'MediZee is a full MCQ bank with instant split-view feedback, analytics, and streaks, built by and for medical students.',
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
+  title: { default: PAGES['/'].title, template: `%s | ${SITE_NAME}` },
+  description: PAGES['/'].description,
+  openGraph: { type: 'website', siteName: SITE_NAME, locale: 'en_US' },
+  twitter: { card: 'summary_large_image' },
   icons: {
     icon: '/favicon.png',
+    apple: '/apple-touch-icon.png',
   },
 };
 

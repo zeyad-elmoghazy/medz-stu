@@ -52,7 +52,7 @@ export function MediZeeLogo({
             alt="MediZee"
             width={box}
             height={box}
-            priority
+            loading="eager"
             onError={() => setImgFailed(true)}
             style={{ width: box, height: box, objectFit: 'cover' }}
           />

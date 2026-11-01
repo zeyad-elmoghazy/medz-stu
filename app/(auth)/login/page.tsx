@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { AuthCardFallback } from '@/components/auth/AuthCardFallback';
 import { ArrowRightIcon, SpinnerIcon, MailIcon, LockIcon } from '@/components/icons';
 import {
   dashboardPathForRole,
@@ -17,7 +18,9 @@ export default function LoginPage() {
   // useSearchParams must live inside a Suspense boundary so the page
   // can be statically prerendered (Next 14.2+ requirement).
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={<AuthCardFallback heading="Welcome back" subheading="Sign in to continue your block." />}
+    >
       <LoginPageInner />
     </Suspense>
   );
@@ -268,6 +271,16 @@ function LoginPageInner() {
             className="font-medium text-accent underline-offset-2 transition hover:text-text-primary hover:underline"
           >
             Create an account
+          </Link>
+        </p>
+
+        <p className="mt-4 text-center text-xs text-text-muted">
+          <Link href="/terms" className="underline-offset-2 transition hover:text-text-primary hover:underline">
+            Terms of Service
+          </Link>
+          {' · '}
+          <Link href="/privacy" className="underline-offset-2 transition hover:text-text-primary hover:underline">
+            Privacy Policy
           </Link>
         </p>
       </div>

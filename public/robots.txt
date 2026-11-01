@@ -1,8 +1,10 @@
 User-agent: *
 Disallow: /api/
 Disallow: /admin/
-Disallow: /professor/
+Disallow: /auth/
 Disallow: /student/
 Allow: /
 Allow: /login
 Allow: /signup
+
+Sitemap: https://www.medizee.app/sitemap.xml

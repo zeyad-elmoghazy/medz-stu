@@ -1,12 +1,12 @@
 import Link from 'next/link';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Terms of Service — MediZee',
-};
+// noindex while the copy is a draft — see lib/seo.ts.
+export const metadata = pageMetadata('/terms');
 
 export default function TermsPage() {
   return (
-    <div data-mz-root style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <main data-mz-root style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '64px 24px 96px' }}>
         <Link href="/" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--accent-text)' }}>← Back to MediZee</Link>
         <h1 style={{ margin: '24px 0 8px', fontSize: 34, fontWeight: 800, letterSpacing: '-.02em' }}>Terms of Service</h1>
@@ -41,6 +41,6 @@ export default function TermsPage() {
           </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
