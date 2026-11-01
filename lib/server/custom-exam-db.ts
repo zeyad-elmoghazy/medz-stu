@@ -7,6 +7,7 @@ import { createRouteHandlerClient } from '@/lib/supabase-server';
 import type { Database, UserRole } from '@/lib/supabase';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { chunk } from '@/lib/server/custom-exam';
+import { publicDbError } from '@/lib/api-error';
 
 /**
  * Shared plumbing for /api/student/custom-exam/** — auth, the
@@ -116,7 +117,7 @@ export async function loadOwnedExam(
     .eq('id', examId)
     .eq('student_id', studentId)
     .maybeSingle();
-  if (res.error) return { exam: null, error: res.error.message as string };
+  if (res.error) return { exam: null, error: publicDbError(res.error) };
   return { exam: (res.data as ExamRow | null) ?? null, error: null };
 }
 
@@ -147,7 +148,7 @@ export async function fetchPublishedPool(
         .eq('status', 'published')
         .order('id', { ascending: true })
         .range(from, from + PAGE_SIZE - 1);
-      if (res.error) return { pool: [], error: res.error.message as string };
+      if (res.error) return { pool: [], error: publicDbError(res.error) };
       const rows = (res.data ?? []) as { id: number; chapter_id: string }[];
       for (const r of rows) pool.push({ id: r.id, chapterId: r.chapter_id });
       if (rows.length < PAGE_SIZE) break;
@@ -173,7 +174,7 @@ export async function fetchPublishedQuestionsByIds<T extends { id: number }>(
       .select(columns)
       .in('id', part)
       .eq('status', 'published');
-    if (res.error) return { rows: [], error: res.error.message as string };
+    if (res.error) return { rows: [], error: publicDbError(res.error) };
     rows.push(...((res.data ?? []) as T[]));
   }
   return { rows, error: null };

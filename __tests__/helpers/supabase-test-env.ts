@@ -10,9 +10,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { isSafeSupabaseTestUrl } from './test-env-guard';
 
-function loadEnvFile(filePath: string): void {
-  if (!fs.existsSync(filePath)) return;
+function parseEnvFile(filePath: string): Record<string, string> {
+  const entries: Record<string, string> = {};
+  if (!fs.existsSync(filePath)) return entries;
   const content = fs.readFileSync(filePath, 'utf-8');
   for (const line of content.split('\n')) {
     const trimmed = line.trim();
@@ -27,6 +29,30 @@ function loadEnvFile(filePath: string): void {
     ) {
       value = value.slice(1, -1);
     }
+    entries[key] = value;
+  }
+  return entries;
+}
+
+function loadEnvFile(filePath: string): void {
+  const entries = parseEnvFile(filePath);
+  if (Object.keys(entries).length === 0) return;
+  // This file holds service-role credentials, and these suites create and
+  // delete auth users with them. Never load it when it (or the shell)
+  // points the tests at anything but a local Supabase stack, so a plain
+  // `npm test` can no longer write to the production project.
+  const targetUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? entries.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  if (!isSafeSupabaseTestUrl(targetUrl)) {
+    console.warn(
+      `[supabase-test-env] ${path.basename(filePath)} points at a non-local Supabase ` +
+        'project; not loading it, integration tests will be skipped. Use a local ' +
+        'stack (supabase start), or set SUPABASE_TEST_ALLOW_REMOTE=1 for a hosted ' +
+        'NON-production test project.',
+    );
+    return;
+  }
+  for (const [key, value] of Object.entries(entries)) {
     // Never clobber an env var CI (or the shell) already provided.
     if (!(key in process.env)) {
       process.env[key] = value;
@@ -47,16 +73,30 @@ export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?
  * environment has no Supabase secrets configured.
  */
 export function supabaseTestEnvAvailable(): boolean {
-  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_SERVICE_ROLE_KEY);
+  return (
+    Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_SERVICE_ROLE_KEY) &&
+    isSafeSupabaseTestUrl(SUPABASE_URL)
+  );
+}
+
+/** Defence in depth: refuse to build a client for a non-test project. */
+function assertSafeTestTarget(): void {
+  if (!isSafeSupabaseTestUrl(SUPABASE_URL)) {
+    throw new Error(
+      'Refusing to run integration tests against a non-local or production Supabase project.',
+    );
+  }
 }
 
 export function getServiceRoleClient(): SupabaseClient {
+  assertSafeTestTarget();
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
 
 export function getAnonClient(): SupabaseClient {
+  assertSafeTestTarget();
   return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
