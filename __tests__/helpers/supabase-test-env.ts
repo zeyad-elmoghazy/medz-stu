@@ -116,9 +116,11 @@ export interface TestUser {
 
 /**
  * Creates a real auth user via the service-role admin API. The
- * on_auth_user_created trigger (006_profile_on_signup.sql) auto-provisions
- * the matching profiles row from user_metadata.role, so no separate
- * profiles insert is needed.
+ * on_auth_user_created trigger auto-provisions the matching profiles row,
+ * so no separate profiles insert is needed. Since migration 030 that row
+ * is always created as a student (signup can't self-assign admin), so an
+ * 'admin' user is promoted afterwards through the service role, the one
+ * caller the role-protection triggers (013, 031) allow to change `role`.
  */
 export async function createTestUser(
   admin: SupabaseClient,
@@ -134,6 +136,12 @@ export async function createTestUser(
   });
   if (error || !data.user) {
     throw new Error(`createTestUser(${role}) failed: ${error?.message}`);
+  }
+  if (role === 'admin') {
+    const promoted = await admin.from('profiles').update({ role: 'admin' }).eq('id', data.user.id);
+    if (promoted.error) {
+      throw new Error(`createTestUser(admin) promotion failed: ${promoted.error.message}`);
+    }
   }
   return { id: data.user.id, email, password };
 }

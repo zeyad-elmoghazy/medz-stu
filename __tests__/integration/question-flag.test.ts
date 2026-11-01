@@ -58,10 +58,6 @@ describeIfSupabase('question flags (report a question)', () => {
     student = await createTestUser(admin, 'student');
     other = await createTestUser(admin, 'student');
     adminUser = await createTestUser(admin, 'admin');
-    // Signup can't self-assign admin (the profile is created as a student);
-    // promote through the service role, as the real admin-promotion path does.
-    const promoted = await admin.from('profiles').update({ role: 'admin' }).eq('id', adminUser.id);
-    if (promoted.error) throw new Error(`admin promotion failed: ${promoted.error.message}`);
 
     subjectSlug = uniqueSlug('subject');
     const { data: subject, error: subjectErr } = await admin
