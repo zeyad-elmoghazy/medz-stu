@@ -18,6 +18,7 @@ import {
 } from '@/components/student/profile/AccountCards';
 import { Notice } from '@/components/student/profile/ui';
 import { academicSession } from '@/lib/academic-year';
+import { clearLocalQuizState } from '@/lib/client-session';
 import { getEmptyStudentStats, type StudentStats } from '@/lib/dashboard-data';
 import {
   changeStudentPassword,
@@ -159,6 +160,7 @@ export default function ProfileSettingsPage() {
     if (signingOut) return;
     setSigningOut(true);
     clearDemoProfile();
+    clearLocalQuizState();
     if (!demo) await createBrowserClient().auth.signOut().catch(() => {});
     router.push('/login');
     router.refresh();
@@ -167,6 +169,7 @@ export default function ProfileSettingsPage() {
   async function handleDelete(confirmEmail: string) {
     await deleteStudentAccount(confirmEmail);
     // The server already ended the session; clear any client-side residue.
+    clearLocalQuizState();
     await createBrowserClient().auth.signOut().catch(() => {});
     router.push('/login');
     router.refresh();

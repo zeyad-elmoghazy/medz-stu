@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, LogOut } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { clearLocalQuizState } from '@/lib/client-session';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { fetchOverview, type AdminOverview } from '@/lib/admin-content-api';
 import { AdminOverviewPanel } from '@/components/admin-content/AdminOverviewPanel';
@@ -74,6 +75,7 @@ export default function AdminContentPage() {
   const handleLogout = useCallback(async () => {
     if (signingOut) return;
     setSigningOut(true);
+    clearLocalQuizState();
     await supabase.auth.signOut().catch(() => {});
     router.push('/login');
     router.refresh();

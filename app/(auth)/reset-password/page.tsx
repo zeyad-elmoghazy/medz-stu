@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRightIcon, SpinnerIcon, LockIcon } from '@/components/icons';
 import { isDemoMode } from '@/lib/demo-profile';
+import { clearLocalQuizState } from '@/lib/client-session';
 
 export default function ResetPasswordPage() {
   // useSearchParams must live inside a Suspense boundary, matching
@@ -98,6 +99,7 @@ function ResetPasswordPageInner() {
     // otherwise bounce this redirect straight back to
     // /reset-password. Sign out so /login sees a clean slate and the
     // student has to log in with the password they just set.
+    clearLocalQuizState();
     await supabase.auth.signOut();
 
     router.push('/login?reset=success');

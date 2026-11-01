@@ -3,9 +3,10 @@ node_modules
 out
 build
 dist
-.env
-.env.local
-.env*.local
+# Every env file (.env.production, .env.launch, .env.keys, ...) — they can
+# hold the production service-role key. Only the placeholder example is kept.
+.env*
+!.env.local.example
 .DS_Store
 *.pem
 npm-debug.log*

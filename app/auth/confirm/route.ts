@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
+import { safeRelativeNext } from '@/lib/safe-redirect';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,17 +30,11 @@ export async function GET(request: NextRequest) {
 
   // `next` is attacker-controllable (it's a query param on a public
   // URL), so it must be a same-origin relative path before it's
-  // trusted as a redirect target. Without this check, a crafted
-  // `next` like "@evil.com/" would make `${origin}${next}` parse as
-  // "localhost:3000" userinfo + "evil.com" host — turning a real,
-  // signed MediZee verification link into a phishing redirect.
-  const rawNext = searchParams.get('next') ?? '/';
-  const next =
-    rawNext.startsWith('/') &&
-    !rawNext.startsWith('//') &&
-    !rawNext.startsWith('/\\')
-      ? rawNext
-      : '/';
+  // trusted as a redirect target, or a real, signed MediZee
+  // verification link becomes a phishing redirect. Checking the first
+  // characters is not enough ("/<TAB>/evil.example" resolves
+  // off-site), so resolve it and compare origins — see lib/safe-redirect.ts.
+  const next = safeRelativeNext(searchParams.get('next'), origin);
 
   if (token_hash && type) {
     const supabase = await createRouteHandlerClient<Database>({ cookies });

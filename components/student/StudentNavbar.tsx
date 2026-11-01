@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { LogOutIcon, MoonIcon, SpinnerIcon, SunIcon } from '@/components/icons';
 import { MediZeeLogo } from '@/components/brand/MediZeeLogo';
 import { useNavToast } from '@/components/ui/use-nav-toast';
+import { clearLocalQuizState } from '@/lib/client-session';
 import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabase';
 import { useDisplayName } from '@/lib/use-display-name';
 import { useScrollShadow } from '@/lib/use-scroll-shadow';
@@ -61,6 +62,7 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
     if (signingOut) return;
     setSigningOut(true);
     clearDemoProfile();
+    clearLocalQuizState();
     if (!isDemoMode()) await supabase.auth.signOut().catch(() => {});
     router.push('/login');
     router.refresh();
