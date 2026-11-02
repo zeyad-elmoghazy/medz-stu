@@ -132,7 +132,13 @@ export async function createTestUser(
     email,
     password,
     email_confirm: true,
-    user_metadata: { role, full_name: `Test ${role}` },
+    // Since migration 040 the signup trigger rejects users without a unique
+    // username; 'tu_' + 8 base36 chars is 11 chars of [a-z0-9_].
+    user_metadata: {
+      role,
+      full_name: `Test ${role}`,
+      username: `tu_${Math.random().toString(36).slice(2, 10).padEnd(8, '0')}`,
+    },
   });
   if (error || !data.user) {
     throw new Error(`createTestUser(${role}) failed: ${error?.message}`);

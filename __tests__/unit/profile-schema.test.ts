@@ -45,6 +45,19 @@ describe('profilePatchSchema', () => {
     expect(profilePatchSchema.safeParse({ username: 'a'.repeat(20) }).success).toBe(true);
   });
 
+  test('rejects reserved usernames, including numbered and underscored variants', () => {
+    for (const reserved of ['admin', 'Admin', 'medizee', 'support_', 'moderator7', 'you']) {
+      const result = profilePatchSchema.safeParse({ username: reserved });
+      expect(result.success).toBe(false);
+    }
+    expect(profilePatchSchema.safeParse({ username: 'administrator_ahmed' }).success).toBe(true);
+  });
+
+  test('rejects an empty username — a student cannot clear it', () => {
+    expect(profilePatchSchema.safeParse({ username: '' }).success).toBe(false);
+    expect(profilePatchSchema.safeParse({ username: '   ' }).success).toBe(false);
+  });
+
   test('rejects academic years outside 1–5 and non-integers', () => {
     for (const bad of [0, 6, -1, 2.5, '3', null]) {
       expect(profilePatchSchema.safeParse({ academic_year: bad }).success).toBe(false);

@@ -1,5 +1,11 @@
 import { z } from 'zod';
 import { ACADEMIC_YEAR_MAX, ACADEMIC_YEAR_MIN } from '@/lib/academic-year';
+import {
+  USERNAME_FORMAT_MESSAGE,
+  USERNAME_PATTERN,
+  USERNAME_RESERVED_MESSAGE,
+  isReservedUsername,
+} from '@/lib/username';
 
 /**
  * Request schemas for the student self-service profile endpoints.
@@ -10,8 +16,9 @@ import { ACADEMIC_YEAR_MAX, ACADEMIC_YEAR_MIN } from '@/lib/academic-year';
  * role, session, …) is rejected rather than silently passed through.
  */
 
-// Mirrors the profiles_username_format CHECK in migration 030.
-export const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
+// The username rules live in lib/username.ts; re-exported so existing
+// imports of USERNAME_PATTERN from here keep working.
+export { USERNAME_PATTERN };
 
 export const profilePatchSchema = z
   .object({
@@ -20,7 +27,8 @@ export const profilePatchSchema = z
       .string()
       .trim()
       .toLowerCase()
-      .regex(USERNAME_PATTERN, 'Use 3–20 letters, numbers or underscores'),
+      .regex(USERNAME_PATTERN, USERNAME_FORMAT_MESSAGE)
+      .refine((value) => !isReservedUsername(value), USERNAME_RESERVED_MESSAGE),
     academic_year: z.number().int().min(ACADEMIC_YEAR_MIN).max(ACADEMIC_YEAR_MAX),
     notify_email: z.boolean(),
     notify_reminders: z.boolean(),

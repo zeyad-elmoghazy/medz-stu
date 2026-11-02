@@ -84,3 +84,8 @@ export const uploadLimiter = buildLimiter(10, '1 h', 'rl:upload');
 // who genuinely finds 20 broken questions in an hour is rare and
 // can finish after the window slides.
 export const reportLimiter = buildLimiter(20, '1 h', 'rl:report');
+
+// Username availability checks (signup form + first-login prompt): 40 per
+// minute per IP. The form checks as the student types (debounced), so a
+// person stays well under this; a script enumerating names does not.
+export const usernameCheckLimiter = buildLimiter(40, '1 m', 'rl:username-check');

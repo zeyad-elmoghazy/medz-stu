@@ -13,9 +13,22 @@ import {
   type ProfileRow,
   type StudentBadge,
 } from '@/lib/student-profile';
+import {
+  USERNAME_COOLDOWN_DAYS,
+  USERNAME_TAKEN_MESSAGE,
+  formatChangeDate,
+  nextUsernameChangeAt,
+} from '@/lib/username';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+/** The unlock instant from enforce_username_rules' error detail, if it parses. */
+function parseUnlock(details: string | null | undefined): Date | null {
+  if (!details) return null;
+  const parsed = new Date(details);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 
 type RouteClient = Awaited<ReturnType<typeof createRouteHandlerClient<Database>>>;
 
@@ -123,7 +136,22 @@ export async function PATCH(request: NextRequest) {
   if (error) {
     // 23505 = unique_violation (profiles.username is unique).
     if (error.code === '23505') {
-      return NextResponse.json({ error: 'That username is already taken' }, { status: 409 });
+      return NextResponse.json({ error: USERNAME_TAKEN_MESSAGE }, { status: 409 });
+    }
+    // The 30-day rule is enforced by enforce_username_rules (migration
+    // 039), which puts the unlock instant (UTC ISO) in the error detail.
+    if (error.code === 'P0001' && error.message === 'username_cooldown') {
+      const unlock =
+        parseUnlock(error.details) ??
+        nextUsernameChangeAt(auth.row.username_changed_at) ??
+        new Date(Date.now() + USERNAME_COOLDOWN_DAYS * 86_400_000);
+      return NextResponse.json(
+        { error: `You can change your username again on ${formatChangeDate(unlock)}` },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(Math.max(1, Math.ceil((unlock.getTime() - Date.now()) / 1000))) },
+        }
+      );
     }
     console.error('[profile PATCH]', error.code, error.message);
     return NextResponse.json({ error: 'Could not save your profile' }, { status: 500 });

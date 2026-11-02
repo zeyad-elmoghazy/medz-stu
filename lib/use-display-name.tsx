@@ -21,6 +21,13 @@ export type StudentProfileState = {
   /** True once the first fetch has settled (success or failure). */
   loaded: boolean;
   fullName: string;
+  /** The student's chosen username ('' until they have one). */
+  username: string;
+  /**
+   * True only when we positively know a signed-in student has no username
+   * yet. Same "never fire on a guess" rule as needsAcademicYear below.
+   */
+  needsUsername: boolean;
   /**
    * The student's CURRENT academic year (1–5), derived from what they
    * chose and the September rollover — null if they haven't chosen one.
@@ -39,6 +46,8 @@ export type StudentProfileState = {
 const NOOP_STATE: StudentProfileState = {
   loaded: false,
   fullName: '',
+  username: '',
+  needsUsername: false,
   academicYear: null,
   needsAcademicYear: false,
   refresh: async () => {},
@@ -48,7 +57,7 @@ const StudentProfileContext = createContext<StudentProfileState>(NOOP_STATE);
 
 type ProfileSlice = Pick<
   Profile,
-  'full_name' | 'academic_year' | 'academic_year_session'
+  'full_name' | 'username' | 'academic_year' | 'academic_year_session'
 >;
 
 /**
@@ -64,6 +73,8 @@ type ProfileSlice = Pick<
 export function DisplayNameProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const [needsUsername, setNeedsUsername] = useState(false);
   const [academicYear, setAcademicYear] = useState<number | null>(null);
   const [needsAcademicYear, setNeedsAcademicYear] = useState(false);
 
@@ -77,6 +88,7 @@ export function DisplayNameProvider({ children }: { children: ReactNode }) {
         slice = demo
           ? {
               full_name: demo.full_name,
+              username: demo.username ?? null,
               academic_year: demo.academic_year ?? null,
               academic_year_session: demo.academic_year_session ?? null,
             }
@@ -90,7 +102,7 @@ export function DisplayNameProvider({ children }: { children: ReactNode }) {
         if (user) {
           const full = await supabase
             .from('profiles')
-            .select('full_name, academic_year, academic_year_session')
+            .select('full_name, username, academic_year, academic_year_session')
             .eq('id', user.id)
             .single();
           if (!full.error) {
@@ -113,6 +125,10 @@ export function DisplayNameProvider({ children }: { children: ReactNode }) {
     }
     if (isCancelled()) return;
     setFullName(slice?.full_name ?? '');
+    setUsername(slice?.username ?? '');
+    // yearColumnsKnown doubles as "the full select worked": username comes
+    // from the same query, so a name-only fallback never prompts.
+    setNeedsUsername(slice != null && yearColumnsKnown && !slice.username);
     const year = currentAcademicYear(slice?.academic_year, slice?.academic_year_session);
     setAcademicYear(year);
     setNeedsAcademicYear(slice != null && yearColumnsKnown && year == null);
@@ -131,8 +147,16 @@ export function DisplayNameProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(() => load(), [load]);
 
   const value = useMemo<StudentProfileState>(
-    () => ({ loaded, fullName, academicYear, needsAcademicYear, refresh }),
-    [loaded, fullName, academicYear, needsAcademicYear, refresh]
+    () => ({
+      loaded,
+      fullName,
+      username,
+      needsUsername,
+      academicYear,
+      needsAcademicYear,
+      refresh,
+    }),
+    [loaded, fullName, username, needsUsername, academicYear, needsAcademicYear, refresh]
   );
 
   return (
