@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { publicDbError } from '@/lib/api-error';
+import { embedded } from '@/lib/postgrest';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
@@ -15,9 +16,12 @@ export const dynamic = 'force-dynamic';
  * that question. Without it: every bookmark the student has saved,
  * joined to its question/chapter for display on /student/bookmarks
  * — bookmarks.question_id has no FK to questions.id (see
- * supabase/migrations/003_student_personalization.sql), so this is
- * two manual batch lookups rather than a PostgREST embed, same
- * approach as lib/server/chapter-mistakes.ts.
+ * supabase/migrations/003_student_personalization.sql), so the
+ * bookmark → question hop is a manual batch lookup rather than a
+ * PostgREST embed, same approach as lib/server/chapter-mistakes.ts.
+ * question → chapter is a second batch lookup, and that chapter select
+ * embeds its subject and module names (real FKs) so the page can group
+ * Module › Subject.
  *
  * Same auth pattern as the chapter-questions route family
  * (if(!user)-only) — the actual scoping is RLS (students_own_
@@ -75,14 +79,25 @@ export async function GET(request: NextRequest) {
           .filter((id): id is string => !!id)
       )
     );
-    const chapterById = new Map<string, { name: string; module_code: string }>();
+    // chapters → subjects / modules are real FKs, so the module and
+    // subject names come back in one embedded select (same shape the
+    // stats route uses for Progress). /student/bookmarks groups the
+    // list Module › Subject from these fields.
+    type ChapterRow = {
+      id: string;
+      name: string;
+      module_code: string;
+      subject_id: string | null;
+      subjects: { name: string } | { name: string }[] | null;
+      modules: { name: string } | { name: string }[] | null;
+    };
+    const chapterById = new Map<string, ChapterRow>();
     if (chapterIds.length > 0) {
       const { data: chapterRows } = await client
         .from('chapters')
-        .select('id, name, module_code')
+        .select('id, name, module_code, subject_id, subjects(name), modules(name)')
         .in('id', chapterIds);
-      for (const c of (chapterRows as { id: string; name: string; module_code: string }[] | null) ??
-        []) {
+      for (const c of (chapterRows as ChapterRow[] | null) ?? []) {
         chapterById.set(c.id, c);
       }
     }
@@ -95,8 +110,12 @@ export async function GET(request: NextRequest) {
         questionId: b.question_id,
         question: q?.question ?? '(question no longer available)',
         topic: q?.topic ?? '',
+        chapterId: chapter?.id ?? null,
         chapterName: chapter?.name ?? null,
         moduleCode: chapter?.module_code ?? null,
+        moduleName: embedded(chapter?.modules)?.name ?? null,
+        subjectId: chapter?.subject_id ?? null,
+        subjectName: embedded(chapter?.subjects)?.name ?? null,
         createdAt: b.created_at,
         choices: q?.choices ?? [],
         correctAnswer: q?.correct_answer ?? null,
