@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@/components/icons';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
 import { isDemoMode } from '@/lib/supabase';
 import { removeBookmark } from '@/lib/chapter-quiz-api';
+import { groupBookmarks } from '@/lib/bookmark-groups';
 
 type Choice = { id: string; text: string };
 
@@ -20,8 +21,12 @@ type BookmarkItem = QuestionDetailFields & {
   questionId: number;
   question: string;
   topic: string;
+  chapterId: string | null;
   chapterName: string | null;
   moduleCode: string | null;
+  moduleName: string | null;
+  subjectId: string | null;
+  subjectName: string | null;
   createdAt: string;
 };
 
@@ -54,6 +59,21 @@ export default function BookmarksPage() {
   const [error, setError] = useState<string | null>(null);
   const [openBookmarkId, setOpenBookmarkId] = useState<string | null>(null);
   const [openNoteId, setOpenNoteId] = useState<string | null>(null);
+  // Subject groups the student has folded away; everything starts expanded.
+  const [collapsedSubjects, setCollapsedSubjects] = useState<ReadonlySet<string>>(new Set());
+
+  // Module › Subject sections for exam revision; regrouped whenever a
+  // bookmark is removed, so counts update and emptied groups vanish.
+  const bookmarkGroups = useMemo(() => groupBookmarks(bookmarks ?? []), [bookmarks]);
+
+  function toggleSubject(key: string) {
+    setCollapsedSubjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -128,33 +148,77 @@ export default function BookmarksPage() {
           loading={loading}
           emptyLabel="No bookmarked questions yet. Tap the bookmark icon while taking a chapter quiz to save one here."
         >
-          {(bookmarks ?? []).map((b) => {
-            const open = openBookmarkId === b.id;
-            return (
-              <Row key={b.id}>
-                <RowHeader open={open} onToggle={() => setOpenBookmarkId(open ? null : b.id)}>
-                  <RowBody
-                    topic={b.topic}
-                    question={b.question}
-                    chapterName={b.chapterName}
-                    moduleCode={b.moduleCode}
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveBookmark(b.questionId);
-                    }}
-                    className="mz-tap"
-                    style={removeButtonStyle}
-                  >
-                    Remove
-                  </button>
-                </RowHeader>
-                {open && <QuestionDetail {...b} />}
-              </Row>
-            );
-          })}
+          {bookmarkGroups.map((moduleGroup) => (
+            <div key={moduleGroup.key} style={{ paddingTop: 14 }}>
+              <h3 style={moduleHeadingStyle}>
+                {moduleGroup.label}
+                <span
+                  style={{
+                    fontWeight: 500,
+                    color: 'var(--text3)',
+                    marginLeft: 10,
+                    letterSpacing: 'normal',
+                    textTransform: 'none',
+                  }}
+                >
+                  {moduleGroup.count} {moduleGroup.count === 1 ? 'question' : 'questions'}
+                </span>
+              </h3>
+              {moduleGroup.subjects.map((subjectGroup) => {
+                const collapsed = collapsedSubjects.has(subjectGroup.key);
+                return (
+                  <div key={subjectGroup.key}>
+                    <button
+                      type="button"
+                      onClick={() => toggleSubject(subjectGroup.key)}
+                      aria-expanded={!collapsed}
+                      className="mz-tap"
+                      style={subjectHeaderStyle}
+                    >
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        {subjectGroup.subjectName}
+                        <span style={{ fontWeight: 500, color: 'var(--text3)', marginLeft: 8 }}>
+                          {subjectGroup.items.length}
+                        </span>
+                      </span>
+                      <span style={{ flex: 'none', color: 'var(--text3)' }}>
+                        {collapsed ? <ChevronDownIcon size={16} /> : <ChevronUpIcon size={16} />}
+                      </span>
+                    </button>
+                    {!collapsed &&
+                      subjectGroup.items.map((b) => {
+                        const open = openBookmarkId === b.id;
+                        return (
+                          <Row key={b.id}>
+                            <RowHeader open={open} onToggle={() => setOpenBookmarkId(open ? null : b.id)}>
+                              <RowBody
+                                topic={b.topic}
+                                question={b.question}
+                                chapterName={b.chapterName}
+                                moduleCode={b.moduleCode}
+                                showModuleCode={false}
+                              />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveBookmark(b.questionId);
+                                }}
+                                className="mz-tap"
+                                style={removeButtonStyle}
+                              >
+                                Remove
+                              </button>
+                            </RowHeader>
+                            {open && <QuestionDetail {...b} />}
+                          </Row>
+                        );
+                      })}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </Section>
 
         <Section
@@ -187,6 +251,32 @@ export default function BookmarksPage() {
     </main>
   );
 }
+
+const moduleHeadingStyle = {
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--accent-text)',
+  margin: '0 0 4px',
+};
+
+const subjectHeaderStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  width: '100%',
+  padding: '12px 0',
+  fontSize: 14,
+  fontWeight: 700,
+  color: 'var(--text)',
+  textAlign: 'left' as const,
+  background: 'transparent',
+  border: 'none',
+  borderBottom: '1px solid var(--line)',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+};
 
 const removeButtonStyle = {
   fontSize: 12,
@@ -287,11 +377,14 @@ function RowBody({
   question,
   chapterName,
   moduleCode,
+  showModuleCode = true,
 }: {
   topic: string;
   question: string;
   chapterName: string | null;
   moduleCode: string | null;
+  /** Off for bookmarks, whose module is already the group heading. */
+  showModuleCode?: boolean;
 }) {
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
@@ -301,7 +394,7 @@ function RowBody({
           <span style={{ color: 'var(--text3)' }}>
             {' '}
             · {chapterName}
-            {moduleCode ? ` (${moduleCode})` : ''}
+            {showModuleCode && moduleCode ? ` (${moduleCode})` : ''}
           </span>
         )}
       </div>

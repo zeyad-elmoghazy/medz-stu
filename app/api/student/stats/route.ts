@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { publicDbError } from '@/lib/api-error';
+import { embedded } from '@/lib/postgrest';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
@@ -583,10 +584,6 @@ type ChapterInfoRow = {
   subjects: { name: string } | { name: string }[] | null;
   modules: { name: string } | { name: string }[] | null;
 };
-
-function embedded<T>(value: T | T[] | null | undefined): T | null {
-  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
-}
 
 function serviceRoleClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
