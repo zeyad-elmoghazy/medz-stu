@@ -79,6 +79,11 @@ export type Profile = {
   role: UserRole;
   created_at: string;
   username: string | null;
+  /**
+   * When the student last CHANGED their username; null = never changed
+   * (the first change is free). Written only by the database (039).
+   */
+  username_changed_at: string | null;
   total_xp: number;
   total_correct_answers: number;
   total_questions_answered: number;
@@ -114,11 +119,14 @@ type DailyStreakRow = {
   xp_correct_count: number;
 };
 
+/**
+ * One leaderboard entry. Deliberately has no real name: the RPCs (039)
+ * only return students who chose a username, and show only that.
+ */
 export type LeaderboardRow = {
   rank: number;
   id: string;
-  username: string | null;
-  full_name: string | null;
+  username: string;
   total_xp: number;
   total_correct_answers: number;
   total_questions_answered: number;

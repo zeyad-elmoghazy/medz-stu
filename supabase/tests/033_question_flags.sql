@@ -35,7 +35,7 @@ BEGIN
   ) VALUES (
     '00000000-0000-0000-0000-000000000000', new_id, 'authenticated', 'authenticated',
     p_email, '', now(), now(), now(),
-    '{"provider":"email","providers":["email"]}', '{"full_name":"T","academic_year":2}', false,
+    '{"provider":"email","providers":["email"]}', jsonb_build_object('full_name', 'T', 'academic_year', 2, 'username', 'u_' || substr(replace(new_id::text, '-', ''), 1, 12)), false,
     '', '', '', ''
   );
   RETURN new_id;

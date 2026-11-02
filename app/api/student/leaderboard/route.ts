@@ -65,7 +65,8 @@ export async function GET() {
   if (rankRes.error) {
     return NextResponse.json({ error: publicDbError(rankRes.error) }, { status: 500 });
   }
-  const myRow = (rankRes.data as LeaderboardRow[] | null)?.[0] ?? null;
+  const rankRow = (rankRes.data as LeaderboardRow[] | null)?.[0];
+  const myRow = rankRow ? toLeaderboardRow(rankRow) : null;
 
   return NextResponse.json({ top10: payload.top10, me: myRow });
 }
@@ -75,7 +76,28 @@ async function fetchLeaderboard(service: ServiceRpcClient): Promise<{ top10: Lea
   if (topRes.error) {
     throw new Error(topRes.error.message);
   }
-  return { top10: (topRes.data as LeaderboardRow[] | null) ?? [] };
+  const rows = (topRes.data as LeaderboardRow[] | null) ?? [];
+  return { top10: rows.map(toLeaderboardRow) };
+}
+
+/**
+ * Copies only the public leaderboard fields. The RPCs (migration 039)
+ * already return nothing but a username, but this is the last step before
+ * the data reaches other students' browsers, so it is a whitelist rather
+ * than a pass-through: a real name or email can't leak even if a future
+ * RPC change adds one.
+ */
+function toLeaderboardRow(row: LeaderboardRow): LeaderboardRow {
+  return {
+    rank: row.rank,
+    id: row.id,
+    username: row.username,
+    total_xp: row.total_xp,
+    total_correct_answers: row.total_correct_answers,
+    total_questions_answered: row.total_questions_answered,
+    last_active_at: row.last_active_at,
+    highest_badge: row.highest_badge,
+  };
 }
 
 // ============== Service-role client typing ==============

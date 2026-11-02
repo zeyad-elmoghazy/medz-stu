@@ -52,6 +52,7 @@ function demoProfileDto(): StudentProfileDto | null {
     role: demo.role,
     full_name: demo.full_name,
     username: demo.username ?? null,
+    username_changed_at: null,
     email: demo.email,
     created_at: '',
     academic_year: demo.academic_year ?? null,

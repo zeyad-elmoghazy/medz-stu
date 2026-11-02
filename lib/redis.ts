@@ -28,7 +28,9 @@ export const CACHE_KEYS = {
   // "one global leaderboard across all students, not scoped per
   // module"). Distinct from `leaderboard(subjectId)` above, which
   // was scaffolded but is unused by this feature.
-  leaderboardGlobal: () => `leaderboard:global`,
+  // `:v2` — the payload used to carry each student's real name. Bumping the
+  // key means a deploy never serves a cached entry from before usernames.
+  leaderboardGlobal: () => `leaderboard:global:v2`,
 };
 
 // TTL constants in seconds.

@@ -24,6 +24,12 @@ import {
   formatAcademicYear,
   isValidAcademicYear,
 } from '@/lib/academic-year';
+import { normalizeUsername, validateUsername } from '@/lib/username';
+import {
+  fetchUsernameAvailability,
+  useUsernameAvailability,
+  type UsernameCheck,
+} from '@/lib/use-username-availability';
 
 type SelectableRole = 'student';
 
@@ -31,6 +37,18 @@ export default function SignupPage() {
   const router = useRouter();
 
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
+  const liveUsernameCheck = useUsernameAvailability(username);
+  // A name can be free while the student types and taken by the time they
+  // submit. When the signup is refused for that, the field must say so
+  // too, instead of still reading "Available" next to the error banner.
+  const [rejectedUsername, setRejectedUsername] = useState<{ name: string; message: string } | null>(
+    null
+  );
+  const usernameCheck: UsernameCheck =
+    rejectedUsername && rejectedUsername.name === normalizeUsername(username)
+      ? { status: 'unavailable', message: rejectedUsername.message }
+      : liveUsernameCheck;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   // Kept as the raw <select> value; '' means "not chosen yet".
@@ -43,6 +61,17 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const chosenUsername = normalizeUsername(username);
+    const usernameProblem = validateUsername(chosenUsername);
+    if (usernameProblem) {
+      setError(usernameProblem);
+      return;
+    }
+    if (usernameCheck.status === 'unavailable') {
+      setError(usernameCheck.message);
+      return;
+    }
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
@@ -61,6 +90,7 @@ export default function SignupPage() {
       writeDemoProfile({
         id: `demo-${Date.now()}`,
         full_name: fullName,
+        username: chosenUsername,
         email,
         role,
         academic_year: chosenYear,
@@ -80,15 +110,31 @@ export default function SignupPage() {
       password,
       options: {
         // The on_auth_user_created trigger validates `academic_year`
-        // (1–5) and stamps the session; `role` is ignored server-side
-        // (migration 030) and only kept for the client-side fallback.
-        data: { full_name: fullName, role, academic_year: chosenYear },
+        // (1–5) and `username` (migrations 030, 039, 040) and stamps the
+        // session; `role` is ignored server-side (migration 030) and only
+        // kept for the client-side fallback.
+        data: {
+          full_name: fullName,
+          username: chosenUsername,
+          role,
+          academic_year: chosenYear,
+        },
       },
     });
 
     if (signUpError || !data.user) {
       setLoading(false);
-      setError(signUpError?.message ?? 'Unable to create account.');
+      // GoTrue reduces any failure inside the signup trigger to the generic
+      // "Database error saving new user", so a username someone else
+      // registered in the meantime would look like an unexplained failure.
+      // Re-check it to give the student an actionable message.
+      const recheck = await fetchUsernameAvailability(chosenUsername);
+      if (recheck.status === 'unavailable') {
+        setRejectedUsername({ name: chosenUsername, message: recheck.message });
+        setError(recheck.message);
+      } else {
+        setError(signUpError?.message ?? 'Unable to create account.');
+      }
       return;
     }
 
@@ -164,6 +210,19 @@ export default function SignupPage() {
                 placeholder="Yusuf Khalil"
                 value={fullName}
                 onChange={setFullName}
+              />
+
+              <FormField
+                id="username"
+                label="Username"
+                icon={<UserIcon size={16} />}
+                type="text"
+                autoComplete="username"
+                placeholder="choose_a_username"
+                value={username}
+                onChange={(v) => setUsername(v.toLowerCase())}
+                maxLength={20}
+                help={usernameHelp(usernameCheck)}
               />
 
               <FormField
@@ -275,6 +334,26 @@ export default function SignupPage() {
   );
 }
 
+type FieldHelp = { tone: 'muted' | 'ok' | 'error'; text: string };
+
+/** The line under the username field for the current availability state. */
+function usernameHelp(check: UsernameCheck): FieldHelp {
+  switch (check.status) {
+    case 'invalid':
+    case 'unavailable':
+      return { tone: 'error', text: check.message };
+    case 'checking':
+      return { tone: 'muted', text: 'Checking…' };
+    case 'available':
+      return { tone: 'ok', text: 'Available' };
+    default:
+      return {
+        tone: 'muted',
+        text: 'Shown on the leaderboard instead of your name. 3–20 lowercase letters, numbers or underscores.',
+      };
+  }
+}
+
 function FormField({
   id,
   label,
@@ -285,6 +364,8 @@ function FormField({
   value,
   onChange,
   minLength,
+  maxLength,
+  help,
 }: {
   id: string;
   label: string;
@@ -295,6 +376,8 @@ function FormField({
   value: string;
   onChange: (v: string) => void;
   minLength?: number;
+  maxLength?: number;
+  help?: FieldHelp;
 }) {
   return (
     <div className="space-y-1.5">
@@ -314,12 +397,30 @@ function FormField({
           autoComplete={autoComplete}
           required
           minLength={minLength}
+          maxLength={maxLength}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          aria-describedby={help ? `${id}-help` : undefined}
+          aria-invalid={help?.tone === 'error' ? true : undefined}
           className="block h-11 w-full rounded-lg border border-border bg-background pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
         />
       </div>
+      {help && (
+        <p
+          id={`${id}-help`}
+          aria-live="polite"
+          className={
+            help.tone === 'error'
+              ? 'text-[11px] text-error'
+              : help.tone === 'ok'
+                ? 'text-[11px] text-success'
+                : 'text-[11px] text-text-muted'
+          }
+        >
+          {help.text}
+        </p>
+      )}
     </div>
   );
 }

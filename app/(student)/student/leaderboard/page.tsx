@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
 import { isDemoMode, type LeaderboardRow } from '@/lib/supabase';
-import { useDisplayName } from '@/lib/use-display-name';
 
 // Badge flair — mirrors the streak_7/14/30 types in the `badges`
 // table (supabase/migrations/015_b2c_pivot_rebuild.sql), "flair
@@ -25,7 +24,6 @@ function getDemoLeaderboardPayload(): LeaderboardPayload {
     rank: i + 1,
     id: `demo-${i}`,
     username: name.toLowerCase(),
-    full_name: name,
     total_xp: 4200 - i * 310,
     total_correct_answers: 420 - i * 25,
     total_questions_answered: 500 - i * 25,
@@ -35,8 +33,7 @@ function getDemoLeaderboardPayload(): LeaderboardPayload {
   const me: LeaderboardRow = {
     rank: 11,
     id: 'demo-me',
-    username: 'you',
-    full_name: 'You',
+    username: 'your_username',
     total_xp: 1200,
     total_correct_answers: 120,
     total_questions_answered: 150,
@@ -47,7 +44,6 @@ function getDemoLeaderboardPayload(): LeaderboardPayload {
 }
 
 export default function LeaderboardPage() {
-  const displayName = useDisplayName();
   const [data, setData] = useState<LeaderboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +124,7 @@ export default function LeaderboardPage() {
                 No ranked students yet. Be the first to take a challenge.
               </div>
             ) : (
-              <LeaderboardList rows={data.top10} meId={data.me?.id} displayName={displayName} />
+              <LeaderboardList rows={data.top10} meId={data.me?.id} />
             )}
           </div>
 
@@ -145,7 +141,7 @@ export default function LeaderboardPage() {
                   padding: '16px 24px',
                 }}
               >
-                <LeaderboardList rows={[data.me]} meId={data.me.id} displayName={displayName} />
+                <LeaderboardList rows={[data.me]} meId={data.me.id} />
               </div>
             </div>
           )}
@@ -155,14 +151,16 @@ export default function LeaderboardPage() {
   );
 }
 
+/**
+ * Everyone, including the viewer, is shown by username only — never a real
+ * name — so students who don't want their name public can stay anonymous.
+ */
 function LeaderboardList({
   rows,
   meId,
-  displayName,
 }: {
   rows: LeaderboardRow[];
   meId: string | undefined;
-  displayName: string;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -172,14 +170,9 @@ function LeaderboardList({
           row.total_questions_answered > 0
             ? Math.round((row.total_correct_answers / row.total_questions_answered) * 100)
             : 0;
-        const name = isMe ? displayName || row.full_name || 'You' : row.full_name ?? row.username ?? 'Student';
-        const initials = name
-          .split(/\s+/)
-          .map((n) => n[0])
-          .filter(Boolean)
-          .slice(0, 2)
-          .join('')
-          .toUpperCase();
+        const name = `@${row.username}`;
+        // First two letters/digits of the username (underscores skipped).
+        const initials = row.username.replace(/_/g, '').slice(0, 2).toUpperCase();
 
         return (
           <div

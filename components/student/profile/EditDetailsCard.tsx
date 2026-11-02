@@ -3,8 +3,14 @@
 import { useState } from 'react';
 import { MailIcon, UserIcon } from '@/components/icons';
 import { ACADEMIC_YEARS, formatAcademicYear } from '@/lib/academic-year';
-import { USERNAME_PATTERN, type ProfilePatch } from '@/lib/profile-schema';
+import type { ProfilePatch } from '@/lib/profile-schema';
 import type { StudentProfileDto } from '@/lib/student-profile';
+import {
+  USERNAME_COOLDOWN_DAYS,
+  formatChangeDate,
+  normalizeUsername,
+  validateUsername,
+} from '@/lib/username';
 import { Card, Field, Notice, PrimaryButton } from './ui';
 
 /**
@@ -35,15 +41,28 @@ export function EditDetailsCard({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const normalisedUsername = username.trim().toLowerCase();
-  const usernameError =
-    normalisedUsername && !USERNAME_PATTERN.test(normalisedUsername)
-      ? 'Use 3–20 letters, numbers or underscores'
+  const normalisedUsername = normalizeUsername(username);
+  // The 30-day rule is enforced by the database; the server tells us when it
+  // lifts so the field can say so instead of failing at save time.
+  const usernameUnlocksAt = profile.usernameChangeAvailableAt
+    ? new Date(profile.usernameChangeAvailableAt)
+    : null;
+  // The server only sends a date while the cooldown is still running.
+  const usernameLocked = usernameUnlocksAt !== null;
+  const usernameCleared = normalisedUsername === '' && !!profile.username;
+  const usernameError = usernameCleared
+    ? 'Username is required'
+    : normalisedUsername
+      ? validateUsername(normalisedUsername)
       : null;
 
   const patch: ProfilePatch = {};
   if (fullName.trim() !== profile.fullName) patch.full_name = fullName.trim();
-  if (normalisedUsername && normalisedUsername !== (profile.username ?? '')) {
+  if (
+    !usernameLocked &&
+    normalisedUsername &&
+    normalisedUsername !== (profile.username ?? '')
+  ) {
     patch.username = normalisedUsername;
   }
   if (year && Number(year) !== profile.academicYear) patch.academic_year = Number(year);
@@ -95,8 +114,13 @@ export function EditDetailsCard({
           autoComplete="username"
           maxLength={20}
           prefix="@"
+          disabled={usernameLocked}
           error={usernameError}
-          hint="Shown on the leaderboard. 3–20 letters, numbers or underscores."
+          hint={
+            usernameLocked && usernameUnlocksAt
+              ? `Shown on the leaderboard instead of your name. You can change it again on ${formatChangeDate(usernameUnlocksAt)}.`
+              : `Shown on the leaderboard instead of your name. 3–20 lowercase letters, numbers or underscores. You can change it once every ${USERNAME_COOLDOWN_DAYS} days.`
+          }
         />
         <Field
           icon={<MailIcon size={14} />}

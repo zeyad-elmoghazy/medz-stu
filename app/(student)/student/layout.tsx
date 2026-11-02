@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { AcademicYearPrompt } from '@/components/student/AcademicYearPrompt';
+import { UsernamePrompt } from '@/components/student/UsernamePrompt';
 import { DisplayNameProvider } from '@/lib/use-display-name';
 import { StudentThemeProvider } from '@/lib/use-student-theme';
 
@@ -15,6 +16,8 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
     <StudentThemeProvider>
       <DisplayNameProvider>
         {children}
+        {/* Blocking prompt for students who signed up before usernames were required. */}
+        <UsernamePrompt />
         {/* One-time prompt for students who signed up before the year was collected. */}
         <AcademicYearPrompt />
       </DisplayNameProvider>

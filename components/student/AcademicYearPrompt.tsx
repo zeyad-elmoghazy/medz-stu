@@ -24,14 +24,15 @@ function wasDismissed(): boolean {
  * returns on their next visit.
  */
 export function AcademicYearPrompt() {
-  const { loaded, needsAcademicYear, refresh } = useStudentProfile();
+  const { loaded, needsAcademicYear, needsUsername, refresh } = useStudentProfile();
   const [dismissed, setDismissed] = useState(true); // assume hidden until we've checked storage
   const [year, setYear] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const selectRef = useRef<HTMLSelectElement>(null);
 
-  const visible = loaded && needsAcademicYear && !dismissed;
+  // The (blocking) username prompt goes first, so the two never stack.
+  const visible = loaded && needsAcademicYear && !needsUsername && !dismissed;
 
   useEffect(() => {
     // sessionStorage only exists in the browser, so it can only be read

@@ -1,17 +1,19 @@
 import { currentAcademicYear } from '@/lib/academic-year';
+import { nextUsernameChangeAt } from '@/lib/username';
 
 /**
  * The `profiles` columns the self-service profile endpoints read. One
  * place so GET and PATCH always return the same shape.
  */
 export const PROFILE_COLUMNS =
-  'id, role, full_name, username, email, created_at, academic_year, academic_year_session, notify_email, notify_reminders, total_xp';
+  'id, role, full_name, username, username_changed_at, email, created_at, academic_year, academic_year_session, notify_email, notify_reminders, total_xp';
 
 export type ProfileRow = {
   id: string;
   role: string;
   full_name: string | null;
   username: string | null;
+  username_changed_at: string | null;
   email: string | null;
   created_at: string;
   academic_year: number | null;
@@ -28,6 +30,11 @@ export type StudentProfileDto = {
   id: string;
   fullName: string;
   username: string | null;
+  /**
+   * When the student may next change their username (ISO), or null if they
+   * can change it now. The database enforces this; the UI only explains it.
+   */
+  usernameChangeAvailableAt: string | null;
   email: string;
   joinedAt: string;
   /** Current year (1–5), derived from the September rollover; null if never chosen. */
@@ -50,6 +57,7 @@ export function toProfileDto(
     id: row.id,
     fullName: row.full_name ?? '',
     username: row.username,
+    usernameChangeAvailableAt: nextUsernameChangeAt(row.username_changed_at, now)?.toISOString() ?? null,
     email: row.email ?? '',
     joinedAt: row.created_at,
     academicYear: currentAcademicYear(row.academic_year, row.academic_year_session, now),
