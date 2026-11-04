@@ -70,15 +70,17 @@ export type FocusArea = {
 };
 
 /**
- * "Module 205 · Nervous & Cardiovascular Systems" — or just "Module 102"
- * when the module has no real name yet (the DB holds placeholders like
- * "Module 102", which would otherwise render as "Module 102 · Module 102").
+ * "Module 205 · Central Nervous System" — or just "Module 102" when the
+ * module has no real name yet (the DB holds placeholders like "Module 102",
+ * which would otherwise render as "Module 102 · Module 102"). A name that
+ * already carries its code ("ISK-101") is shown as-is, not "Module 101 · ISK-101".
  */
 export function moduleLabel(code: string, name: string | null | undefined): string {
   const trimmed = (name ?? '').trim();
   const isPlaceholder =
     trimmed === '' || trimmed === code || /^module\s+\d+$/i.test(trimmed);
-  return isPlaceholder ? `Module ${code}` : `Module ${code} · ${trimmed}`;
+  if (isPlaceholder) return `Module ${code}`;
+  return trimmed.includes(code) ? trimmed : `Module ${code} · ${trimmed}`;
 }
 
 export type ChapterMistake = {

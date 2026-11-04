@@ -8,8 +8,15 @@ import {
 
 describe('moduleLabel', () => {
   test('appends a real module name', () => {
-    expect(moduleLabel('205', 'Nervous & Cardiovascular Systems')).toBe(
-      'Module 205 · Nervous & Cardiovascular Systems'
+    expect(moduleLabel('205', 'Central Nervous System')).toBe(
+      'Module 205 · Central Nervous System'
+    );
+  });
+
+  test('shows a name that already contains its code as-is', () => {
+    expect(moduleLabel('101', 'ISK-101')).toBe('ISK-101');
+    expect(moduleLabel('104', 'CPS-104 (Cardiopulmonary System)')).toBe(
+      'CPS-104 (Cardiopulmonary System)'
     );
   });
 
