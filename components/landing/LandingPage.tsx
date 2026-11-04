@@ -69,7 +69,7 @@ html[data-mz-theme="dark"] .mzl{--bg2:#0B151B;--on-accent:#0F1B22;--success-bg:r
 .mzl .sec{padding:100px 44px}
 .mzl .wrap{max-width:1180px;margin:0 auto}
 .mzl .note{font-size:12px;color:var(--muted)}
-.mzl .badge-soon{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--muted)}
+.mzl .badge-soon{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:5px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--muted)}
 
 .mz-btn{display:inline-flex;align-items:center;gap:10px;font-weight:700;border-radius:999px;background:var(--accent);color:var(--on-accent)!important;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s ease}
 .mz-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px -10px var(--accent)}
@@ -140,7 +140,8 @@ html[data-mz-theme="dark"] .mzl{--bg2:#0B151B;--on-accent:#0F1B22;--success-bg:r
 /* catalogue marquee */
 .mq-box{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
 .mq{display:flex;gap:16px;width:max-content;animation:mq 48s linear infinite}
-.mq-box:hover .mq,.mq-box:focus-within .mq{animation-play-state:paused}
+.mq-box:hover .mq,.mq-box:focus-within .mq,.mq-box:active .mq{animation-play-state:paused}
+.mq-name{margin-top:16px;font-size:17px;font-weight:800;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
 @keyframes mq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
 .tab-in{animation:up .5s cubic-bezier(.2,.8,.2,1) both}
@@ -163,6 +164,8 @@ html[data-mz-theme="dark"] .mzl{--bg2:#0B151B;--on-accent:#0F1B22;--success-bg:r
   .mzl .mq-box{overflow-x:auto}
 }
 @media (max-width:960px){
+  /* Stacked layout: the breakdown sits below the question, off-screen while the loop plays, so show it statically instead of leaving a blank gap. */
+  .mzl .ex-panel,.mzl .ex-row{animation:none;opacity:1;transform:none}
   .mzl .g2,.mzl .g4{grid-template-columns:minmax(0,1fr)!important}
   .mzl .nav-links{display:none!important}
   .mzl .h1{font-size:64px!important}
@@ -176,7 +179,7 @@ html[data-mz-theme="dark"] .mzl{--bg2:#0B151B;--on-accent:#0F1B22;--success-bg:r
   .mzl .lead{font-size:24px!important}
   .mzl .h2{font-size:30px}
   .mzl .mz-nav{padding:12px 16px;gap:8px}
-  .mzl .nav-btn{padding:11px 14px!important}
+  .mzl .nav-btn{padding:12px 14px!important;min-height:44px}
   .mzl .hide-sm{display:none!important}
   .mzl .ex-wrap{grid-template-columns:minmax(0,1fr)!important}
   .mzl .final-h2{font-size:38px!important}
@@ -294,7 +297,7 @@ export default function LandingPage({ stats: initialStats, modules: initialModul
 
       {/* NAV */}
       <nav aria-label="Primary" className={`mz-nav${scrolled ? ' scrolled' : ''}`}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+        <Link href="/" aria-label="MediZee home" style={{ display: 'flex', alignItems: 'center', gap: 11, minHeight: 44, minWidth: 44 }}>
           {/* Above the fold, so eager — the default lazy loading made the logo pop in after first paint. */}
           <Image src="/medizee-logo.webp" alt="MediZee" width={32} height={32} loading="eager" style={{ borderRadius: 9, objectFit: 'cover' }} />
           <span className="brand-word" style={{ fontSize: 21, fontWeight: 800, letterSpacing: '-.5px' }}>MediZee</span>
@@ -713,9 +716,9 @@ function ModuleMarquee({ modules }: { modules: LandingModuleCard[] }) {
       <li key={`${copy ? 'b' : 'a'}-${m.code}`} aria-hidden={copy || undefined} className="mz-card" style={{ flex: 'none', width: 260, padding: 20, borderRadius: 20, border: `1px solid ${isLive ? 'var(--line2)' : 'var(--line)'}`, background: 'var(--surface)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: 'var(--accent)', border: '1px solid var(--line2)', padding: '4px 8px', borderRadius: 6 }}>MODULE {m.code}</span>
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', padding: '4px 8px', borderRadius: 999, background: isLive ? 'var(--accent)' : 'var(--fill)', color: isLive ? 'var(--on-accent)' : 'var(--muted)' }}>{isLive ? 'Live' : 'Soon'}</span>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', padding: '4px 8px', borderRadius: 999, background: isLive ? 'var(--accent)' : 'var(--fill)', color: isLive ? 'var(--on-accent)' : 'var(--muted)' }}>{isLive ? 'Live' : 'Soon'}</span>
         </div>
-        <div style={{ marginTop: 16, fontSize: 17, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</div>
+        <div className="mq-name">{m.name}</div>
         <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--muted)' }}>
           Year {m.yearNum}{isLive ? ` · ${fmt(m.publishedCount)} questions` : ''}
         </div>
