@@ -174,8 +174,12 @@ html[data-mz-theme="dark"] .mzl{--bg2:#0B151B;--on-accent:#0F1B22;--success-bg:r
   .mzl .sec{padding:72px 20px}
 }
 @media (max-width:640px){
-  .mzl .h1{font-size:46px!important;gap:2px!important}
-  .mzl .h1 .bn-slot{width:112px!important;height:112px!important}
+  /* Phone hero: Bueno on the left, "Meet / MediZee" stacked to his right, greeting note above him. */
+  .mzl .h1{font-size:46px!important;display:grid!important;grid-template-columns:auto auto;grid-template-areas:"mascot meet" "mascot name";gap:0 10px!important;margin-top:48px!important;text-align:left}
+  .mzl .h1 .bn-slot{grid-area:mascot;width:112px!important;height:112px!important}
+  .mzl .h1 .h1-meet{grid-area:meet;align-self:end}
+  .mzl .h1 .h1-name{grid-area:name;align-self:start}
+  .mzl .bn-note{left:2px!important;top:-34px!important;font-size:24px!important}
   .mzl .lead{font-size:24px!important}
   .mzl .h2{font-size:30px}
   .mzl .mz-nav{padding:12px 16px;gap:8px}
@@ -184,6 +188,10 @@ html[data-mz-theme="dark"] .mzl{--bg2:#0B151B;--on-accent:#0F1B22;--success-bg:r
   .mzl .ex-wrap{grid-template-columns:minmax(0,1fr)!important}
   .mzl .final-h2{font-size:38px!important}
   .mzl footer{padding:28px 20px!important}
+}
+@media (max-width:350px){
+  .mzl .h1{font-size:38px!important}
+  .mzl .h1 .bn-slot{width:92px!important;height:92px!important}
 }
 @media (max-width:400px){
   .mzl .brand-word{display:none!important}
@@ -330,15 +338,15 @@ export default function LandingPage({ stats: initialStats, modules: initialModul
             Built by students, for students
           </div>
           <h1 className="h1" style={{ margin: '26px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 6, fontSize: 112, lineHeight: 1, fontWeight: 900, letterSpacing: '-.045em' }}>
-            <span className="up" style={{ animationDelay: '.1s' }}>Meet</span>
+            <span className="up h1-meet" style={{ animationDelay: '.1s' }}>Meet</span>
             <span className="bn-slot bn-wrap" style={{ position: 'relative', display: 'inline-block', width: 210, height: 210, flex: 'none' }}>
               <span className="bn-in bones" aria-hidden="true">
                 <span className="bn-shadow" />
                 <Bueno eager />
               </span>
-              <span className="note-in hide-sm" aria-hidden="true" style={{ position: 'absolute', left: 170, top: -6, whiteSpace: 'nowrap', fontFamily: 'var(--font-caveat), cursive', fontSize: 26, fontWeight: 700, letterSpacing: 0, color: 'var(--accent)' }}>hi, I&apos;m Bueno!</span>
+              <span className="note-in bn-note" aria-hidden="true" style={{ position: 'absolute', left: 170, top: -6, whiteSpace: 'nowrap', fontFamily: 'var(--font-caveat), cursive', fontSize: 26, fontWeight: 700, letterSpacing: 0, color: 'var(--accent)' }}>hi, I&apos;m Bueno!</span>
             </span>
-            <span className="up" style={{ animationDelay: '.25s' }}>MediZee</span>
+            <span className="up h1-name" style={{ animationDelay: '.25s' }}>MediZee</span>
           </h1>
           <p className="lead up" style={{ animationDelay: '.4s', margin: '20px auto 0', maxWidth: 820, fontSize: 38, lineHeight: 1.15, fontWeight: 800, letterSpacing: '-.02em' }}>
             The MCQ bank that shows you <span style={{ color: 'var(--accent)' }}>exactly where you&apos;re weak.</span>
