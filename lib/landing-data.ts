@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import {
-  LANDING_MODULE_CODES,
   fetchCatalogueStats,
   fetchLandingModules,
   type AnonCatalogueClient,
@@ -41,7 +40,7 @@ export async function loadLandingData(): Promise<LandingData> {
 
     const [stats, modules] = await Promise.all([
       fetchCatalogueStats(client),
-      fetchLandingModules(LANDING_MODULE_CODES, client),
+      fetchLandingModules(client),
     ]);
 
     return {

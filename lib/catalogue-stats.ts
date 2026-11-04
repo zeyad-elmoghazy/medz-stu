@@ -63,13 +63,6 @@ export async function fetchCatalogueStats(
   };
 }
 
-// The specific modules shown on the landing page's catalogue strip —
-// one per year group is Anatomy/Spinal Cord's own module (205); the
-// rest are real neighboring modules, published or not. Names come
-// from the database (fetchLandingModules), not hardcoded — this array
-// is only the set of codes to ask for.
-export const LANDING_MODULE_CODES = ['101', '102', '103', '205', '206', '309', '310'];
-
 export type LandingModuleCard = {
   code: string;
   name: string;
@@ -78,22 +71,23 @@ export type LandingModuleCard = {
 };
 
 /**
- * Real name/year/published-count for a specific set of modules —
- * used by the public landing page's module-card grid. publishedCount
- * is the same aggregate already confirmed correct on
- * /api/student/catalogue/modules-by-year (sum of
+ * Real name/year/published-count for every module — used by the public
+ * landing page's catalogue strip. Every module, not a hardcoded list,
+ * so a newly published module shows up as live on its own (within the
+ * page's ISR window). publishedCount is the same aggregate already
+ * confirmed correct on /api/student/catalogue/modules-by-year (sum of
  * chapters.published_count across every chapter in the module), just
  * computed here via the anon-scoped client instead of that
- * authenticated route, and scoped to the requested codes instead of
- * every module.
+ * authenticated route. Sorted by year, then code.
  */
 export async function fetchLandingModules(
-  codes: string[],
   client: AnonCatalogueClient = browserAnon(),
 ): Promise<LandingModuleCard[]> {
+  // ponytail: PostgREST returns at most 1000 rows; chapters is ~234 today
+  // (see fetchCatalogueStats), move the per-module sum to an RPC beyond that.
   const [modulesRes, chaptersRes] = await Promise.all([
-    client.from('modules').select('code, name, year_num').in('code', codes),
-    client.from('chapters').select('module_code, published_count').in('module_code', codes),
+    client.from('modules').select('code, name, year_num'),
+    client.from('chapters').select('module_code, published_count'),
   ]);
 
   const publishedByCode = new Map<string, number>();
@@ -105,15 +99,13 @@ export async function fetchLandingModules(
   }
 
   const modules = (modulesRes.data ?? []) as { code: string; name: string; year_num: string }[];
-  const byCode = new Map(modules.map((m) => [m.code, m]));
 
-  return codes
-    .map((code) => byCode.get(code))
-    .filter((m): m is { code: string; name: string; year_num: string } => Boolean(m))
+  return modules
     .map((m) => ({
       code: m.code,
       name: m.name,
       yearNum: Number(m.year_num),
       publishedCount: publishedByCode.get(m.code) ?? 0,
-    }));
+    }))
+    .sort((a, b) => a.yearNum - b.yearNum || a.code.localeCompare(b.code));
 }

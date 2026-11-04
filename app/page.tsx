@@ -5,9 +5,11 @@ import { SITE_NAME, SITE_URL, pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata('/');
 
-// ISR: the catalogue strip is rebuilt from the database at most once an
-// hour. Without this the page is only as fresh as the last deploy.
-export const revalidate = 3600;
+// ISR: the catalogue strip is rebuilt from the database at most every
+// 10 minutes, so a newly published module flips to "Live" on its own
+// within that window. Without this the page is only as fresh as the
+// last deploy.
+export const revalidate = 600;
 
 // Only facts that are visible on the page / true of the site: who
 // publishes it and what the site is called. No FAQ/Review/Rating
