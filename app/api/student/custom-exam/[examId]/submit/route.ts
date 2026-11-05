@@ -11,6 +11,9 @@ import {
   loadOwnedExam,
   serviceClient,
 } from '@/lib/server/custom-exam-db';
+import { untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient as sharedServiceRoleClient } from '@/lib/supabase-service';
+import { buildStreakOutcome, snapshotBeforeSubmit } from '@/lib/server/streak-status';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -130,6 +133,11 @@ export async function POST(
 
   const { results, score, total, accuracy } = scoreExam(questions, merged);
 
+  // Mascot: the streak BEFORE this attempt is recorded, so the results page can say
+  // "streak extended". Best-effort: it never blocks the submission.
+  const streakDb = untypedFrom(sharedServiceRoleClient());
+  const streakBefore = await snapshotBeforeSubmit(streakDb, auth.user.id, todayISODate());
+
   // Only answers to scored questions are stored on the session row.
   const scoredIds = new Set(questions.map((q) => String(q.id)));
   const sessionAnswers: Record<string, string> = {};
@@ -202,6 +210,10 @@ export async function POST(
     // non-fatal
   }
 
+  // Mascot: apply the 100-question rescue if it was just earned and report what this
+  // submission did to the streak (null on any failure; the exam result is unaffected).
+  const streak = await buildStreakOutcome(streakDb, auth.user.id, todayISODate(), streakBefore);
+
   return NextResponse.json(
     {
       score,
@@ -209,6 +221,7 @@ export async function POST(
       accuracy,
       xpEarned,
       results,
+      streak,
       // What the results screen needs to describe each question.
       questions: questions.map((q) => {
         const chapter = Array.isArray(q.chapters) ? q.chapters[0] : q.chapters;

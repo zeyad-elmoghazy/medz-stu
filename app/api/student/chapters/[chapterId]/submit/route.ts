@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@/lib/supabase-server';
+import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient as sharedServiceRoleClient } from '@/lib/supabase-service';
+import {
+  buildStreakOutcome,
+  previousChapterAccuracy,
+  snapshotBeforeSubmit,
+} from '@/lib/server/streak-status';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import type { Database, UserRole } from '@/lib/supabase';
@@ -148,6 +154,13 @@ export async function POST(
   const total = questions.length;
   const accuracy = Number(((score / total) * 100).toFixed(2));
 
+  // Mascot: read the streak and the previous attempt in this chapter BEFORE this
+  // attempt is recorded, so the results page can say "streak extended" and "up X%
+  // since last time". Both are best-effort and never block the submission.
+  const streakDb = untypedFrom(sharedServiceRoleClient());
+  const streakBefore = await snapshotBeforeSubmit(streakDb, user.id, todayISODate());
+  const previousAccuracy = await previousChapterAccuracy(streakDb, user.id, chapterId);
+
   // Best-effort: record this attempt in quiz_sessions so it feeds the
   // Analytics view (Recent Challenges / Accuracy Trend / per-subject
   // numbers). Non-fatal — a failed insert here shouldn't block XP/
@@ -206,7 +219,11 @@ export async function POST(
     // non-fatal
   }
 
-  return NextResponse.json({ score, total, accuracy, xpEarned, results });
+  // Mascot: apply the 100-question rescue if it was just earned and report what this
+  // submission did to the streak (null on any failure; the quiz result is unaffected).
+  const streak = await buildStreakOutcome(streakDb, user.id, today, streakBefore);
+
+  return NextResponse.json({ score, total, accuracy, xpEarned, results, streak, previousAccuracy });
 }
 
 // ============== Service-role client typing ==============
