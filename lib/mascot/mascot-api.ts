@@ -2,6 +2,8 @@ import type { StreakState } from '@/lib/streak-state';
 
 /** Response of GET /api/student/mascot/status. */
 export type MascotStatus = {
+  /** The signed-in student's own id; keys the "already greeted today" record on this device. */
+  userId: string;
   today: string;
   state: StreakState;
   rescue: { answeredToday: number; target: number };

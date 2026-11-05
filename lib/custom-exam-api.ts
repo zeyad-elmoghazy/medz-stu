@@ -8,6 +8,7 @@
  */
 
 import type { ChapterQuizQuestion } from '@/lib/chapter-quiz-api';
+import type { StreakOutcome } from '@/lib/mascot/streak-outcome';
 import type { ExamSubjectOption } from '@/lib/custom-exam-rules';
 
 /** A question in an exam: a chapter-quiz question that also says where it comes from. */
@@ -53,6 +54,8 @@ export type CustomExamResult = {
   total: number;
   accuracy: number;
   xpEarned: number;
+  /** What this submission did to the streak (null/absent if it could not be worked out). */
+  streak?: StreakOutcome | null;
   results: Array<{
     questionId: number;
     isCorrect: boolean;

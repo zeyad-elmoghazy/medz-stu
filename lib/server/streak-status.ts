@@ -15,7 +15,6 @@ import { streakOutcome, type StreakOutcome } from '@/lib/mascot/streak-outcome';
  * `db` is an untyped `{ from() }` (see `untypedFrom`): the generated Database
  * type doesn't propagate into `.from()` builders in this codebase.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type StreakDb = { from: (table: string) => any };
 
 /** How far back to look for active days. A streak longer than this is capped, which is fine. */

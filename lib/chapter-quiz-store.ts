@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import type { StreakOutcome } from '@/lib/mascot/streak-outcome';
 
 /**
  * Client state for the chapter quiz: a `chapterId`-keyed session, with
@@ -16,6 +17,10 @@ export type ChapterSubmissionResult = {
   total: number;
   accuracy: number;
   xpEarned: number;
+  streak?: StreakOutcome | null;
+  previousAccuracy?: number | null;
+  /** Client-only: the full-screen streak celebration has already been shown for this result. */
+  streakSeen?: boolean;
   results: Array<{
     questionId: number;
     isCorrect: boolean;
@@ -55,6 +60,8 @@ export type ChapterQuizState = {
   startMistakeSession: (chapterId: string, mistakeIds: number[]) => void;
   clearFilter: () => void;
   setLastResult: (result: ChapterSubmissionResult) => void;
+  /** Remember that the streak celebration was shown, so reloading the results page doesn't replay it. */
+  markStreakSeen: () => void;
   recordMistakes: (chapterId: string, ids: number[]) => void;
   clearMistakes: (chapterId: string, ids: number[]) => void;
   /** Restore an attempt saved on the server (see chapter_quiz_progress). */
@@ -135,6 +142,11 @@ export const useChapterQuizStore = create<ChapterQuizState>()(
       clearFilter: () => set({ filterQuestionIds: null }),
 
       setLastResult: (result) => set({ lastResult: result }),
+
+      markStreakSeen: () =>
+        set((state) =>
+          state.lastResult ? { lastResult: { ...state.lastResult, streakSeen: true } } : {}
+        ),
 
       recordMistakes: (chapterId, ids) =>
         set((state) => {

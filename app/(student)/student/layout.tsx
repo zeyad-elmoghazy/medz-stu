@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { AcademicYearPrompt } from '@/components/student/AcademicYearPrompt';
 import { UsernamePrompt } from '@/components/student/UsernamePrompt';
+import { MascotHost } from '@/components/mascot/MascotHost';
 import { DisplayNameProvider } from '@/lib/use-display-name';
 import { StudentThemeProvider } from '@/lib/use-student-theme';
 
@@ -20,6 +21,8 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
         <UsernamePrompt />
         {/* One-time prompt for students who signed up before the year was collected. */}
         <AcademicYearPrompt />
+        {/* Bueno: the daily greeting and the peace-sign goodbye after Save & Exit. */}
+        <MascotHost />
       </DisplayNameProvider>
     </StudentThemeProvider>
   );

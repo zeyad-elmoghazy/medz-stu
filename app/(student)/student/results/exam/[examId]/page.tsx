@@ -21,6 +21,9 @@ import {
 import { moduleLabel } from '@/lib/dashboard-data';
 import { cn } from '@/lib/utils';
 import { LinkPending } from '@/components/ui/LinkPending';
+import { ResultsBueno } from '@/components/mascot/ResultsBueno';
+import { StreakCelebration } from '@/components/mascot/StreakCelebration';
+import { shouldCelebrate } from '@/lib/mascot/streak-outcome';
 
 /**
  * Custom Exam results screen — the same layout/behavior as the chapter
@@ -47,6 +50,7 @@ export default function CustomExamResultsPage() {
   const lastResult = useCustomExamStore((s) => s.lastResult);
   const sessionStartedAt = useCustomExamStore((s) => s.sessionStartedAt);
   const sessionEndedAt = useCustomExamStore((s) => s.sessionEndedAt);
+  const markStreakSeen = useCustomExamStore((s) => s.markStreakSeen);
 
   // Only this exam's result — never another exam's left in storage.
   const result = lastResult && lastResult.examId === examId ? lastResult : null;
@@ -86,6 +90,20 @@ export default function CustomExamResultsPage() {
   }, [sessionEndedAt, endStamp]);
 
   const elapsedMs = sessionStartedAt && endStamp ? Math.max(0, endStamp - sessionStartedAt) : 0;
+
+  // Bueno: when this exam grew (or rescued) the streak, open with the full-screen
+  // celebration exactly once, then reveal his reaction to the score. `streakSeen` is
+  // stored with the result so reloading this page never replays it.
+  const streakOutcome = result?.streak ?? null;
+  const streakPending = shouldCelebrate(streakOutcome) && !result?.streakSeen;
+  const [celebrating, setCelebrating] = useState(false);
+  useEffect(() => {
+    if (streakPending && !celebrating) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCelebrating(true);
+      markStreakSeen();
+    }
+  }, [streakPending, celebrating, markStreakSeen]);
 
   const [starting, setStarting] = useState<'again' | 'mistakes' | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
@@ -172,6 +190,10 @@ export default function CustomExamResultsPage() {
     <main className="min-h-screen w-full" style={{ backgroundColor: 'var(--bg)' }}>
       <Header />
 
+      {celebrating && streakOutcome && (
+        <StreakCelebration outcome={streakOutcome} onDone={() => setCelebrating(false)} />
+      )}
+
       <motion.div
         initial="hidden"
         animate="visible"
@@ -214,6 +236,12 @@ export default function CustomExamResultsPage() {
             </p>
           </div>
         </FadeUp>
+
+        {!celebrating && !streakPending && (
+          <FadeUp className="mt-6">
+            <ResultsBueno accuracy={accuracy} correct={correct} total={accuracyTotal} />
+          </FadeUp>
+        )}
 
         <FadeUp className="mt-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

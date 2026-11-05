@@ -37,7 +37,7 @@ export async function GET() {
   try {
     const db = untypedFrom(serviceRoleClient());
     const status = await getMascotStatus(db, user.id, todayISODate());
-    return NextResponse.json(status, { headers: { 'Cache-Control': 'private, no-store' } });
+    return NextResponse.json({ userId: user.id, ...status }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (err) {
     return NextResponse.json(
       { error: publicDbError({ message: err instanceof Error ? err.message : 'unknown error' }) },

@@ -16,6 +16,9 @@ import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchChapterQuiz, type ChapterQuiz } from '@/lib/chapter-quiz-api';
 import { cn } from '@/lib/utils';
 import { LinkPending } from '@/components/ui/LinkPending';
+import { ResultsBueno } from '@/components/mascot/ResultsBueno';
+import { StreakCelebration } from '@/components/mascot/StreakCelebration';
+import { shouldCelebrate } from '@/lib/mascot/streak-outcome';
 
 /**
  * Chapter-scoped results screen. It renders from the submit response
@@ -36,6 +39,7 @@ export default function ChapterResultsPage() {
   const mistakeQuestionIdsByChapter = useChapterQuizStore((s) => s.mistakeQuestionIdsByChapter);
   const startMistakeSession = useChapterQuizStore((s) => s.startMistakeSession);
   const startSession = useChapterQuizStore((s) => s.startSession);
+  const markStreakSeen = useChapterQuizStore((s) => s.markStreakSeen);
 
   const [data, setData] = useState<ChapterQuiz | null>(null);
 
@@ -102,6 +106,20 @@ export default function ChapterResultsPage() {
 
   const elapsedMs = sessionStartedAt && endStamp ? Math.max(0, endStamp - sessionStartedAt) : 0;
 
+  // Bueno: when this attempt grew (or rescued) the streak, open with the full-screen
+  // celebration exactly once, then reveal his reaction to the score. `streakSeen` is
+  // stored with the result so reloading this page never replays it.
+  const streakOutcome = lastResult?.streak ?? null;
+  const streakPending = shouldCelebrate(streakOutcome) && !lastResult?.streakSeen;
+  const [celebrating, setCelebrating] = useState(false);
+  useEffect(() => {
+    if (streakPending && !celebrating) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCelebrating(true);
+      markStreakSeen();
+    }
+  }, [streakPending, celebrating, markStreakSeen]);
+
   function handleQuizMistakes() {
     if (practiceIds.length === 0) return;
     startMistakeSession(chapterId, practiceIds);
@@ -120,6 +138,10 @@ export default function ChapterResultsPage() {
   return (
     <main className="min-h-screen w-full" style={{ backgroundColor: 'var(--bg)' }}>
       <Header />
+
+      {celebrating && streakOutcome && (
+        <StreakCelebration outcome={streakOutcome} onDone={() => setCelebrating(false)} />
+      )}
 
       <motion.div
         initial="hidden"
@@ -163,6 +185,17 @@ export default function ChapterResultsPage() {
             </p>
           </div>
         </FadeUp>
+
+        {lastResult && !celebrating && !streakPending && (
+          <FadeUp className="mt-6">
+            <ResultsBueno
+              accuracy={accuracy}
+              correct={correct}
+              total={accuracyTotal}
+              previousAccuracy={lastResult.previousAccuracy ?? null}
+            />
+          </FadeUp>
+        )}
 
         <FadeUp className="mt-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -22,6 +22,8 @@ import type { CustomExamResult } from '@/lib/custom-exam-api';
 
 /** The finished exam, plus what the results page needs to offer "Solve again" / "Practice mistakes". */
 export type ExamSessionResult = CustomExamResult & {
+  /** Client-only: the full-screen streak celebration has already been shown for this result. */
+  streakSeen?: boolean;
   examId: string;
   moduleCode: string;
   moduleName: string;
@@ -44,6 +46,8 @@ export type CustomExamState = {
   jumpToQuestion: (index: number) => void;
   completeSession: () => void;
   setLastResult: (result: ExamSessionResult) => void;
+  /** Remember that the streak celebration was shown, so reloading the results page doesn't replay it. */
+  markStreakSeen: () => void;
   /** Replace local state with what the server has saved for this exam. */
   hydrateFromServer: (
     examId: string,
@@ -88,6 +92,11 @@ export const useCustomExamStore = create<CustomExamState>()(
       completeSession: () => set({ sessionComplete: true, sessionEndedAt: Date.now() }),
 
       setLastResult: (result) => set({ lastResult: result }),
+
+      markStreakSeen: () =>
+        set((state) =>
+          state.lastResult ? { lastResult: { ...state.lastResult, streakSeen: true } } : {}
+        ),
 
       hydrateFromServer: (examId, saved) => {
         // Answers arrive keyed by string question id (JSON); the store

@@ -48,6 +48,7 @@ import {
 } from '@/lib/custom-exam-api';
 import { moduleLabel } from '@/lib/dashboard-data';
 import { cn, letterFor } from '@/lib/utils';
+import { pushMascotEvent } from '@/lib/mascot/events';
 import {
   FLAG_DETAIL_MAX,
   FLAG_REASONS,
@@ -408,6 +409,8 @@ export default function CustomExamQuizPage() {
       document.exitFullscreen().catch(() => {});
     }
     setShowExitModal(false);
+    // Bueno waves goodbye on the next page (only reached once the save is confirmed).
+    pushMascotEvent('saved-exit');
     // Back to the builder, which offers Continue for the saved exam.
     router.push('/student/exam');
   }

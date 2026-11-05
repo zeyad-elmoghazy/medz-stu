@@ -22,6 +22,7 @@ import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
 import { fetchModulesByYear, type ModulesByYear } from '@/lib/catalogue-api';
 import { LinkPending } from '@/components/ui/LinkPending';
+import { ProudBueno } from '@/components/mascot/ProudBueno';
 
 // =============================================================
 // Page
@@ -528,6 +529,9 @@ function AnalyticsView({
           ← Back to Subjects
         </button>
       </div>
+
+      {/* Bueno, proud of the student's real progress. */}
+      <ProudBueno stats={s} loading={loading} />
 
       {/* Practice mistakes — real, chapter-quiz-backed mistake pool
           (lib/server/chapter-mistakes.ts). Appears once the student

@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthCardFallback } from '@/components/auth/AuthCardFallback';
+import { AuthGoodbye } from '@/components/mascot/AuthGoodbye';
 import { ArrowRightIcon, SpinnerIcon, MailIcon, LockIcon } from '@/components/icons';
 import {
   dashboardPathForRole,
@@ -153,6 +154,8 @@ function LoginPageInner() {
 
   return (
     <main className="relative flex min-h-dvh w-full items-center justify-center px-4 py-16">
+      {/* Bueno's peace-sign goodbye, only right after signing out. */}
+      <AuthGoodbye />
       <div
         className="animate-fade-in-up w-full max-w-md rounded-2xl border border-border bg-surface p-6 sm:p-10"
       >

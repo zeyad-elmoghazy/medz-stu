@@ -12,6 +12,7 @@ import { clearDemoProfile, createBrowserClient, isDemoMode } from '@/lib/supabas
 import { useDisplayName } from '@/lib/use-display-name';
 import { useScrollShadow } from '@/lib/use-scroll-shadow';
 import { useStudentTheme } from '@/lib/use-student-theme';
+import { pushMascotEvent } from '@/lib/mascot/events';
 import { LinkPending } from '@/components/ui/LinkPending';
 
 // framer-motion lives in this chunk only; load it after hydration, off the critical path.
@@ -64,6 +65,8 @@ export function StudentNavbar({ activeLabel }: { activeLabel?: NavLink['label'] 
     clearDemoProfile();
     clearLocalQuizState();
     if (!isDemoMode()) await supabase.auth.signOut().catch(() => {});
+    // Bueno says goodbye on the login page.
+    pushMascotEvent('signed-out');
     router.push('/login');
     router.refresh();
   }

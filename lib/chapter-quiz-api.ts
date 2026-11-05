@@ -7,6 +7,7 @@
  */
 
 import type { FlagReason } from '@/lib/question-flags';
+import type { StreakOutcome } from '@/lib/mascot/streak-outcome';
 
 export type ChapterQuizChoice = {
   id: string;
@@ -155,6 +156,10 @@ export type ChapterQuizResult = {
   total: number;
   accuracy: number;
   xpEarned: number;
+  /** What this submission did to the streak (null/absent if it could not be worked out). */
+  streak?: StreakOutcome | null;
+  /** Accuracy of the previous attempt in this chapter, for "up X% since last time". */
+  previousAccuracy?: number | null;
   results: Array<{
     questionId: number;
     isCorrect: boolean;
