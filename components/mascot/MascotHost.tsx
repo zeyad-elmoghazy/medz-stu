@@ -55,8 +55,10 @@ export function MascotHost() {
   // A pending goodbye from Save & Exit is shown on whatever page we land on.
   useEffect(() => {
     if (isDemoMode() || isQuietRoute(pathname) || shownRef.current) return;
+    // sessionStorage only exists on the client, so this note can only be read in an effect.
     const ev = consumeMascotEvent();
     if (ev?.type === 'saved-exit') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShown({ type: 'peace', line: pick(SAVED_EXIT_LINES, Date.now()) });
     }
   }, [pathname]);
