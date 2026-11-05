@@ -511,6 +511,8 @@ describeIfSupabase('custom exam API', () => {
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body).toMatchObject({ score: 6, total: 9, accuracy: 66.67, xpEarned: 60 });
+      // Bueno: a student's first quiz of the day starts a streak, and the exam route reports it too.
+      expect(body.streak).toMatchObject({ before: 0, after: 1, extended: true, rescued: false });
       expect(body.results).toHaveLength(9);
       expect(body.results.map((r: { questionId: number }) => r.questionId)).toEqual(ids);
       expect(body.results[8]).toMatchObject({ chosen: null, isCorrect: false });
