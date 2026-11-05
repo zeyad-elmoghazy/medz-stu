@@ -29,9 +29,12 @@ Two or more missed days: gone. It is idempotent and needs no migration. The writ
 ## Motion
 
 Every appearance plays the same choreography (`components/mascot/Bueno.tsx`, `lib/mascot/poses.ts`):
-pop in standing in the **original pose**, crouch, hop with a stretch, cross-fade into the pose
-mid-air, land with a squash, idle. The old waving-arm layer **never moves** on the way into a
-pose; only `pose="rest"` waves (the greeting hello). `prefers-reduced-motion` gets the finished
+pop in standing in the **original pose**, crouch, hop, cross-fade into the pose mid-air, land,
+idle. The old waving-arm layer **never moves** on the way into a pose; only `pose="rest"` waves
+(the greeting hello). **His width-to-height ratio never changes**, at any moment or screen size:
+every scale in the choreography and the idle loops is a single uniform number (no squash or
+sideways stretch), his box keeps the artwork's 800:1100 ratio and is never flex-shrunk, and the
+artwork is `object-fit: contain`. A unit test fails if any mascot file scales one axis alone. `prefers-reduced-motion` gets the finished
 pose after a short fade, with no travel, loops or confetti.
 
 ## Files

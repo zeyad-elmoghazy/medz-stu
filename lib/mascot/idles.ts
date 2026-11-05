@@ -4,6 +4,10 @@ import type { IdleKind } from '@/lib/mascot/poses';
  * Idle loops: what Bueno does once he has landed in a pose. Each entry is a set
  * of keyframes sharing one `times` array (0..1). Values are CSS-ready: x / y are
  * percentages of the figure, rotate is degrees, scale is a plain number.
+ *
+ * `scale` is deliberately ONE number per keyframe, applied to both axes: Bueno's
+ * width-to-height ratio must never change, not even for a moment (squashing him
+ * sideways reads as a distorted mascot, most of all on small screens).
  */
 export type IdleSpec = {
   /** Length of one loop, in ms. */
@@ -12,8 +16,8 @@ export type IdleSpec = {
   x?: string[];
   y?: string[];
   rotate?: number[];
-  scaleX?: number[];
-  scaleY?: number[];
+  /** Uniform scale (same on both axes). */
+  scale?: number[];
   easing: string;
 };
 
@@ -27,8 +31,7 @@ export const IDLES: Record<IdleKind, IdleSpec> = {
   pump: {
     duration: 3200, easing: 'ease-in-out',
     times: [0, 0.12, 0.24, 0.36, 0.48, 0.74, 1],
-    scaleX: [1, 1.045, 1, 1.045, 1, 1, 1],
-    scaleY: [1, 1.045, 1, 1.045, 1, 1, 1],
+    scale: [1, 1.045, 1, 1.045, 1, 1, 1],
     y: ['0%', '-0.8%', '0%', '-0.8%', '0%', '-1.2%', '0%'],
   },
   // thumbs up: two approving nods
@@ -56,8 +59,7 @@ export const IDLES: Record<IdleKind, IdleSpec> = {
     duration: 1500, easing: 'ease-in-out',
     times: [0, 0.28, 0.5, 0.62, 1],
     y: ['0%', '-9%', '1.5%', '0%', '0%'],
-    scaleX: [1, 0.97, 1.05, 1, 1],
-    scaleY: [1, 1.05, 0.94, 1, 1],
+    scale: [1, 1.03, 0.97, 1, 1],
   },
   // worried: a nervous tremble
   tremble: {
@@ -70,8 +72,7 @@ export const IDLES: Record<IdleKind, IdleSpec> = {
   breathe: {
     duration: 3400, easing: 'ease-in-out',
     times: [0, 0.5, 1],
-    scaleX: [1, 1.03, 1],
-    scaleY: [1, 1.03, 1],
+    scale: [1, 1.03, 1],
     y: ['0%', '-0.8%', '0%'],
   },
 };
@@ -83,6 +84,6 @@ export function idleKeyframes(spec: IdleSpec): Keyframe[] {
     transform:
       `translate(${spec.x?.[i] ?? '0%'}, ${spec.y?.[i] ?? '0%'}) ` +
       `rotate(${spec.rotate?.[i] ?? 0}deg) ` +
-      `scale(${spec.scaleX?.[i] ?? 1}, ${spec.scaleY?.[i] ?? 1})`,
+      `scale(${spec.scale?.[i] ?? 1})`,
   }));
 }

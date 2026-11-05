@@ -40,9 +40,12 @@ describe('pose table', () => {
     for (const id of ALL) {
       const p = POSES[id];
       expect(IDLES).toContain(p.idle);
-      for (const n of [p.hop, p.headTo, ...p.squash, ...p.stretch]) expect(Number.isFinite(n)).toBe(true);
-      expect(p.squash[0]).toBeGreaterThanOrEqual(1); // crouch: wider...
-      expect(p.squash[1]).toBeLessThanOrEqual(1); // ...and shorter
+      for (const n of [p.hop, p.headTo, p.crouch, p.peak]) expect(Number.isFinite(n)).toBe(true);
+      // one uniform scale each: the crouch is a touch smaller, the top of the hop a touch bigger
+      expect(p.crouch).toBeGreaterThanOrEqual(0.9);
+      expect(p.crouch).toBeLessThanOrEqual(1);
+      expect(p.peak).toBeGreaterThanOrEqual(1);
+      expect(p.peak).toBeLessThanOrEqual(1.1);
       expect(Math.abs(p.hop)).toBeLessThanOrEqual(20);
     }
   });

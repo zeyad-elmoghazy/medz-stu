@@ -47,6 +47,8 @@ const img: CSSProperties = {
   inset: 0,
   width: '100%',
   height: '100%',
+  // If a box ever ended up a different shape from the artwork, letterbox it rather than stretch it.
+  objectFit: 'contain',
   display: 'block',
   userSelect: 'none',
   pointerEvents: 'none',
@@ -127,10 +129,9 @@ export function Bueno({
       ], { duration: 3600, delay: T.enter, iterations: Infinity, easing: 'ease-in-out' });
       run(hop, idleKeyframes(IDLES.bob), { duration: IDLES.bob.duration, delay: T.enter, iterations: Infinity, easing: 'ease-in-out' });
     } else {
-      const [sqX, sqY] = spec.squash;
-      const [stX, stY] = spec.stretch;
-      const crouch = `translateY(2%) scale(${sqX}, ${sqY})`;
-      const top = `translateY(${spec.hop}%) scale(${stX}, ${stY})`;
+      // Uniform scale only: Bueno's proportions must hold at every moment of the animation.
+      const crouch = `translateY(2%) scale(${spec.crouch})`;
+      const top = `translateY(${spec.hop}%) scale(${spec.peak})`;
 
       // crouch
       run(hop, [{ transform: 'none' }, { transform: crouch }], {
@@ -153,7 +154,7 @@ export function Bueno({
       // land: squash, then settle
       run(hop, [
         { transform: top },
-        { transform: `translateY(1%) scale(${sqX}, ${sqY})`, offset: 0.55 },
+        { transform: `translateY(1%) scale(${spec.crouch})`, offset: 0.55 },
         { transform: 'none' },
       ], { duration: T.idleAt - T.landAt, delay: T.landAt, easing: E_SPRING });
       // idle for this pose
@@ -204,6 +205,10 @@ export function Bueno({
         position: 'relative',
         width: typeof size === 'number' ? `${size}px` : size,
         aspectRatio: `${CANVAS.width} / ${CANVAS.height}`,
+        // Never squeezed by a flex/grid parent, and never wider than the room there is (the height
+        // follows the aspect ratio either way, so he only ever scales, never distorts).
+        flexShrink: 0,
+        maxWidth: '100%',
         cursor: interactive ? 'pointer' : undefined,
         userSelect: 'none',
         WebkitTapHighlightColor: 'transparent',

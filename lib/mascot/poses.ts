@@ -36,10 +36,13 @@ export type PoseSpec = {
   src: string | null;
   /** Hop height in % of the figure (negative = up, positive = a stomp down). */
   hop: number;
-  /** [scaleX, scaleY] when crouching before the move. */
-  squash: readonly [number, number];
-  /** [scaleX, scaleY] at the top of the hop. */
-  stretch: readonly [number, number];
+  /**
+   * Scale when crouching before the move (a bit under 1), and at the top of the hop (a bit over 1).
+   * ONE number each, applied to both axes: Bueno's width-to-height ratio never changes, not even
+   * mid-animation. (Squashing him sideways reads as a distorted mascot, most of all on small screens.)
+   */
+  crouch: number;
+  peak: number;
   /** Head tilt (degrees) on the way into the pose. */
   headTo: number;
   idle: IdleKind;
@@ -60,39 +63,39 @@ const s = (id: Exclude<PoseId, 'rest'>) => `/mascot/poses/${id}.webp`;
 
 export const POSES: Record<PoseId, PoseSpec> = {
   rest: {
-    id: 'rest', src: null, hop: 0, squash: [1, 1], stretch: [1, 1], headTo: 0, idle: 'bob',
+    id: 'rest', src: null, hop: 0, crouch: 1, peak: 1, headTo: 0, idle: 'bob',
     skull: { x: 401.5, y: 71, width: 510, tilt: 0 },
   },
   flex: {
-    id: 'flex', src: s('flex'), hop: -9, squash: [1.06, 0.92], stretch: [0.95, 1.08], headTo: -6, idle: 'pump',
+    id: 'flex', src: s('flex'), hop: -9, crouch: 0.96, peak: 1.04, headTo: -6, idle: 'pump',
     skull: { x: 400.5, y: 71, width: 494, tilt: 0 },
   },
   thumbs: {
-    id: 'thumbs', src: s('thumbs'), hop: -6, squash: [1.04, 0.95], stretch: [0.97, 1.05], headTo: 7, idle: 'nod',
+    id: 'thumbs', src: s('thumbs'), hop: -6, crouch: 0.97, peak: 1.03, headTo: 7, idle: 'nod',
     skull: { x: 389.5, y: 71, width: 491, tilt: 0 },
   },
   flat: {
-    id: 'flat', src: s('flat'), hop: -1.5, squash: [1.01, 0.99], stretch: [1, 1.01], headTo: -4, idle: 'sway',
+    id: 'flat', src: s('flat'), hop: -1.5, crouch: 0.99, peak: 1.01, headTo: -4, idle: 'sway',
     skull: { x: 403, y: 71, width: 496, tilt: 0 },
   },
   angry: {
-    id: 'angry', src: s('angry'), hop: 2.2, squash: [1.07, 0.9], stretch: [1.02, 0.98], headTo: 9, idle: 'shake',
+    id: 'angry', src: s('angry'), hop: 2.2, crouch: 0.96, peak: 1.0, headTo: 9, idle: 'shake',
     skull: { x: 399, y: 71, width: 495, tilt: 0 },
   },
   cheer: {
-    id: 'cheer', src: s('cheer'), hop: -13, squash: [1.07, 0.9], stretch: [0.94, 1.1], headTo: -8, idle: 'bounce',
+    id: 'cheer', src: s('cheer'), hop: -13, crouch: 0.95, peak: 1.05, headTo: -8, idle: 'bounce',
     skull: { x: 393.5, y: 71, width: 490, tilt: -4 },
   },
   worried: {
-    id: 'worried', src: s('worried'), hop: 0.8, squash: [1.03, 0.96], stretch: [1, 1], headTo: 10, idle: 'tremble',
+    id: 'worried', src: s('worried'), hop: 0.8, crouch: 0.98, peak: 1.0, headTo: 10, idle: 'tremble',
     skull: { x: 410.5, y: 71, width: 483, tilt: 6 },
   },
   proud: {
-    id: 'proud', src: s('proud'), hop: -5, squash: [1.04, 0.95], stretch: [0.97, 1.05], headTo: -8, idle: 'breathe',
+    id: 'proud', src: s('proud'), hop: -5, crouch: 0.97, peak: 1.03, headTo: -8, idle: 'breathe',
     skull: { x: 401.5, y: 71, width: 463, tilt: 0 },
   },
   peace: {
-    id: 'peace', src: s('peace'), hop: -4, squash: [1.03, 0.96], stretch: [0.98, 1.04], headTo: 6, idle: 'sway',
+    id: 'peace', src: s('peace'), hop: -4, crouch: 0.98, peak: 1.02, headTo: 6, idle: 'sway',
     skull: { x: 364.5, y: 70, width: 483, tilt: 0 },
   },
 };
