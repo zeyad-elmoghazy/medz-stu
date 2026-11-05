@@ -60,6 +60,12 @@ describe('pickProudMessage', () => {
     expect(m.pose).toBe('proud');
   });
 
+  it('exactly 7 days already counts as a streak worth being proud of', () => {
+    const m = pickProudMessage(base({ streakDays: 7 }));
+    expect(m.kind).toBe('streak');
+    expect(m.headline).toBe('7 days in a row!');
+  });
+
   it('a 6-day streak is not enough to win the headline', () => {
     expect(pickProudMessage(base({ streakDays: 6 })).kind).not.toBe('streak');
   });

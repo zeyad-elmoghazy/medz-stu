@@ -8,13 +8,10 @@ import { pick, SAVED_EXIT_LINES } from '@/lib/mascot/copy';
 import { consumeMascotEvent } from '@/lib/mascot/events';
 import { decideGreeting, type Greeting } from '@/lib/mascot/greeting';
 import { fetchMascotStatus, type MascotStatus } from '@/lib/mascot/mascot-api';
+import { isQuietRoute } from '@/lib/mascot/routes';
 import { markSeen, readSeen } from '@/lib/mascot/seen';
 import { isDemoMode } from '@/lib/demo-profile';
 
-/** Where Bueno must not interrupt: a quiz in progress, and the results screens that have their own Bueno. */
-export function isQuietRoute(pathname: string | null): boolean {
-  return !!pathname && (pathname.startsWith('/student/quiz/') || pathname.startsWith('/student/results/'));
-}
 
 type Shown =
   | { type: 'greeting'; greeting: Greeting }
