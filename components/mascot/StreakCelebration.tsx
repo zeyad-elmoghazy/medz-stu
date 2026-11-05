@@ -35,7 +35,8 @@ export function StreakCelebration({ outcome, onDone }: { outcome: StreakOutcome;
   const shown = reduce ? outcome.after : counted;
 
   useEffect(() => {
-    button.current?.focus();
+    // preventScroll: focusing a button below the fold must not scroll the dialog away from Bueno.
+    button.current?.focus({ preventScroll: true });
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
@@ -88,11 +89,10 @@ export function StreakCelebration({ outcome, onDone }: { outcome: StreakOutcome;
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
         gap: 10,
         padding: '24px 20px',
         overflowY: 'auto',
-        background: 'color-mix(in srgb, var(--bg) 94%, transparent)',
+        background: 'color-mix(in srgb, var(--bg) 97%, transparent)',
         backdropFilter: 'blur(10px)',
         animation: reduce ? undefined : 'bueno-fade-in 220ms ease-out both',
       }}
@@ -100,17 +100,25 @@ export function StreakCelebration({ outcome, onDone }: { outcome: StreakOutcome;
       <style>{`@keyframes bueno-fade-in { from { opacity: 0 } to { opacity: 1 } }`}</style>
       {partying && <Confetti seed={outcome.after} delayMs={700} />}
 
+      {/* Flexible spacers centre the content when there is room and collapse when there isn't, so the
+          top stays reachable on short screens (a centred, overflowing flex column cannot be scrolled up). */}
+      <div aria-hidden="true" style={{ flex: '1 0 0' }} />
+
       <Bueno
         key="cheer"
         pose="cheer"
         accessory={milestone?.accessory ?? null}
-        size="min(52vw, 230px)"
+        size="min(52vw, 230px, 22vh)"
+        style={{ marginTop: 'clamp(14px, 4vh, 36px)' }}
         label="Bueno jumping for joy"
       />
 
       {/* the flame, with the streak counting up inside it */}
-      <div style={{ position: 'relative', width: 132, height: 156, marginTop: -4 }} aria-hidden="true">
-        <svg viewBox="0 0 64 80" width="132" height="156" style={{ display: 'block', filter: 'drop-shadow(0 6px 14px rgba(249,115,22,.35))' }}>
+      <div
+        style={{ position: 'relative', width: 'clamp(84px, 17vh, 132px)', aspectRatio: '132 / 156', marginTop: -4 }}
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 64 80" width="100%" height="100%" style={{ display: 'block', filter: 'drop-shadow(0 6px 14px rgba(249,115,22,.35))' }}>
           <defs>
             <linearGradient id={`${uid}-flame`} x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stopColor="#FFC83D" />
@@ -135,7 +143,7 @@ export function StreakCelebration({ outcome, onDone }: { outcome: StreakOutcome;
             right: 0,
             top: '46%',
             textAlign: 'center',
-            fontSize: 54,
+            fontSize: 'clamp(34px, 8vh, 54px)',
             lineHeight: 1,
             fontWeight: 900,
             color: '#fff',
@@ -218,6 +226,8 @@ export function StreakCelebration({ outcome, onDone }: { outcome: StreakOutcome;
       >
         Continue
       </button>
+
+      <div aria-hidden="true" style={{ flex: '1 0 0' }} />
     </div>
   );
 }

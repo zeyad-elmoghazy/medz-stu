@@ -34,15 +34,31 @@ export function MascotHost() {
   const pathname = usePathname();
   const [shown, setShown] = useState<Shown | null>(null);
   const [leaving, setLeaving] = useState(false);
-  const statusRef = useRef<MascotStatus | null>(null);
-  const fetching = useRef(false);
+  // One shared in-flight request: if the effect re-runs while it is pending (React StrictMode in
+  // dev, or the student navigating), the live run awaits the same promise instead of giving up.
+  const statusPromise = useRef<Promise<MascotStatus | null> | null>(null);
   const decided = useRef(false);
   const shownRef = useRef<Shown | null>(null);
-  const retries = useRef(0);
+  // True while any dialog is open anywhere on the page (the username / academic-year prompts, an
+  // exit confirmation...). Bueno steps aside while it is, and returns when it closes. Watching the
+  // DOM continuously matters: the prompts mount only after their own profile fetch resolves, which
+  // can be after the greeting has already been decided.
+  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
     shownRef.current = shown;
   }, [shown]);
+
+  useEffect(() => {
+    const check = () => setBlocked(!!document.querySelector('[role="dialog"]'));
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const frame = requestAnimationFrame(check);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, []);
 
   const dismiss = useCallback(() => {
     setLeaving(true);
@@ -65,28 +81,19 @@ export function MascotHost() {
 
   // The daily greeting.
   useEffect(() => {
-    if (isDemoMode() || decided.current || isQuietRoute(pathname)) return;
+    if (isDemoMode() || decided.current || isQuietRoute(pathname) || blocked) return;
     let cancelled = false;
-    let retry: ReturnType<typeof setTimeout> | undefined;
 
     async function run() {
-      if (!statusRef.current) {
-        if (fetching.current) return;
-        fetching.current = true;
-        statusRef.current = await fetchMascotStatus();
-        fetching.current = false;
-      }
-      const status = statusRef.current;
-      if (cancelled || !status) return;
-
-      // Wait out blocking prompts (username / academic year) instead of stacking on them.
-      if (document.querySelector('[role="dialog"]')) {
-        if (retries.current < 8) {
-          retries.current += 1;
-          retry = setTimeout(run, 1500);
-        }
+      statusPromise.current ??= fetchMascotStatus();
+      const status = await statusPromise.current;
+      if (!status) {
+        statusPromise.current = null; // failed: the next navigation may try again
         return;
       }
+      if (cancelled) return;
+      // A prompt may have opened while the request was in flight: wait (this effect re-runs when it closes).
+      if (document.querySelector('[role="dialog"]')) return;
       if (shownRef.current) return;
 
       const greeting = decideGreeting({
@@ -104,13 +111,12 @@ export function MascotHost() {
     run();
     return () => {
       cancelled = true;
-      if (retry) clearTimeout(retry);
     };
-  }, [pathname]);
+  }, [pathname, blocked]);
 
-  // Leave on their own.
+  // Leave on their own (the clock only runs while nothing is covering him).
   useEffect(() => {
-    if (!shown) return;
+    if (!shown || blocked) return;
     const ms =
       shown.type === 'peace'
         ? AUTO_DISMISS.peace
@@ -119,9 +125,9 @@ export function MascotHost() {
           : AUTO_DISMISS.nudge;
     const t = setTimeout(dismiss, ms);
     return () => clearTimeout(t);
-  }, [shown, dismiss]);
+  }, [shown, blocked, dismiss]);
 
-  if (!shown) return null;
+  if (!shown || blocked) return null;
 
   return (
     <MascotToast leaving={leaving} onClose={dismiss} testId={shown.type === 'peace' ? 'bueno-peace' : `bueno-greeting-${shown.greeting.kind}`}>
