@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthCardFallback } from '@/components/auth/AuthCardFallback';
+import { GoogleButton, OrDivider } from '@/components/auth/GoogleButton';
 import { ArrowRightIcon, SpinnerIcon, MailIcon, LockIcon } from '@/components/icons';
 import {
   dashboardPathForRole,
@@ -42,6 +43,9 @@ function LoginPageInner() {
     const errorParam = searchParams.get('error');
     if (errorParam === 'missing_profile') {
       return 'Your profile could not be loaded. Please sign up again or contact support.';
+    }
+    if (errorParam === 'oauth_failed') {
+      return "Google sign-in didn't complete. Try again, or log in with your email.";
     }
     if (errorParam === 'invalid_link') {
       return 'That link is invalid or has expired. Please request a new one.';
@@ -263,6 +267,11 @@ function LoginPageInner() {
             )}
           </button>
         </form>
+
+        <div className="mt-5 space-y-5">
+          <OrDivider />
+          <GoogleButton />
+        </div>
 
         <p className="mt-8 text-center text-sm text-text-muted">
           New to MediZee?{' '}

@@ -17,6 +17,7 @@ import {
   isDemoMode,
   writeDemoProfile,
 } from '@/lib/demo-profile';
+import { GoogleButton, OrDivider } from '@/components/auth/GoogleButton';
 import { CheckInboxCard, type ResendResult } from '@/components/auth/CheckInboxCard';
 import {
   ACADEMIC_YEARS,
@@ -391,6 +392,14 @@ export default function SignupPage() {
                 )}
               </button>
             </form>
+
+            {/* Below the form so the "how did you hear" answer above is
+                already chosen when Google takes over. Year and username are
+                collected after sign-in. */}
+            <div className="mt-5 space-y-5">
+              <OrDivider />
+              <GoogleButton label="Sign up with Google" source={signupSource} />
+            </div>
 
             <p className="mt-8 text-center text-sm text-text-muted">
               Already have an account?{' '}

@@ -9,8 +9,9 @@ import { normalizeUsername, validateUsername } from '@/lib/username';
 import { Notice, PrimaryButton } from '@/components/student/profile/ui';
 
 /**
- * Blocking "Choose a username" prompt for students who signed up before
- * usernames were required. Unlike the academic-year prompt there is no
+ * Blocking "Finish setting up" prompt (choose a username) for students who
+ * have none: those who signed up before usernames were required, and everyone
+ * who signs up with Google (migration 044), who arrives without one. Unlike the academic-year prompt there is no
  * "Later": the leaderboard shows usernames instead of real names, and a
  * student without one is not ranked, so it stays until they pick one.
  *
@@ -106,11 +107,11 @@ export function UsernamePrompt() {
       >
         <div>
           <h2 id="username-prompt-title" style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>
-            Choose a username
+            Finish setting up
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text3)', lineHeight: 1.5 }}>
-            The leaderboard now shows usernames instead of real names, so nobody sees your
-            name unless you want them to. Pick one to keep your place.
+            Choose a username. The leaderboard shows usernames instead of real names, so
+            nobody sees your name unless you want them to, and you need one to be ranked.
           </p>
         </div>
 
@@ -167,7 +168,7 @@ export function UsernamePrompt() {
         {error && <Notice kind="error">{error}</Notice>}
 
         <PrimaryButton type="submit" busy={saving} disabled={!canSave}>
-          {saving ? 'Saving…' : 'Save username'}
+          {saving ? 'Saving…' : 'Continue'}
         </PrimaryButton>
       </form>
     </div>
