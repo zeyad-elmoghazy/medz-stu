@@ -344,7 +344,7 @@ export default function SignupPage() {
                         type="button"
                         aria-pressed={active}
                         onClick={() => setSignupSource(active ? null : src)}
-                        className={`h-9 rounded-full border px-3.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                        className={`h-9 rounded-full border px-3.5 max-sm:h-11 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
                           active
                             ? 'border-accent bg-accent/15 text-text-primary'
                             : 'border-border text-text-muted hover:border-accent/50 hover:text-text-primary'
