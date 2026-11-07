@@ -2,6 +2,8 @@
  * Fetchers for the student-facing /api/student/catalogue/* surface.
  */
 
+import type { NextStep } from '@/lib/student/next-step';
+
 export type CatalogueModule = {
   code: string;
   name: string;
@@ -66,6 +68,12 @@ export type ChaptersBySubject = {
   publishedTotal: number;
   chapters: CatalogueChapter[];
 };
+
+export async function fetchNextStep(): Promise<NextStep> {
+  const res = await fetch('/api/student/next-step', { credentials: 'include', cache: 'no-store' });
+  const body = await json<{ nextStep: NextStep }>(res);
+  return body.nextStep;
+}
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
