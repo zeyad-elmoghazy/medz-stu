@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeLoginTarget } from '@/lib/safe-redirect';
 import { AuthCardFallback } from '@/components/auth/AuthCardFallback';
 import { GoogleButton, OrDivider } from '@/components/auth/GoogleButton';
 import { ArrowRightIcon, SpinnerIcon, MailIcon, LockIcon } from '@/components/icons';
@@ -145,13 +146,17 @@ function LoginPageInner() {
       return;
     }
 
-    // Always land on the role's home page after sign-in — the
-    // previous `redirectedFrom` follow-through meant students who
-    // hit /student/subjects while logged out came back to subjects
-    // instead of the dashboard. If deep-link-after-auth is needed
-    // later (e.g. shared quiz links), reintroduce it behind an
-    // allowlist of paths.
-    router.push(dashboardPathForRole(profile.role));
+    // Land back on the page proxy.ts bounced them from (?redirectedFrom=),
+    // but only if it is a same-origin path inside their own role's area
+    // (safeLoginTarget); anything else goes to their dashboard.
+    router.push(
+      safeLoginTarget(
+        searchParams.get('redirectedFrom'),
+        profile.role,
+        window.location.origin,
+        dashboardPathForRole(profile.role)
+      )
+    );
     router.refresh();
   }
 
@@ -270,7 +275,14 @@ function LoginPageInner() {
 
         <div className="mt-5 space-y-5">
           <OrDivider />
-          <GoogleButton />
+          <GoogleButton
+            next={safeLoginTarget(
+              searchParams.get('redirectedFrom'),
+              'student',
+              typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
+              '/student/dashboard'
+            )}
+          />
         </div>
 
         <p className="mt-8 text-center text-sm text-text-muted">

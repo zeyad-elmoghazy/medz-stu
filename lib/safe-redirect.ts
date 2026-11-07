@@ -30,3 +30,19 @@ export function safeRelativeNext(
     return '/';
   }
 }
+
+/**
+ * Where to send someone right after they log in. `redirectedFrom` is the page
+ * proxy.ts bounced them from, so it is attacker-controllable too: it must be a
+ * same-origin path (see safeRelativeNext) AND inside the area their role may
+ * use, otherwise they get `fallback` (their dashboard).
+ */
+export function safeLoginTarget(
+  redirectedFrom: string | null | undefined,
+  role: string,
+  origin: string,
+  fallback: string,
+): string {
+  const next = safeRelativeNext(redirectedFrom, origin);
+  return next.startsWith(`/${role}/`) ? next : fallback;
+}

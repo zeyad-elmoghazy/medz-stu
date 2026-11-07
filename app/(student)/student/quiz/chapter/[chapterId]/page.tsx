@@ -80,6 +80,46 @@ const RichTextEditor = dynamic(() => import('@/components/quiz/NotesEditor'), {
   ssr: false,
 });
 
+/** An error / empty screen that never leaves the student stranded. */
+function QuizDeadEnd({
+  message,
+  tone,
+  onBack,
+  onRetry,
+}: {
+  message: string;
+  tone: 'error' | 'muted';
+  onBack: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <main
+      className="flex min-h-screen w-full flex-col items-center justify-center gap-5 px-6 text-center"
+      style={{ backgroundColor: 'var(--bg)' }}
+    >
+      <p role={tone === 'error' ? 'alert' : undefined} className={`max-w-sm text-sm ${tone === 'error' ? 'text-error' : 'text-text-muted'}`}>
+        {message}
+      </p>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex h-11 items-center rounded-xl border border-border px-5 text-sm font-medium text-text-primary transition hover:border-accent/50"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="inline-flex h-11 items-center rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-glow"
+        >
+          Retry
+        </button>
+      </div>
+    </main>
+  );
+}
+
 export default function ChapterQuizPage() {
   const router = useRouter();
   const params = useParams<{ chapterId: string }>();
@@ -597,14 +637,19 @@ export default function ChapterQuizPage() {
     }
   }
 
+  // Where "Back" goes from an error screen: the subject page when we know it,
+  // otherwise wherever the student came from.
+  const goBack = () =>
+    data?.subjectHref ? router.push(data.subjectHref) : router.back();
+
   if (loadError) {
     return (
-      <main
-        className="flex min-h-screen w-full items-center justify-center px-6 text-center"
-        style={{ backgroundColor: 'var(--bg)' }}
-      >
-        <p className="text-sm text-error">{loadError}</p>
-      </main>
+      <QuizDeadEnd
+        message={loadError}
+        tone="error"
+        onBack={goBack}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
@@ -622,12 +667,12 @@ export default function ChapterQuizPage() {
 
   if (data.questions.length === 0) {
     return (
-      <main
-        className="flex min-h-screen w-full items-center justify-center px-6 text-center"
-        style={{ backgroundColor: 'var(--bg)' }}
-      >
-        <p className="text-sm text-text-muted">No published questions in this chapter yet.</p>
-      </main>
+      <QuizDeadEnd
+        message="No published questions in this chapter yet."
+        tone="muted"
+        onBack={goBack}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 

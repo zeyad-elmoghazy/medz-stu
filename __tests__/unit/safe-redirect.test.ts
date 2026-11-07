@@ -1,4 +1,4 @@
-import { safeRelativeNext } from '@/lib/safe-redirect';
+import { safeLoginTarget, safeRelativeNext } from '@/lib/safe-redirect';
 
 const ORIGIN = 'https://www.example-app.test';
 
@@ -58,5 +58,43 @@ describe('safeRelativeNext', () => {
       const out = safeRelativeNext(raw, ORIGIN);
       expect(new URL(out, ORIGIN).origin).toBe(ORIGIN);
     }
+  });
+});
+
+describe('safeLoginTarget', () => {
+  const FALLBACK = '/student/dashboard';
+
+  test('returns to the page the student was bounced from', () => {
+    expect(safeLoginTarget('/student/catalogue/2/205', 'student', ORIGIN, FALLBACK)).toBe(
+      '/student/catalogue/2/205'
+    );
+    expect(safeLoginTarget('/student/quiz/chapter/abc?x=1', 'student', ORIGIN, FALLBACK)).toBe(
+      '/student/quiz/chapter/abc?x=1'
+    );
+  });
+
+  test('falls back when there is nothing, or it is not a path', () => {
+    expect(safeLoginTarget(null, 'student', ORIGIN, FALLBACK)).toBe(FALLBACK);
+    expect(safeLoginTarget('', 'student', ORIGIN, FALLBACK)).toBe(FALLBACK);
+    expect(safeLoginTarget('student/dashboard', 'student', ORIGIN, FALLBACK)).toBe(FALLBACK);
+  });
+
+  test('refuses off-site and scheme-relative targets (open-redirect hardening)', () => {
+    for (const evil of [
+      'https://evil.example/student/x',
+      '//evil.example/student/x',
+      '/\t/evil.example',
+      '/\\evil.example',
+      '/..//evil.example',
+    ]) {
+      expect(safeLoginTarget(evil, 'student', ORIGIN, FALLBACK)).toBe(FALLBACK);
+    }
+  });
+
+  test("refuses another role's area and the public pages", () => {
+    expect(safeLoginTarget('/admin/content', 'student', ORIGIN, FALLBACK)).toBe(FALLBACK);
+    expect(safeLoginTarget('/student', 'student', ORIGIN, FALLBACK)).toBe(FALLBACK);
+    expect(safeLoginTarget('/login', 'student', ORIGIN, FALLBACK)).toBe(FALLBACK);
+    expect(safeLoginTarget('/studentx/foo', 'student', ORIGIN, FALLBACK)).toBe(FALLBACK);
   });
 });

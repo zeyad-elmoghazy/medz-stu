@@ -567,7 +567,7 @@ function AnalyticsView({
               {s.mistakes.length} chapter{s.mistakes.length === 1 ? '' : 's'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>
-              Practice the ones you got wrong — spaced review sticks longest.
+              Redo the ones you got wrong until they stick.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -789,6 +789,39 @@ function ChapterPath({
   );
 }
 
+/**
+ * A list row that is a real link when it has somewhere to go (keyboard and
+ * right-click friendly), and a plain block when it doesn't.
+ */
+function RowLink({
+  href,
+  className,
+  style,
+  children,
+}: {
+  href?: string;
+  className?: string;
+  style?: CSSProperties;
+  children: React.ReactNode;
+}) {
+  if (!href) {
+    return (
+      <div className={className} style={style}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      className={className}
+      style={{ display: 'block', color: 'inherit', textDecoration: 'none', ...style }}
+    >
+      {children}
+    </Link>
+  );
+}
+
 function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading: boolean }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 22 }}>
@@ -799,7 +832,7 @@ function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading:
       {focusAreas.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {focusAreas.map((f) => (
-            <div key={f.chapterId}>
+            <RowLink key={f.chapterId} href={f.href}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 12 }}>
                 <span style={{ color: 'var(--text)', fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>
                   {f.chapterName}
@@ -822,7 +855,7 @@ function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading:
               <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 4 }}>
                 {f.attempted} question{f.attempted === 1 ? '' : 's'} attempted
               </div>
-            </div>
+            </RowLink>
           ))}
         </div>
       ) : (
@@ -865,8 +898,9 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
         const pct = Math.round(c.accuracy);
         const { color, tag, tagBg } = challengeTone(pct);
         return (
-          <div
+          <RowLink
             key={c.id}
+            href={c.href}
             className="mz-dash-chal"
             style={{
               display: 'grid',
@@ -923,7 +957,7 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
             >
               {c.inProgress ? 'In progress' : tag}
             </div>
-          </div>
+          </RowLink>
         );
       })}
     </div>

@@ -170,6 +170,12 @@ const nextConfig = {
   // this redirect keeps old bookmarks/links landing somewhere useful.
   async redirects() {
     return [
+      // Bare /student has no page of its own and 404'd.
+      {
+        source: '/student',
+        destination: '/student/dashboard',
+        permanent: false,
+      },
       {
         source: '/student/subjects/:path*',
         destination: '/student/catalogue',

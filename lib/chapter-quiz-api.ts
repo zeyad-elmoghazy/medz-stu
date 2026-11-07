@@ -7,6 +7,7 @@
  */
 
 import type { FlagReason } from '@/lib/question-flags';
+import { readApiError } from '@/lib/catalogue-api';
 
 export type ChapterQuizChoice = {
   id: string;
@@ -41,16 +42,7 @@ export async function fetchChapterQuiz(chapterId: string): Promise<ChapterQuiz> 
     `/api/student/chapters/${encodeURIComponent(chapterId)}/questions`,
     { credentials: 'include', cache: 'no-store' }
   );
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body?.error) msg = body.error;
-    } catch {
-      /* ignore — keep the generic HTTP status message */
-    }
-    throw new Error(msg);
-  }
+  if (!res.ok) throw new Error(await readApiError(res));
   return res.json();
 }
 
@@ -188,16 +180,7 @@ export async function submitChapterQuiz(
       body: JSON.stringify({ answers, questionIds }),
     }
   );
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body?.error) msg = body.error;
-    } catch {
-      /* ignore — keep the generic HTTP status message */
-    }
-    throw new Error(msg);
-  }
+  if (!res.ok) throw new Error(await readApiError(res));
   return res.json();
 }
 
