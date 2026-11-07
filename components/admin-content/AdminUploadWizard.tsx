@@ -56,6 +56,9 @@ export function AdminUploadWizard({ onContentChanged }: Props) {
   const [chapterId, setChapterId] = useState('');
   const [addingChapter, setAddingChapter] = useState(false);
   const [newChapterName, setNewChapterName] = useState('');
+  // '' = append at the end; otherwise insert right after that chapter
+  // (later chapters move down; the new one copies its topic and book).
+  const [newChapterAfterId, setNewChapterAfterId] = useState('');
   const [creatingChapter, setCreatingChapter] = useState(false);
   const [destLoading, setDestLoading] = useState(true);
 
@@ -109,17 +112,19 @@ export function AdminUploadWizard({ onContentChanged }: Props) {
         moduleCode,
         subjectId,
         name: newChapterName.trim(),
+        ...(newChapterAfterId ? { afterChapterId: newChapterAfterId } : {}),
       });
       await loadChapters();
       setChapterId(chapter.id);
       setAddingChapter(false);
       setNewChapterName('');
+      setNewChapterAfterId('');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to add chapter');
     } finally {
       setCreatingChapter(false);
     }
-  }, [newChapterName, moduleCode, subjectId, loadChapters]);
+  }, [newChapterName, newChapterAfterId, moduleCode, subjectId, loadChapters]);
 
   // ---- Manual entry ----
   const [mqStem, setMqStem] = useState('');
@@ -403,6 +408,29 @@ export function AdminUploadWizard({ onContentChanged }: Props) {
                     {creatingChapter ? 'Adding…' : 'Add'}
                   </button>
                 </div>
+                {chapters.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#33BFBF', margin: '14px 0 9px' }}>Position</div>
+                    <select
+                      value={newChapterAfterId}
+                      onChange={(e) => setNewChapterAfterId(e.target.value)}
+                      aria-label="New chapter position"
+                      style={{ width: '100%', background: '#132B45', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 9, padding: '11px 13px', color: '#F7F9FA', fontSize: 13, fontFamily: 'inherit' }}
+                    >
+                      <option value="">At the end</option>
+                      {chapters.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          After {c.ordinal}. {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    {newChapterAfterId && (
+                      <div style={{ fontSize: 10.5, color: '#8B98A6', marginTop: 7, lineHeight: 1.5 }}>
+                        Later chapters move down one place. The new chapter copies the topic and reference book of the one it follows.
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -414,7 +442,10 @@ export function AdminUploadWizard({ onContentChanged }: Props) {
                 const selected = chapterId === c.id;
                 return (
                   <button key={c.id} type="button" onClick={() => setChapterId(c.id)} style={optionBtn(selected)}>
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: selected ? 700 : 500 }}>{c.name}</span>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: selected ? 700 : 500 }}>
+                      <span style={{ color: '#8B98A6', fontWeight: 500 }}>{c.ordinal}. </span>
+                      {c.name}
+                    </span>
                     <span style={{ fontSize: 10, color: '#8B98A6' }}>{c.published_count}/{c.question_count} pub</span>
                     {selected && <span style={{ fontSize: 13, color: '#00A6A6' }}>✓</span>}
                   </button>
