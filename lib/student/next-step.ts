@@ -38,30 +38,56 @@ export interface NextStepInput {
 /**
  * Chooses the next step from what we know about the student. Pure: no I/O.
  *
- * TODO(you): replace this placeholder. Shape of the answer, per kind:
+ * Order, first match wins:
+ *   1. 'resume'        an unfinished chapter: the most recently touched one.
+ *   2. 'next-chapter'  the chapter after the one they last finished.
+ *   3. 'module'        the first stocked module of their year.
+ *   4. 'year'          their year's catalogue page, else the catalogue root.
  *
- *   'resume'        href `/student/quiz/chapter/${chapterId}` (the quiz page
- *                   restores the saved attempt), label e.g.
- *                   `Continue ${chapterName}`, chapterId set.
- *   'next-chapter'  same href shape for `nextChapterId`; label e.g.
- *                   `Next up: ${nextChapterName}`, chapterId set.
- *   'module'        `currentModule.href`; label `Start here: ${currentModule.name}`.
- *   'year'          the last resort: `/student/catalogue/${academicYear}` or,
- *                   with no year, `/student/catalogue`.
+ * Decisions (change them here, and in the spec, together):
+ *   - Unfinished beats next chapter: half a chapter is the cheapest thing to
+ *     finish, and saved answers are lost if it is abandoned.
+ *   - No staleness cutoff on an unfinished attempt: the card is a suggestion,
+ *     and "Start over" lives on the subject page. ponytail: add a cutoff only
+ *     if students report being pulled back to something old.
+ *   - Finished the last chapter of a subject: fall through to their module
+ *     rather than the subject page, which they have just seen.
  *
- * Decisions that are yours (they change what students see first):
- *   - several unfinished attempts: the most recent `updatedAt`? Or ignore an
- *     attempt that has sat untouched for weeks?
- *   - unfinished vs `nextChapterId`: does finishing a chapter's quiz in
- *     progress always beat moving on?
- *   - `lastPlayed` with no next chapter (they reached the end of the subject):
- *     fall through to `currentModule`, or send them to `subjectHref`?
- *
- * __tests__/unit/next-step.test.ts is the spec. It is red until this is done.
+ * __tests__/unit/next-step.test.ts is the spec.
  */
 export function pickNextStep(input: NextStepInput): NextStep {
-  void input; // remove once implemented
-  return { kind: 'year', href: '/student/catalogue', label: 'Browse the catalogue' };
+  const { unfinished, lastPlayed, academicYear, currentModule } = input;
+
+  const latest = unfinished.reduce<NextStepInput['unfinished'][number] | null>(
+    // Compare as dates: the strings are not guaranteed to share a format.
+    (best, a) => (!best || Date.parse(a.updatedAt) > Date.parse(best.updatedAt) ? a : best),
+    null
+  );
+  if (latest) {
+    return {
+      kind: 'resume',
+      href: `/student/quiz/chapter/${encodeURIComponent(latest.chapterId)}`,
+      label: `Continue ${latest.chapterName}`,
+      chapterId: latest.chapterId,
+    };
+  }
+
+  if (lastPlayed?.nextChapterId) {
+    return {
+      kind: 'next-chapter',
+      href: `/student/quiz/chapter/${encodeURIComponent(lastPlayed.nextChapterId)}`,
+      label: `Next up: ${lastPlayed.nextChapterName ?? 'next chapter'}`,
+      chapterId: lastPlayed.nextChapterId,
+    };
+  }
+
+  if (currentModule) {
+    return { kind: 'module', href: currentModule.href, label: `Start here: ${currentModule.name}` };
+  }
+
+  return academicYear
+    ? { kind: 'year', href: `/student/catalogue/${academicYear}`, label: `Browse Year ${academicYear}` }
+    : { kind: 'year', href: '/student/catalogue', label: 'Browse the catalogue' };
 }
 
 /** Gathers the input from the database and picks. `db` is the student's own client. */

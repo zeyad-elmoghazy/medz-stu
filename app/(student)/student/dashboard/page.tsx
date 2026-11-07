@@ -1051,8 +1051,9 @@ function NextStepCard({ firstName, step }: { firstName: string; step: NextStep }
               color: 'var(--accent-text)',
             }}
           >
-            {firstName ? `Hi ${firstName}` : 'Welcome'} ·{' '}
-            {continuing ? 'Continue where you left off' : 'Start here'}
+            {firstName ? `Hi ${firstName}` : 'Welcome'}
+            {/* The title already says "Start here: …" for a new student. */}
+            {continuing && ' · Continue where you left off'}
           </div>
           <div
             style={{
