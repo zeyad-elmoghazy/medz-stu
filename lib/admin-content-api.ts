@@ -203,6 +203,9 @@ export async function createAdminChapter(body: {
   moduleCode: string;
   subjectId: string;
   name: string;
+  /** Insert right after this chapter, inheriting its topic and reference book. */
+  afterChapterId?: string;
+  topic?: string;
 }): Promise<{ chapter: { id: string; module_code: string; subject_id: string; slug: string; name: string; ordinal: number } }> {
   const res = await fetch('/api/admin/content/chapters', {
     method: 'POST',
@@ -221,6 +224,8 @@ export async function fetchAdminQuestions(params: {
   search?: string;
   limit?: number;
   offset?: number;
+  /** 'position' (needs chapterId) = the order students see, up to 500 rows. */
+  order?: 'recent' | 'position';
 }): Promise<{ questions: AdminQuestion[]; total: number; limit: number; offset: number }> {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
@@ -229,6 +234,21 @@ export async function fetchAdminQuestions(params: {
   const res = await fetch(`/api/admin/content/questions?${qs.toString()}`, {
     credentials: 'include',
     cache: 'no-store',
+  });
+  return json(res);
+}
+
+/**
+ * Move questions to another chapter (the bulk route's 'retag' action).
+ * Used to split a long chapter. The count trigger from migration 007
+ * recounts both the old and the new chapter.
+ */
+export async function moveAdminQuestions(ids: number[], chapterId: string): Promise<{ ok: true; updated: number }> {
+  const res = await fetch('/api/admin/content/questions/bulk', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'retag', ids, chapterId }),
   });
   return json(res);
 }
