@@ -17,7 +17,7 @@ import {
   isDemoMode,
   writeDemoProfile,
 } from '@/lib/demo-profile';
-import { CheckInboxCard } from '@/components/auth/CheckInboxCard';
+import { CheckInboxCard, type ResendResult } from '@/components/auth/CheckInboxCard';
 import {
   ACADEMIC_YEARS,
   academicSession,
@@ -25,6 +25,15 @@ import {
   isValidAcademicYear,
 } from '@/lib/academic-year';
 import { normalizeUsername, validateUsername } from '@/lib/username';
+import { applyDomainSuggestion, suggestEmailDomain } from '@/lib/email-typo';
+import {
+  SIGNUP_SOURCES,
+  SIGNUP_SOURCE_LABELS,
+  UTM_COOKIE,
+  parseUtmCookie,
+  readCookie,
+  type SignupSource,
+} from '@/lib/signup-attribution';
 import {
   fetchUsernameAvailability,
   useUsernameAvailability,
@@ -50,6 +59,10 @@ export default function SignupPage() {
       ? { status: 'unavailable', message: rejectedUsername.message }
       : liveUsernameCheck;
   const [email, setEmail] = useState('');
+  // Advisory only (never blocks submit): set when the email field loses
+  // focus with a domain that looks like a typo, e.g. gmail.con.
+  const [domainSuggestion, setDomainSuggestion] = useState<string | null>(null);
+  const [signupSource, setSignupSource] = useState<SignupSource | null>(null);
   const [password, setPassword] = useState('');
   // Kept as the raw <select> value; '' means "not chosen yet".
   const [academicYear, setAcademicYear] = useState('');
@@ -105,6 +118,10 @@ export default function SignupPage() {
     const { createBrowserClient } = await import('@/lib/supabase');
     const supabase = createBrowserClient();
 
+    // First-touch utm_* params, remembered by proxy.ts when the student
+    // landed from a campaign link. The trigger re-validates both.
+    const utm = parseUtmCookie(readCookie(UTM_COOKIE, document.cookie));
+
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -118,6 +135,8 @@ export default function SignupPage() {
           username: chosenUsername,
           role,
           academic_year: chosenYear,
+          ...(signupSource ? { signup_source: signupSource } : {}),
+          ...(Object.keys(utm).length > 0 ? { signup_utm: utm } : {}),
         },
       },
     });
@@ -157,6 +176,19 @@ export default function SignupPage() {
     router.refresh();
   }
 
+  async function resendConfirmation(): Promise<ResendResult> {
+    const { createBrowserClient } = await import('@/lib/supabase');
+    const { error: resendError } = await createBrowserClient().auth.resend({
+      type: 'signup',
+      email,
+    });
+    return {
+      error: resendError
+        ? 'Could not resend yet. Wait a minute and try again.'
+        : null,
+    };
+  }
+
   return (
     <main className="relative flex min-h-dvh w-full items-center justify-center px-4 py-16">
       <div
@@ -182,6 +214,7 @@ export default function SignupPage() {
               body="Your account is created — you just need to confirm it."
               backHref="/login"
               backLabel="Back to log in"
+              onResend={resendConfirmation}
             />
           </div>
         ) : (
@@ -231,10 +264,34 @@ export default function SignupPage() {
                 icon={<MailIcon size={16} />}
                 type="email"
                 autoComplete="email"
-                placeholder="you@university.edu"
+                placeholder="name@gmail.com"
                 value={email}
-                onChange={setEmail}
+                onChange={(v) => {
+                  setEmail(v);
+                  setDomainSuggestion(null);
+                }}
+                onBlur={() => setDomainSuggestion(suggestEmailDomain(email))}
               />
+              {domainSuggestion && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="-mt-3 text-[11px] text-text-muted"
+                >
+                  Did you mean{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail(applyDomainSuggestion(email, domainSuggestion));
+                      setDomainSuggestion(null);
+                    }}
+                    className="font-medium text-accent underline underline-offset-2 transition hover:text-text-primary"
+                  >
+                    {domainSuggestion}
+                  </button>
+                  ? We need a working address to send your confirmation link.
+                </p>
+              )}
 
               <div className="space-y-1.5">
                 <label
@@ -271,6 +328,33 @@ export default function SignupPage() {
                   It moves up automatically every September.
                 </p>
               </div>
+
+              <fieldset className="space-y-1.5">
+                <legend className="text-xs font-medium uppercase tracking-[0.16em] text-text-muted">
+                  How did you hear about MediZee?{' '}
+                  <span className="normal-case tracking-normal">(optional)</span>
+                </legend>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {SIGNUP_SOURCES.map((src) => {
+                    const active = signupSource === src;
+                    return (
+                      <button
+                        key={src}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setSignupSource(active ? null : src)}
+                        className={`h-9 rounded-full border px-3.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                          active
+                            ? 'border-accent bg-accent/15 text-text-primary'
+                            : 'border-border text-text-muted hover:border-accent/50 hover:text-text-primary'
+                        }`}
+                      >
+                        {SIGNUP_SOURCE_LABELS[src]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
 
               <FormField
                 id="password"
@@ -366,6 +450,7 @@ function FormField({
   minLength,
   maxLength,
   help,
+  onBlur,
 }: {
   id: string;
   label: string;
@@ -378,6 +463,7 @@ function FormField({
   minLength?: number;
   maxLength?: number;
   help?: FieldHelp;
+  onBlur?: () => void;
 }) {
   return (
     <div className="space-y-1.5">
@@ -401,6 +487,7 @@ function FormField({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           aria-describedby={help ? `${id}-help` : undefined}
           aria-invalid={help?.tone === 'error' ? true : undefined}
           className="block h-11 w-full rounded-lg border border-border bg-background pl-10 pr-4 text-sm text-text-primary placeholder:text-text-muted/60 transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
