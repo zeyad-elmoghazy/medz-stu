@@ -29,7 +29,13 @@ export const dynamic = 'force-dynamic';
  * satisfy "review the references before publish."
  *
  * Query params: status (CSV), moduleCode, subjectId, chapterId,
- * search (keyword, matches question text), limit, offset.
+ * search (keyword, matches question text), limit, offset,
+ * order ('recent' default | 'position').
+ *
+ * order=position (with chapterId) lists a chapter's questions in the
+ * order students get them (questions.id ascending, as the student
+ * questions route does) and allows up to 500 rows, so a whole chapter
+ * fits on one page when an admin splits it.
  */
 export async function GET(request: NextRequest) {
   const { supabase, error } = await requireAdmin();
@@ -42,7 +48,8 @@ export async function GET(request: NextRequest) {
   const subjectId = searchParams.get('subjectId');
   const chapterId = searchParams.get('chapterId');
   const search = searchParams.get('search');
-  const limit = Math.min(Number(searchParams.get('limit') ?? '50'), 200);
+  const byPosition = searchParams.get('order') === 'position' && !!chapterId;
+  const limit = Math.min(Number(searchParams.get('limit') ?? '50'), byPosition ? 500 : 200);
   const offset = Math.max(Number(searchParams.get('offset') ?? '0'), 0);
 
   let chapterIds: string[] | null = chapterId ? [chapterId] : null;
@@ -69,7 +76,10 @@ export async function GET(request: NextRequest) {
   if (chapterIds) query = query.in('chapter_id', chapterIds);
   if (search) query = query.ilike('question', `%${search}%`);
 
-  query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+  query = (byPosition ? query.order('id', { ascending: true }) : query.order('created_at', { ascending: false })).range(
+    offset,
+    offset + limit - 1
+  );
 
   const { data, error: dbError, count } = await query;
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
