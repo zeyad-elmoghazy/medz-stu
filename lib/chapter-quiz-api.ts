@@ -30,6 +30,8 @@ export type ChapterQuiz = {
   chapterName: string;
   moduleCode: string;
   subjectName: string;
+  /** Subject page this chapter belongs to (module page or catalogue as fallbacks). */
+  subjectHref: string;
   questionTotal: number;
   questions: ChapterQuizQuestion[];
 };

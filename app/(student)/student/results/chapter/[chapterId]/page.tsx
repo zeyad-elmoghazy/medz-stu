@@ -36,6 +36,7 @@ export default function ChapterResultsPage() {
   const mistakeQuestionIdsByChapter = useChapterQuizStore((s) => s.mistakeQuestionIdsByChapter);
   const startMistakeSession = useChapterQuizStore((s) => s.startMistakeSession);
   const startSession = useChapterQuizStore((s) => s.startSession);
+  const lastSubject = useChapterQuizStore((s) => s.lastSubject);
 
   const [data, setData] = useState<ChapterQuiz | null>(null);
 
@@ -92,6 +93,14 @@ export default function ChapterResultsPage() {
   const persistentMistakeIds = mistakeQuestionIdsByChapter[chapterId] ?? [];
   const practiceIds = recentMistakeIds.length > 0 ? recentMistakeIds : persistentMistakeIds;
 
+  // Back goes to the subject this chapter belongs to. The freshly fetched
+  // chapter wins; the quiz page's remembered subject covers the moment
+  // before that fetch returns (or if it fails).
+  const remembered = lastSubject?.chapterId === chapterId ? lastSubject : null;
+  const backHref = data?.subjectHref ?? remembered?.href ?? '/student/catalogue';
+  const backName = data?.subjectName || remembered?.name || '';
+  const backLabel = backName ? `Back to ${backName}` : 'Back to Catalogue';
+
   // Same hydration-mismatch avoidance as the reference page: freeze
   // the "now" fallback post-mount only, never during SSR/first paint.
   const [endStamp, setEndStamp] = useState<number | null>(null);
@@ -119,7 +128,7 @@ export default function ChapterResultsPage() {
 
   return (
     <main className="min-h-screen w-full" style={{ backgroundColor: 'var(--bg)' }}>
-      <Header />
+      <Header backHref={backHref} />
 
       <motion.div
         initial="hidden"
@@ -229,12 +238,12 @@ export default function ChapterResultsPage() {
               <ArrowRightIcon size={16} className="transition group-hover:translate-x-0.5" />
             </button>
             <Link
-              href="/student/catalogue"
+              href={backHref}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-medium text-text-primary transition"
               style={{ border: '1px solid var(--line)', backgroundColor: 'var(--surface)' }}
             >
               <ArrowLeftIcon size={16} />
-              Back to Catalogue
+              {backLabel}
               <LinkPending />
             </Link>
           </div>
@@ -324,14 +333,14 @@ export default function ChapterResultsPage() {
   );
 }
 
-function Header() {
+function Header({ backHref }: { backHref: string }) {
   return (
     <header
       className="sticky top-0 z-20 backdrop-blur-xl"
       style={{ backgroundColor: 'var(--nav-bg)', borderBottom: '1px solid var(--line)' }}
     >
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-6">
-        <Link href="/student/catalogue" className="flex items-center gap-2">
+        <Link href={backHref} className="flex items-center gap-2">
           <span className="text-lg font-bold tracking-tight text-text-primary">
             MediZee
           </span>

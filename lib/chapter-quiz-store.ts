@@ -43,6 +43,12 @@ export type ChapterQuizState = {
    * page could later wipe an attempt the student meant to continue.
    */
   pendingFreshStart: boolean;
+  /**
+   * The subject page the last-opened chapter belongs to. The quiz page
+   * records it on load so the results page can show the right
+   * "Back to <Subject>" link before its own chapter fetch returns.
+   */
+  lastSubject: { chapterId: string; name: string; href: string } | null;
   /** Question ids the student got wrong, namespaced per chapter so
    *  "Practice mistakes" never mixes ids from two different chapters. */
   mistakeQuestionIdsByChapter: Record<string, number[]>;
@@ -55,6 +61,7 @@ export type ChapterQuizState = {
   startMistakeSession: (chapterId: string, mistakeIds: number[]) => void;
   clearFilter: () => void;
   setLastResult: (result: ChapterSubmissionResult) => void;
+  setLastSubject: (subject: { chapterId: string; name: string; href: string }) => void;
   recordMistakes: (chapterId: string, ids: number[]) => void;
   clearMistakes: (chapterId: string, ids: number[]) => void;
   /** Restore an attempt saved on the server (see chapter_quiz_progress). */
@@ -76,6 +83,7 @@ const initialState = {
   filterQuestionIds: null as number[] | null,
   lastResult: null as ChapterSubmissionResult | null,
   pendingFreshStart: false,
+  lastSubject: null as { chapterId: string; name: string; href: string } | null,
   mistakeQuestionIdsByChapter: {} as Record<string, number[]>,
 };
 
@@ -135,6 +143,8 @@ export const useChapterQuizStore = create<ChapterQuizState>()(
       clearFilter: () => set({ filterQuestionIds: null }),
 
       setLastResult: (result) => set({ lastResult: result }),
+
+      setLastSubject: (subject) => set({ lastSubject: subject }),
 
       recordMistakes: (chapterId, ids) =>
         set((state) => {
@@ -208,6 +218,7 @@ export const useChapterQuizStore = create<ChapterQuizState>()(
         sessionEndedAt: state.sessionEndedAt,
         filterQuestionIds: state.filterQuestionIds,
         lastResult: state.lastResult,
+        lastSubject: state.lastSubject,
         mistakeQuestionIdsByChapter: state.mistakeQuestionIdsByChapter,
       }),
     }

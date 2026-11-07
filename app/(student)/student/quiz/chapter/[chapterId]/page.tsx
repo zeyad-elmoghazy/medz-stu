@@ -96,6 +96,7 @@ export default function ChapterQuizPage() {
   const nextQuestion = useChapterQuizStore((s) => s.nextQuestion);
   const completeSession = useChapterQuizStore((s) => s.completeSession);
   const setLastResult = useChapterQuizStore((s) => s.setLastResult);
+  const setLastSubject = useChapterQuizStore((s) => s.setLastSubject);
   const recordMistakes = useChapterQuizStore((s) => s.recordMistakes);
   const clearMistakes = useChapterQuizStore((s) => s.clearMistakes);
   const hydrateFromProgress = useChapterQuizStore((s) => s.hydrateFromProgress);
@@ -108,7 +109,9 @@ export default function ChapterQuizPage() {
     let cancelled = false;
     fetchChapterQuiz(chapterId)
       .then((d) => {
-        if (!cancelled) setData(d);
+        if (cancelled) return;
+        setData(d);
+        setLastSubject({ chapterId, name: d.subjectName, href: d.subjectHref });
       })
       .catch((err) => {
         if (!cancelled) {
@@ -118,7 +121,7 @@ export default function ChapterQuizPage() {
     return () => {
       cancelled = true;
     };
-  }, [chapterId]);
+  }, [chapterId, setLastSubject]);
 
   const questions = useMemo(() => {
     const allQuestions = data?.questions ?? [];
@@ -447,7 +450,7 @@ export default function ChapterQuizPage() {
       document.exitFullscreen().catch(() => {});
     }
     setShowExitModal(false);
-    router.push('/student/catalogue');
+    router.push(data?.subjectHref ?? '/student/catalogue');
   }
 
   function handleContinueChallenge() {
