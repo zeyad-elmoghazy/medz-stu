@@ -3,6 +3,9 @@ import { publicDbError } from '@/lib/api-error';
 import { embedded } from '@/lib/postgrest';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient } from '@/lib/supabase-service';
+import { applyRateLimit } from '@/lib/apply-rate-limit';
+import { contentLimiter } from '@/lib/rate-limit';
 import type { Database } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -41,6 +44,8 @@ export async function GET(request: NextRequest) {
   const questionIdParam = request.nextUrl.searchParams.get('questionId');
 
   if (questionIdParam === null) {
+    const limited = await applyRateLimit(request, contentLimiter, user.id);
+    if (limited) return limited;
     const { data: rows } = await client
       .from('bookmarks')
       .select('id, question_id, created_at')
@@ -54,10 +59,11 @@ export async function GET(request: NextRequest) {
     }
 
     const questionIds = bookmarkRows.map((b) => b.question_id);
-    const { data: questionRows } = await client
+    const { data: questionRows } = await untypedFrom(serviceRoleClient())
       .from('questions')
       .select('id, question, topic, chapter_id, choices, correct_answer, explanation, choice_rationales')
-      .in('id', questionIds);
+      .in('id', questionIds)
+      .eq('status', 'published');
     type QuestionRow = {
       id: number;
       question: string;
@@ -167,10 +173,11 @@ export async function POST(request: NextRequest) {
   }
 
   const client = untypedFrom(supabase);
-  const { data: question, error: questionError } = await client
+  const { data: question, error: questionError } = await untypedFrom(serviceRoleClient())
     .from('questions')
     .select('subject_id')
     .eq('id', questionId)
+    .eq('status', 'published')
     .single();
 
   if (questionError || !question) {

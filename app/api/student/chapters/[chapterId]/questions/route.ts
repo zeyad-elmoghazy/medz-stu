@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient } from '@/lib/supabase-service';
+import { applyRateLimit } from '@/lib/apply-rate-limit';
+import { contentLimiter } from '@/lib/rate-limit';
 import type { Database } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -14,16 +17,16 @@ export const dynamic = 'force-dynamic';
  * route (student/quiz/chapter/[chapterId]); the Custom Exam, whose
  * questions span chapters, is served by /api/student/custom-exam/[examId].
  *
- * status='published' is filtered explicitly in the query below
- * rather than relying on RLS alone — RLS (questions_read_published)
- * already enforces this, but the filter is made explicit here too
- * so the guarantee isn't resting on a single, easy-to-miss layer.
+ * Students can't SELECT `questions` directly (migration 047 makes it
+ * admin-only, so the question bank can't be paged out over PostgREST),
+ * so this reads with the service role and MUST keep the explicit
+ * status='published' filter. Rate-limited per user per day.
  *
  * Auth: any signed-in user, same if(!user)-only pattern as
  * /api/student/stats — no role check.
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   props: { params: Promise<{ chapterId: string }> }
 ) {
   const params = await props.params;
@@ -34,6 +37,9 @@ export async function GET(
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const limited = await applyRateLimit(request, contentLimiter, user.id);
+  if (limited) return limited;
 
   const chapterId = params.chapterId;
   const client = untypedFrom(supabase);
@@ -54,7 +60,7 @@ export async function GET(
     subjects: { name: string } | null;
   };
 
-  const questionsRes = await client
+  const questionsRes = await untypedFrom(serviceRoleClient())
     .from('questions')
     .select(
       'id, question, choices, correct_answer, explanation, choice_rationales, reference, topic, reference_page'

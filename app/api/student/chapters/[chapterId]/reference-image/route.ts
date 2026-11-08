@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient } from '@/lib/supabase-service';
 import type { Database } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -53,7 +54,7 @@ export async function GET(
   // The access check and the URL resolution don't depend on each other, so
   // run them together. The URL is only returned if the check passes.
   const [{ data: match }, url] = await Promise.all([
-    client
+    untypedFrom(serviceRoleClient())
       .from('questions')
       .select('id')
       .eq('chapter_id', params.chapterId)

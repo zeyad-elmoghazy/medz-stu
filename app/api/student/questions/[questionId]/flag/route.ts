@@ -3,6 +3,7 @@ import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient } from '@/lib/supabase-service';
 import type { Database, UserRole } from '@/lib/supabase';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { reportLimiter } from '@/lib/rate-limit';
@@ -127,12 +128,14 @@ export async function POST(
 
   const client = untypedFrom(auth.supabase);
 
-  // RLS only exposes published questions to a student, so a missing row
-  // means "doesn't exist or isn't live" — either way not reportable.
-  const questionRes = await client
+  // Students can't read `questions` directly (migration 047), so look it up
+  // with the service role. A missing row means "doesn't exist or isn't
+  // live" — either way not reportable.
+  const questionRes = await untypedFrom(serviceRoleClient())
     .from('questions')
     .select('id')
     .eq('id', questionId)
+    .eq('status', 'published')
     .maybeSingle();
   if (questionRes.error) {
     return NextResponse.json({ error: publicDbError(questionRes.error) }, { status: 500 });
