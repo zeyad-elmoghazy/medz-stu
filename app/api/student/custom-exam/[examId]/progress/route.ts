@@ -3,6 +3,7 @@ import { publicDbError } from '@/lib/api-error';
 import { z } from 'zod';
 import { progressLimiter } from '@/lib/rate-limit';
 import { mergeExamAnswers } from '@/lib/server/custom-exam';
+import { awardAnswersXp } from '@/lib/server/xp';
 import {
   NO_STORE,
   authenticateStudent,
@@ -90,8 +91,17 @@ export async function PUT(
     return NextResponse.json({ error: publicDbError(update.error) }, { status: 500 });
   }
 
+  // XP for answers new in this save (migration 048: 10 XP the first time
+  // a question is answered correctly, ever).
+  const previous = exam.answers ?? {};
+  const newAnswers: Record<string, string> = {};
+  for (const [key, choice] of Object.entries(merged)) {
+    if (!(key in previous)) newAnswers[key] = choice;
+  }
+  const xpAwarded = await awardAnswersXp(service, auth.user.id, newAnswers);
+
   return NextResponse.json(
-    { saved: true, answered: Object.keys(merged).length, total },
+    { saved: true, answered: Object.keys(merged).length, total, xpAwarded },
     { headers: NO_STORE }
   );
 }
