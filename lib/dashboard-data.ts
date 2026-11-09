@@ -49,6 +49,10 @@ export type ChallengeResult = {
   // covering `chapterCount` chapters. Absent for chapter-quiz and legacy rows.
   kind?: 'custom_exam';
   chapterCount?: number;
+  // Where tapping the row goes: the chapter's subject page, or the saved
+  // attempt / unfinished Custom Exam to resume. Absent when there is nowhere
+  // sensible (a finished Custom Exam, a legacy chapterless session).
+  href?: string;
 };
 
 export type ProgressDataPoint = {
@@ -67,6 +71,7 @@ export type FocusArea = {
   moduleName: string | null;
   accuracy: number;      // 0-100
   attempted: number;     // question-attempts this chapter is based on
+  href?: string;         // the chapter's subject page
 };
 
 /**

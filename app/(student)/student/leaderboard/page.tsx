@@ -98,7 +98,7 @@ export default function LeaderboardPage() {
             Leaderboard
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', margin: '6px 0 4px' }}>
-            Top students this term
+            Top students of all time
           </h1>
           <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>
             Ranked by XP: points for every correct answer, with a bonus for high-accuracy sessions.

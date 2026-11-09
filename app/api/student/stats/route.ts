@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { publicDbError } from '@/lib/api-error';
 import { embedded } from '@/lib/postgrest';
+import { chapterBackHref } from '@/lib/catalogue';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
@@ -363,7 +364,7 @@ export async function GET() {
   if (chapterIds.length > 0) {
     const chaptersInfoRes = (await untypedFrom(supabase)
       .from('chapters')
-      .select('id, name, module_code, subjects(name), modules(name)')
+      .select('id, name, module_code, subjects(name, slug), modules(name, year_num)')
       .in('id', chapterIds)) as { data: ChapterInfoRow[] | null };
     for (const c of chaptersInfoRes.data ?? []) {
       chapterInfoById.set(c.id, {
@@ -371,6 +372,11 @@ export async function GET() {
         moduleCode: c.module_code,
         moduleName: embedded(c.modules)?.name ?? null,
         subjectName: embedded(c.subjects)?.name ?? null,
+        href: chapterBackHref({
+          yearNum: embedded(c.modules)?.year_num,
+          moduleCode: c.module_code,
+          subjectSlug: embedded(c.subjects)?.slug,
+        }),
       });
     }
   }
@@ -424,6 +430,7 @@ export async function GET() {
       chapterName: info?.name ?? null,
       moduleCode: info?.moduleCode ?? null,
       moduleName: info?.moduleName ?? null,
+      href: info?.href,
       score: s.score,
       total: s.total_questions,
       accuracy: Number(s.accuracy),
@@ -447,6 +454,8 @@ export async function GET() {
       chapterName: info?.name ?? null,
       moduleCode: info?.moduleCode ?? null,
       moduleName: info?.moduleName ?? null,
+      // Resumes the saved attempt: the quiz page restores it on arrival.
+      href: `/student/quiz/chapter/${i.chapterId}`,
       score: i.correct,
       total: i.answered,
       accuracy: Math.round((i.correct / i.answered) * 1000) / 10,
@@ -467,6 +476,7 @@ export async function GET() {
           chapterName: null,
           moduleCode: inProgressExam.moduleCode,
           moduleName: moduleNameByCode.get(inProgressExam.moduleCode) ?? null,
+          href: `/student/quiz/exam/${inProgressExam.examId}`,
           score: inProgressExam.correct,
           total: inProgressExam.answered,
           accuracy: Math.round((inProgressExam.correct / inProgressExam.answered) * 1000) / 10,
@@ -500,6 +510,7 @@ export async function GET() {
         moduleName: info.moduleName,
         accuracy: f.accuracy,
         attempted: f.attempted,
+        href: info.href,
       },
     ];
   });
@@ -573,6 +584,8 @@ type ChapterInfo = {
   moduleCode: string;
   moduleName: string | null;
   subjectName: string | null;
+  /** The chapter's subject page (module page / catalogue as fallbacks). */
+  href: string;
 };
 
 // Row shape of chapters + embedded subjects/modules (PostgREST embeds a
@@ -581,8 +594,8 @@ type ChapterInfoRow = {
   id: string;
   name: string;
   module_code: string;
-  subjects: { name: string } | { name: string }[] | null;
-  modules: { name: string } | { name: string }[] | null;
+  subjects: { name: string; slug: string } | { name: string; slug: string }[] | null;
+  modules: { name: string; year_num: string } | { name: string; year_num: string }[] | null;
 };
 
 function serviceRoleClient() {

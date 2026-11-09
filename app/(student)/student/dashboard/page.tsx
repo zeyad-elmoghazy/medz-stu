@@ -9,7 +9,7 @@ import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
 import { StudentNavbar } from '@/components/student/StudentNavbar';
 import { getSubjectImage } from '@/lib/subject-images';
 import { isDemoMode } from '@/lib/supabase';
-import { useDisplayName } from '@/lib/use-display-name';
+import { useDisplayName, useStudentProfile } from '@/lib/use-display-name';
 import {
   getEmptyStudentStats,
   moduleLabel,
@@ -20,7 +20,8 @@ import {
 } from '@/lib/dashboard-data';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
-import { fetchModulesByYear, type ModulesByYear } from '@/lib/catalogue-api';
+import { fetchModulesByYear, fetchNextStep, type ModulesByYear } from '@/lib/catalogue-api';
+import type { NextStep } from '@/lib/student/next-step';
 import { LinkPending } from '@/components/ui/LinkPending';
 
 // =============================================================
@@ -152,6 +153,7 @@ function StudentDashboardInner() {
 // =============================================================
 
 function HomeView({
+  firstName,
   onViewAnalytics,
 }: {
   firstName: string;
@@ -159,6 +161,8 @@ function HomeView({
 }) {
   const [catalogueStats, setCatalogueStats] = useState<CatalogueStats | null>(null);
   const [modulesByYear, setModulesByYear] = useState<ModulesByYear | null>(null);
+  const [nextStep, setNextStep] = useState<NextStep | null>(null);
+  const { academicYear: myYear } = useStudentProfile();
   const heroPhoto = getSubjectImage('anatomy');
 
   useEffect(() => {
@@ -173,6 +177,14 @@ function HomeView({
       .catch(() => {
         /* leave modulesByYear null — the section below handles it */
       });
+    // The card is a nicety: if it can't load, Home still works without it.
+    if (!isDemoMode()) {
+      fetchNextStep()
+        .then((n) => {
+          if (!cancelled) setNextStep(n);
+        })
+        .catch(() => {});
+    }
     return () => {
       cancelled = true;
     };
@@ -180,6 +192,8 @@ function HomeView({
 
   return (
     <>
+      {nextStep && <NextStepCard firstName={firstName} step={nextStep} />}
+
       {/* ================= HERO ================= */}
       <section
         className="mz-dash-hero"
@@ -376,9 +390,12 @@ function HomeView({
               gap: 16,
             }}
           >
-            {modulesByYear.years.map((y) => (
-              <YearCard key={y.year} year={y} />
-            ))}
+            {/* The student's own year first; the rest keep their order. */}
+            {[...modulesByYear.years]
+              .sort((a, b) => Number(b.year === myYear) - Number(a.year === myYear))
+              .map((y) => (
+                <YearCard key={y.year} year={y} mine={y.year === myYear} />
+              ))}
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text3)', fontSize: 13, padding: 40 }}>
@@ -550,7 +567,7 @@ function AnalyticsView({
               {s.mistakes.length} chapter{s.mistakes.length === 1 ? '' : 's'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>
-              Practice the ones you got wrong — spaced review sticks longest.
+              Redo the ones you got wrong until they stick.
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -772,6 +789,39 @@ function ChapterPath({
   );
 }
 
+/**
+ * A list row that is a real link when it has somewhere to go (keyboard and
+ * right-click friendly), and a plain block when it doesn't.
+ */
+function RowLink({
+  href,
+  className,
+  style,
+  children,
+}: {
+  href?: string;
+  className?: string;
+  style?: CSSProperties;
+  children: React.ReactNode;
+}) {
+  if (!href) {
+    return (
+      <div className={className} style={style}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      className={className}
+      style={{ display: 'block', color: 'inherit', textDecoration: 'none', ...style }}
+    >
+      {children}
+    </Link>
+  );
+}
+
 function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading: boolean }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 22 }}>
@@ -782,7 +832,7 @@ function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading:
       {focusAreas.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {focusAreas.map((f) => (
-            <div key={f.chapterId}>
+            <RowLink key={f.chapterId} href={f.href}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 12 }}>
                 <span style={{ color: 'var(--text)', fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>
                   {f.chapterName}
@@ -805,7 +855,7 @@ function FocusAreas({ focusAreas, loading }: { focusAreas: FocusArea[]; loading:
               <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 4 }}>
                 {f.attempted} question{f.attempted === 1 ? '' : 's'} attempted
               </div>
-            </div>
+            </RowLink>
           ))}
         </div>
       ) : (
@@ -848,8 +898,9 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
         const pct = Math.round(c.accuracy);
         const { color, tag, tagBg } = challengeTone(pct);
         return (
-          <div
+          <RowLink
             key={c.id}
+            href={c.href}
             className="mz-dash-chal"
             style={{
               display: 'grid',
@@ -906,7 +957,7 @@ function RecentChallenges({ challenges, loading }: { challenges: ChallengeResult
             >
               {c.inProgress ? 'In progress' : tag}
             </div>
-          </div>
+          </RowLink>
         );
       })}
     </div>
@@ -972,7 +1023,71 @@ function Divider() {
   return <div className="mz-dash-div" style={{ width: 1, height: 34, background: 'var(--line2)' }} />;
 }
 
-function YearCard({ year }: { year: ModulesByYear['years'][number] }) {
+function NextStepCard({ firstName, step }: { firstName: string; step: NextStep }) {
+  const continuing = step.kind === 'resume' || step.kind === 'next-chapter';
+  return (
+    <section style={{ padding: '28px 44px 0' }} className="mz-dash-sec">
+      <Link
+        href={step.href}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 20,
+          padding: '20px 24px',
+          borderRadius: 16,
+          background: 'var(--surface)',
+          border: '1px solid var(--line2)',
+          textDecoration: 'none',
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'var(--accent-text)',
+            }}
+          >
+            {firstName ? `Hi ${firstName}` : 'Welcome'}
+            {/* The title already says "Start here: …" for a new student. */}
+            {continuing && ' · Continue where you left off'}
+          </div>
+          <div
+            style={{
+              fontSize: 20,
+              fontWeight: 800,
+              letterSpacing: '-0.01em',
+              color: 'var(--text)',
+              marginTop: 6,
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {step.label}
+          </div>
+        </div>
+        <span
+          style={{
+            flex: 'none',
+            fontSize: 14,
+            fontWeight: 700,
+            color: '#F7F9FA',
+            background: 'var(--accent-text)',
+            padding: '12px 20px',
+            borderRadius: 11,
+          }}
+        >
+          {step.kind === 'resume' ? 'Resume' : 'Go'} →
+        </span>
+        <LinkPending />
+      </Link>
+    </section>
+  );
+}
+
+function YearCard({ year, mine }: { year: ModulesByYear['years'][number]; mine?: boolean }) {
   return (
     <Link
       href={`/student/catalogue/${year.year}`}
@@ -1007,6 +1122,24 @@ function YearCard({ year }: { year: ModulesByYear['years'][number] }) {
       </div>
       <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text)' }}>
         Year {year.year}
+        {mine && (
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--accent-text)',
+              border: '1px solid var(--line2)',
+              borderRadius: 5,
+              padding: '2px 6px',
+              verticalAlign: 'middle',
+            }}
+          >
+            Your year
+          </span>
+        )}
       </div>
       <div style={{ fontSize: 11.5, color: 'var(--text3)', marginTop: 3 }}>{year.label}</div>
       <div style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 12 }}>

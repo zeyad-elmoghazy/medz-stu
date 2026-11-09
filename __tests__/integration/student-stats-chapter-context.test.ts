@@ -230,6 +230,8 @@ describeIfSupabase('GET /api/student/stats — chapter/subject/module context', 
         moduleName: 'Module 977',
         accuracy: 25,
         attempted: 4,
+        // Tapping it opens the chapter's subject page (year_num defaults to '1').
+        href: `/student/catalogue/1/${encodeURIComponent(weak.moduleCode)}/${encodeURIComponent(weak.subjectSlug)}`,
       },
       {
         chapterId: strong.chapterId,
@@ -239,10 +241,20 @@ describeIfSupabase('GET /api/student/stats — chapter/subject/module context', 
         moduleName: 'Nervous & Cardiovascular (test)',
         accuracy: 100,
         attempted: 3,
+        href: `/student/catalogue/1/${encodeURIComponent(strong.moduleCode)}/${encodeURIComponent(strong.subjectSlug)}`,
       },
     ]);
     // `tiny` (2 attempts) is excluded.
     expect(stats.focusAreas.map((f) => f.chapterId)).not.toContain(tiny.chapterId);
+  });
+
+  test('a finished chapter challenge links to its subject page', async () => {
+    await session(strong, 3, 3, '2026-10-01T10:00:00.000Z');
+
+    const stats = await getStats();
+    expect(stats.recentChallenges[0].href).toBe(
+      `/student/catalogue/1/${encodeURIComponent(strong.moduleCode)}/${encodeURIComponent(strong.subjectSlug)}`
+    );
   });
 
   test('the practice-mistakes banner carries chapter, subject and module like the other cards', async () => {

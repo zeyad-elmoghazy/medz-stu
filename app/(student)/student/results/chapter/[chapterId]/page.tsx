@@ -36,6 +36,7 @@ export default function ChapterResultsPage() {
   const mistakeQuestionIdsByChapter = useChapterQuizStore((s) => s.mistakeQuestionIdsByChapter);
   const startMistakeSession = useChapterQuizStore((s) => s.startMistakeSession);
   const startSession = useChapterQuizStore((s) => s.startSession);
+  const lastSubject = useChapterQuizStore((s) => s.lastSubject);
 
   const [data, setData] = useState<ChapterQuiz | null>(null);
 
@@ -68,10 +69,16 @@ export default function ChapterResultsPage() {
     () =>
       (data?.questions ?? []).map((q) => {
         const r = lastResultMap?.get(q.id);
+        const choiceText = (id: string | null | undefined) =>
+          q.choices.find((c) => c.id === id)?.text ?? null;
         return {
           id: q.id,
           topic: q.topic,
           preview: q.question.slice(0, 96) + (q.question.length > 96 ? '…' : ''),
+          fullQuestion: q.question,
+          explanation: q.explanation,
+          chosenText: choiceText(r?.chosen),
+          correctText: choiceText(q.correctAnswer),
           attempted: r ? r.chosen !== null : false,
           correct: r ? r.isCorrect : false,
         };
@@ -91,6 +98,14 @@ export default function ChapterResultsPage() {
     : breakdown.filter((b) => b.attempted && !b.correct).map((b) => b.id);
   const persistentMistakeIds = mistakeQuestionIdsByChapter[chapterId] ?? [];
   const practiceIds = recentMistakeIds.length > 0 ? recentMistakeIds : persistentMistakeIds;
+
+  // Back goes to the subject this chapter belongs to. The freshly fetched
+  // chapter wins; the quiz page's remembered subject covers the moment
+  // before that fetch returns (or if it fails).
+  const remembered = lastSubject?.chapterId === chapterId ? lastSubject : null;
+  const backHref = data?.subjectHref ?? remembered?.href ?? '/student/catalogue';
+  const backName = data?.subjectName || remembered?.name || '';
+  const backLabel = backName ? `Back to ${backName}` : 'Back to Catalogue';
 
   // Same hydration-mismatch avoidance as the reference page: freeze
   // the "now" fallback post-mount only, never during SSR/first paint.
@@ -119,7 +134,7 @@ export default function ChapterResultsPage() {
 
   return (
     <main className="min-h-screen w-full" style={{ backgroundColor: 'var(--bg)' }}>
-      <Header />
+      <Header backHref={backHref} />
 
       <motion.div
         initial="hidden"
@@ -229,12 +244,12 @@ export default function ChapterResultsPage() {
               <ArrowRightIcon size={16} className="transition group-hover:translate-x-0.5" />
             </button>
             <Link
-              href="/student/catalogue"
+              href={backHref}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-medium text-text-primary transition"
               style={{ border: '1px solid var(--line)', backgroundColor: 'var(--surface)' }}
             >
               <ArrowLeftIcon size={16} />
-              Back to Catalogue
+              {backLabel}
               <LinkPending />
             </Link>
           </div>
@@ -272,47 +287,67 @@ export default function ChapterResultsPage() {
               {breakdown.map((b, i) => {
                 const state = b.correct ? 'correct' : b.attempted ? 'incorrect' : 'skipped';
                 return (
-                  <li
-                    key={b.id}
-                    className="flex items-start gap-4 py-3"
-                    style={{ borderTop: i === 0 ? '1px solid transparent' : undefined }}
-                  >
-                    <span
-                      className={cn(
-                        'mt-0.5 grid h-7 w-10 shrink-0 place-items-center rounded-md text-xs font-semibold',
-                        state === 'correct' && 'bg-success/15 text-success',
-                        state === 'incorrect' && 'bg-error/15 text-error',
-                        state === 'skipped' && 'bg-input text-text-muted'
-                      )}
-                    >
-                      Q{i + 1}
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-accent/80">
-                        {b.topic}
-                      </p>
-                      <p className="mt-0.5 text-sm leading-snug text-text-primary">{b.preview}</p>
-                    </div>
-                    <span
-                      className={cn(
-                        'shrink-0 self-center text-xs font-medium',
-                        state === 'correct' && 'text-success',
-                        state === 'incorrect' && 'text-error',
-                        state === 'skipped' && 'text-text-muted'
-                      )}
-                    >
-                      {state === 'correct' && (
-                        <span className="inline-flex items-center gap-1">
-                          <CheckIcon size={14} /> Correct
+                  <li key={b.id} style={{ borderTop: i === 0 ? '1px solid transparent' : undefined }}>
+                    {/* Native <details>: keyboard and screen-reader friendly, no state. */}
+                    <details className="group">
+                      <summary className="flex cursor-pointer list-none items-start gap-4 py-3 [&::-webkit-details-marker]:hidden">
+                        <span
+                          className={cn(
+                            'mt-0.5 grid h-7 w-10 shrink-0 place-items-center rounded-md text-xs font-semibold',
+                            state === 'correct' && 'bg-success/15 text-success',
+                            state === 'incorrect' && 'bg-error/15 text-error',
+                            state === 'skipped' && 'bg-input text-text-muted'
+                          )}
+                        >
+                          Q{i + 1}
                         </span>
-                      )}
-                      {state === 'incorrect' && (
-                        <span className="inline-flex items-center gap-1">
-                          <CloseIcon size={14} /> Incorrect
+                        <div className="flex-1">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-accent/80">
+                            {b.topic}
+                          </p>
+                          <p className="mt-0.5 text-sm leading-snug text-text-primary">{b.preview}</p>
+                        </div>
+                        <span
+                          className={cn(
+                            'shrink-0 self-center text-xs font-medium',
+                            state === 'correct' && 'text-success',
+                            state === 'incorrect' && 'text-error',
+                            state === 'skipped' && 'text-text-muted'
+                          )}
+                        >
+                          {state === 'correct' && (
+                            <span className="inline-flex items-center gap-1">
+                              <CheckIcon size={14} /> Correct
+                            </span>
+                          )}
+                          {state === 'incorrect' && (
+                            <span className="inline-flex items-center gap-1">
+                              <CloseIcon size={14} /> Incorrect
+                            </span>
+                          )}
+                          {state === 'skipped' && 'Skipped'}
                         </span>
-                      )}
-                      {state === 'skipped' && 'Skipped'}
-                    </span>
+                        <span
+                          aria-hidden
+                          className="shrink-0 self-center text-text-muted transition-transform group-open:rotate-90"
+                        >
+                          ›
+                        </span>
+                      </summary>
+                      <div
+                        className="mb-3 ml-14 space-y-2 rounded-lg p-3 text-sm leading-relaxed"
+                        style={{ backgroundColor: 'var(--fill)' }}
+                      >
+                        <p className="text-text-primary">{b.fullQuestion}</p>
+                        {b.chosenText && state === 'incorrect' && (
+                          <p className="text-error">Your answer: {b.chosenText}</p>
+                        )}
+                        {b.correctText && (
+                          <p className="text-success">Correct answer: {b.correctText}</p>
+                        )}
+                        {b.explanation && <p className="text-text-muted">{b.explanation}</p>}
+                      </div>
+                    </details>
                   </li>
                 );
               })}
@@ -324,14 +359,14 @@ export default function ChapterResultsPage() {
   );
 }
 
-function Header() {
+function Header({ backHref }: { backHref: string }) {
   return (
     <header
       className="sticky top-0 z-20 backdrop-blur-xl"
       style={{ backgroundColor: 'var(--nav-bg)', borderBottom: '1px solid var(--line)' }}
     >
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-6">
-        <Link href="/student/catalogue" className="flex items-center gap-2">
+        <Link href={backHref} className="flex items-center gap-2">
           <span className="text-lg font-bold tracking-tight text-text-primary">
             MediZee
           </span>

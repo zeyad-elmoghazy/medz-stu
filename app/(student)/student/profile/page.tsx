@@ -226,7 +226,9 @@ export default function ProfileSettingsPage() {
           loading={loading}
         />
         <SubjectProgress stats={stats} />
-        <BadgesCard badges={profile?.badges ?? []} />
+        {/* Nothing awards badges yet, so an always-empty card is just noise:
+            show it only for a student who actually has some. */}
+        {(profile?.badges?.length ?? 0) > 0 && <BadgesCard badges={profile?.badges ?? []} />}
         <QuickLinks bookmarksCount={stats ? stats.bookmarksCount : null} />
 
         {profile && (

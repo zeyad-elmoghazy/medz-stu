@@ -2,6 +2,8 @@
  * Fetchers for the student-facing /api/student/catalogue/* surface.
  */
 
+import type { NextStep } from '@/lib/student/next-step';
+
 export type CatalogueModule = {
   code: string;
   name: string;
@@ -67,17 +69,35 @@ export type ChaptersBySubject = {
   chapters: CatalogueChapter[];
 };
 
-async function json<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
+export async function fetchNextStep(): Promise<NextStep> {
+  const res = await fetch('/api/student/next-step', { credentials: 'include', cache: 'no-store' });
+  const body = await json<{ nextStep: NextStep }>(res);
+  return body.nextStep;
+}
+
+/**
+ * A message safe to show a student for a failed API call, instead of
+ * "HTTP 500". Our own 4xx messages ("Chapter not found") are written for
+ * people and pass through; auth, throttling and server faults get plain
+ * wording, since the body of a 5xx is never meant for them.
+ */
+export async function readApiError(res: Response): Promise<string> {
+  if (res.status === 401) return 'Your session has expired. Please log in again.';
+  if (res.status === 429) return 'Too many requests. Wait a moment and try again.';
+  if (res.status < 500) {
     try {
       const body = await res.json();
-      if (body?.error) msg = body.error;
+      if (typeof body?.error === 'string' && body.error) return body.error;
     } catch {
-      /* ignore — keep the generic HTTP status message */
+      /* no usable body: fall through */
     }
-    throw new Error(msg);
+    return "We couldn't complete that request. Please try again.";
   }
+  return 'Something went wrong on our side. Please try again in a moment.';
+}
+
+async function json<T>(res: Response): Promise<T> {
+  if (!res.ok) throw new Error(await readApiError(res));
   return res.json();
 }
 

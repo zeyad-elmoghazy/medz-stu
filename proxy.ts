@@ -2,6 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createMiddlewareSupabase, isDemoMode, type UserRole } from '@/lib/supabase';
 import { apiLimiter } from '@/lib/rate-limit';
 import { isCrossSiteWrite } from '@/lib/csrf';
+import {
+  UTM_COOKIE,
+  UTM_COOKIE_MAX_AGE,
+  serializeUtmCookie,
+  utmFromSearchParams,
+} from '@/lib/signup-attribution';
 
 // The '/professor' page-role gate is removed: profiles.role no
 // longer permits 'professor' (015_b2c_pivot_rebuild.sql), so that
@@ -162,6 +168,22 @@ export async function proxy(request: NextRequest) {
   }
 
   const response = NextResponse.next();
+
+  // Remember the FIRST campaign link a visitor arrives on, so the signup
+  // (possibly days later, on another page) can record where they came from.
+  // Landing pages themselves are untouched; this just reads the URL.
+  if (request.method === 'GET' && !request.cookies.has(UTM_COOKIE)) {
+    const utm = utmFromSearchParams(request.nextUrl.searchParams);
+    if (Object.keys(utm).length > 0) {
+      response.cookies.set(UTM_COOKIE, serializeUtmCookie(utm), {
+        maxAge: UTM_COOKIE_MAX_AGE,
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+      });
+    }
+  }
+
   const supabase = createMiddlewareSupabase(request, response);
 
   // getClaims() verifies the JWT signature (locally, via the project's

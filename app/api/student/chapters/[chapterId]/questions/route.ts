@@ -3,6 +3,8 @@ import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import type { Database } from '@/lib/supabase';
+import { embedded } from '@/lib/postgrest';
+import { chapterBackHref } from '@/lib/catalogue';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,7 +42,7 @@ export async function GET(
 
   const chapterRes = await client
     .from('chapters')
-    .select('id, name, module_code, subjects(name)')
+    .select('id, name, module_code, subjects(name, slug), modules(year_num)')
     .eq('id', chapterId)
     .single();
 
@@ -51,8 +53,12 @@ export async function GET(
     id: string;
     name: string;
     module_code: string;
-    subjects: { name: string } | null;
+    // PostgREST embeds a to-one join as an object, but typings may say array.
+    subjects: { name: string; slug: string } | { name: string; slug: string }[] | null;
+    modules: { year_num: string } | { year_num: string }[] | null;
   };
+  const subject = embedded(chapter.subjects);
+  const moduleRow = embedded(chapter.modules);
 
   const questionsRes = await client
     .from('questions')
@@ -85,7 +91,13 @@ export async function GET(
       chapterId: chapter.id,
       chapterName: chapter.name,
       moduleCode: chapter.module_code,
-      subjectName: chapter.subjects?.name ?? '',
+      subjectName: subject?.name ?? '',
+      // Where "Back to <Subject>" and Save & Exit should land.
+      subjectHref: chapterBackHref({
+        yearNum: moduleRow?.year_num,
+        moduleCode: chapter.module_code,
+        subjectSlug: subject?.slug,
+      }),
       questionTotal: rows.length,
       questions: rows.map((r) => ({
         id: r.id,
