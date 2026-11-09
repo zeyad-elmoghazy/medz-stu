@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
+import { serviceRoleClient } from '@/lib/supabase-service';
 import type { Database } from '@/lib/supabase';
 import { deriveChapterMistakes, fetchChapterQuizAttempts } from '@/lib/server/chapter-mistakes';
 
@@ -112,7 +113,7 @@ export async function GET(request: NextRequest) {
       attemptedChapterIds.add(row.chapter_id);
     }
 
-    const attempts = await fetchChapterQuizAttempts(supabase, user.id, { chapterIds });
+    const attempts = await fetchChapterQuizAttempts(serviceRoleClient(), user.id, { chapterIds });
     // A chapter answered through a FINISHED Custom Exam counts as attempted
     // too (those sessions have no chapter_id, so the query above can't see
     // them) — which is what offers "Solve Again" / "Practice mistakes" for

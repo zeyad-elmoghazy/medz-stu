@@ -89,3 +89,11 @@ export const reportLimiter = buildLimiter(20, '1 h', 'rl:report');
 // minute per IP. The form checks as the student types (debounced), so a
 // person stays well under this; a script enumerating names does not.
 export const usernameCheckLimiter = buildLimiter(40, '1 m', 'rl:username-check');
+
+// Question content reads: 150 per user per day. Counts every call that
+// returns full questions + answers — a chapter quiz load, plus the
+// bookmarks and notes lists (the Bookmarks page costs 2). The heaviest
+// real student finished 25 quizzes in one day (Nov 2026), so this leaves
+// ample headroom for reloads; a script paging the whole bank chapter by
+// chapter hits the wall fast and shows up in the Upstash dashboard.
+export const contentLimiter = buildLimiter(150, '1 d', 'rl:content');
