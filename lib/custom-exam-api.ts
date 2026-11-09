@@ -154,7 +154,9 @@ export async function fetchCustomExam(examId: string): Promise<CustomExam> {
  */
 export async function saveCustomExamProgress(
   examId: string,
-  snapshot: { answers: Record<string, string>; currentQuestionIndex: number }
+  snapshot: { answers: Record<string, string>; currentQuestionIndex: number },
+  /** Called with the XP the server credited for this save, when above 0. */
+  onXp?: (xp: number) => void
 ): Promise<boolean> {
   try {
     const res = await fetch(`${BASE}/${encodeURIComponent(examId)}/progress`, {
@@ -164,6 +166,10 @@ export async function saveCustomExamProgress(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(snapshot),
     });
+    if (res.ok && onXp) {
+      const body = (await res.json().catch(() => null)) as { xpAwarded?: number } | null;
+      if (body?.xpAwarded && body.xpAwarded > 0) onXp(body.xpAwarded);
+    }
     return res.ok;
   } catch {
     return false;

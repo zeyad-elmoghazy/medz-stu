@@ -11,6 +11,7 @@ import {
   loadOwnedExam,
   serviceClient,
 } from '@/lib/server/custom-exam-db';
+import { finishAttemptXp, recordQuizStats } from '@/lib/server/xp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -171,19 +172,18 @@ export async function POST(
     );
   }
 
-  // 2) Credit XP / daily cap / streak — the same RPC as the chapter quiz.
-  const rpcRes = await service.rpc('record_quiz_result', {
-    p_student_id: auth.user.id,
-    p_correct_count: score,
-    p_total_count: total,
-    p_accuracy: accuracy,
-    p_violations_count: 0,
-    p_streak_date: todayISODate(),
-  });
-  if (rpcRes.error) {
-    console.error('[custom-exam/submit] record_quiz_result failed:', rpcRes.error.message);
-  }
-  const xpEarned = rpcRes.data?.[0]?.xp_earned ?? 0;
+  // 2) Streak + counters, then XP (migration 048) — same as the chapter
+  //    quiz. Answers were normally credited live by the progress PUT;
+  //    finishAttemptXp catches up lost saves, adds the 90%-accuracy bonus
+  //    and returns what this attempt earned since the exam started.
+  await recordQuizStats(service, auth.user.id, score, total, todayISODate());
+  const xpEarned = await finishAttemptXp(
+    service,
+    auth.user.id,
+    sessionAnswers,
+    exam.started_at,
+    accuracy
+  );
 
   // 3) The attempt now lives in quiz_sessions: drop the unfinished row so
   //    Continue disappears and the dashboard doesn't count it twice.

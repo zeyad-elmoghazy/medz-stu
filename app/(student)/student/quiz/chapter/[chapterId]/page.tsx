@@ -1,5 +1,6 @@
 'use client';
 
+import { XpCounter } from '@/components/student/XpCounter';
 import {
   useCallback,
   useEffect,
@@ -190,6 +191,13 @@ export default function ChapterQuizPage() {
   // the restored state.
   const [progressChecked, setProgressChecked] = useState(false);
   const [savingExit, setSavingExit] = useState(false);
+  // XP credited live by the server as answers are saved (migration 048).
+  const [xpThisQuiz, setXpThisQuiz] = useState(0);
+  const [xpGain, setXpGain] = useState<{ key: number; amount: number } | null>(null);
+  function addXp(amount: number) {
+    setXpThisQuiz((v) => v + amount);
+    setXpGain({ key: Date.now(), amount });
+  }
   const [exitError, setExitError] = useState<string | null>(null);
   // Tail of the queue of progress saves. Saves run one after another
   // so a slow earlier request can never land after a later one, and
@@ -462,7 +470,7 @@ export default function ChapterQuizPage() {
         answers: stringKeyed,
         currentQuestionIndex: index,
         questionIds: subsetIds,
-      })
+      }, addXp)
     );
     saveQueueRef.current = run;
     return run;
@@ -694,6 +702,8 @@ export default function ChapterQuizPage() {
         onRequestFullscreen={enterFullscreen}
         chapterName={data.chapterName}
         onExit={handleExitButtonClick}
+        xpTotal={xpThisQuiz}
+        xpGain={xpGain}
       />
 
       <AnimatePresence>
@@ -883,6 +893,8 @@ function TopBar({
   onRequestFullscreen,
   chapterName,
   onExit,
+  xpTotal,
+  xpGain,
 }: {
   currentIndex: number;
   total: number;
@@ -895,6 +907,8 @@ function TopBar({
   onRequestFullscreen: () => void;
   chapterName: string;
   onExit: () => void;
+  xpTotal: number;
+  xpGain: { key: number; amount: number } | null;
 }) {
   return (
     <header
@@ -937,6 +951,7 @@ function TopBar({
               icon={<ExpandIcon size={16} />}
             />
           )}
+          <XpCounter total={xpTotal} gain={xpGain} />
           <button
             type="button"
             onClick={onExit}

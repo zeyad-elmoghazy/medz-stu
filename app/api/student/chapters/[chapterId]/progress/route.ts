@@ -7,6 +7,7 @@ import { z } from 'zod';
 import type { Database, UserRole } from '@/lib/supabase';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { progressLimiter } from '@/lib/rate-limit';
+import { awardAnswersXp } from '@/lib/server/xp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -265,8 +266,18 @@ export async function PUT(
     return NextResponse.json({ error: publicDbError(upsert.error) }, { status: 500 });
   }
 
+  // XP for answers new in this save (migration 048: 10 XP the first time
+  // a question is answered correctly, ever). Credited AFTER the upsert so
+  // the row's started_at precedes the award and the submit-time accuracy
+  // bonus counts it as earned in this attempt.
+  const newAnswers: Record<string, string> = {};
+  for (const [key, choice] of Object.entries(incoming)) {
+    if (!(key in existing)) newAnswers[key] = choice;
+  }
+  const xpAwarded = await awardAnswersXp(service, auth.user.id, newAnswers);
+
   return NextResponse.json(
-    { saved: true, answered: Object.keys(merged).length, total },
+    { saved: true, answered: Object.keys(merged).length, total, xpAwarded },
     { headers: NO_STORE }
   );
 }

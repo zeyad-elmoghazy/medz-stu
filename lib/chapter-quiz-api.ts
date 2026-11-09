@@ -225,7 +225,9 @@ export async function saveChapterProgress(
     answers: Record<string, string>;
     currentQuestionIndex: number;
     questionIds?: number[];
-  }
+  },
+  /** Called with the XP the server credited for this save, when above 0. */
+  onXp?: (xp: number) => void
 ): Promise<boolean> {
   try {
     const res = await fetch(
@@ -238,6 +240,10 @@ export async function saveChapterProgress(
         body: JSON.stringify(snapshot),
       }
     );
+    if (res.ok && onXp) {
+      const body = (await res.json().catch(() => null)) as { xpAwarded?: number } | null;
+      if (body?.xpAwarded && body.xpAwarded > 0) onXp(body.xpAwarded);
+    }
     return res.ok;
   } catch {
     return false;

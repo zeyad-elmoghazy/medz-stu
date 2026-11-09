@@ -158,7 +158,8 @@ DO $$
 DECLARE p TEXT[];
 BEGIN
   FOREACH p SLICE 1 IN ARRAY ARRAY[
-    ['questions', 'questions_read_published'],
+    -- questions_read_published was dropped by 047 (students read questions
+    -- only through server routes), so it is no longer checked here.
     ['subjects', 'subjects_public_read'],
     ['module_subjects', 'module_subjects_public_read'],
     ['reference_books', 'reference_books_public_read'],

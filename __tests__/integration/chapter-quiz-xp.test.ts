@@ -166,19 +166,40 @@ describeIfSupabase('chapter-quiz XP + leaderboard', () => {
     expect((profile as { total_xp: number }).total_xp).toBe(0);
   });
 
+  test('retaking a chapter earns no XP for questions already answered correctly', async () => {
+    const client = await signInTestUser(student.email, student.password);
+    mockCreateRouteHandlerClient.mockResolvedValue(client as unknown as Awaited<ReturnType<typeof createRouteHandlerClient>>);
+
+    // First attempt: 6/10 right -> 60 XP.
+    const first: Record<string, string> = {};
+    questionIds.forEach((id, i) => {
+      first[String(id)] = i < 6 ? 'a' : 'b';
+    });
+    const res1 = await chapterSubmitPost(submitRequest(first), { params: Promise.resolve({ chapterId }) });
+    expect((await res1.json()).xpEarned).toBe(60);
+
+    // Retake: 10/10 right. Only the 4 newly-correct questions pay, with the
+    // 90%+ bonus on those: 4 * 10 * 1.5 = 60.
+    const all = Object.fromEntries(questionIds.map((id) => [String(id), 'a']));
+    const res2 = await chapterSubmitPost(submitRequest(all), { params: Promise.resolve({ chapterId }) });
+    expect((await res2.json()).xpEarned).toBe(60);
+
+    // A third perfect run pays nothing.
+    const res3 = await chapterSubmitPost(submitRequest(all), { params: Promise.resolve({ chapterId }) });
+    expect((await res3.json()).xpEarned).toBe(0);
+
+    const { data: profile } = await admin.from('profiles').select('total_xp').eq('id', student.id).single();
+    expect((profile as { total_xp: number }).total_xp).toBe(120);
+  });
+
   /**
-   * Regression test for the read-then-write race fixed in
-   * supabase/migrations/029_fix_record_quiz_result_race.sql. Before
-   * that fix, two concurrent submissions both read the same
-   * daily_streaks.xp_correct_count snapshot before either wrote
-   * back, so each could independently believe it had the full
-   * DAILY_XP_CORRECT_CAP (150) remaining — letting the cap be
-   * exceeded. This chapter has 100 questions (well over the shared
-   * 10-question fixture) so two fully-correct concurrent
-   * submissions (100 + 100 = 200 potential eligible) actually
-   * exercise the cap, not just approach it.
+   * Migration 048 removed the daily cap; "first correct answer only" is the
+   * limit now. Two concurrent submissions of the same 100-question attempt
+   * must pay each question (and its accuracy bonus) exactly once between
+   * them, however they interleave — the xp_awards primary key and the
+   * per-row `claimed` flag guarantee that.
    */
-  test('concurrent submissions from the same student never exceed the daily XP cap', async () => {
+  test('concurrent submissions pay each question once, with no daily cap', async () => {
     const bigChapterSlug = uniqueSlug('big-chapter');
     const { data: bigChapter, error: bigChapterErr } = await admin
       .from('chapters')
@@ -226,20 +247,14 @@ describeIfSupabase('chapter-quiz XP + leaderboard', () => {
       const body1 = await res1.json();
       const body2 = await res2.json();
 
-      // Combined eligible-for-XP correct count must be clamped to
-      // the 150/day cap, however the two requests interleaved.
-      const totalXpEarned = body1.xpEarned + body2.xpEarned;
-      expect(totalXpEarned).toBe(150 * 10 * 1.5); // 150 eligible, all at the 100%-accuracy bonus rate
+      // 100 questions, all first-time correct: 1000 XP + 50% bonus = 1500,
+      // paid once in total across both requests.
+      expect(body1.xpEarned + body2.xpEarned).toBe(1500);
+      const { data: xpRow } = await admin.from('profiles').select('total_xp').eq('id', student.id).single();
+      expect((xpRow as { total_xp: number }).total_xp).toBe(1500);
 
-      const { data: streak } = await admin
-        .from('daily_streaks')
-        .select('xp_correct_count')
-        .eq('student_id', student.id)
-        .single();
-      expect((streak as { xp_correct_count: number }).xp_correct_count).toBe(150);
-
-      // Personal stats still reflect the REAL total answered/correct
-      // (200), independent of the XP cap — only XP eligibility is capped.
+      // Personal stats count both submissions' answers (200), independent
+      // of XP — only XP is once-per-question.
       const { data: profile } = await admin
         .from('profiles')
         .select('total_correct_answers, total_questions_answered')

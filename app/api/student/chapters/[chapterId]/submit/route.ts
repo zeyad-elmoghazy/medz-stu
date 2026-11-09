@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { publicDbError } from '@/lib/api-error';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@/lib/supabase-server';
+import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import type { Database, UserRole } from '@/lib/supabase';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { quizLimiter } from '@/lib/rate-limit';
+import { finishAttemptXp, recordQuizStats } from '@/lib/server/xp';
 import { invalidateCache } from '@/lib/cache';
 import { CACHE_KEYS } from '@/lib/redis';
 
@@ -60,6 +61,7 @@ export async function POST(
   request: NextRequest,
   props: { params: Promise<{ chapterId: string }> }
 ) {
+  const requestStartedAt = new Date().toISOString();
   const params = await props.params;
   const chapterId = params.chapterId;
 
@@ -167,20 +169,23 @@ export async function POST(
     console.error('[chapters/submit] quiz_sessions insert failed:', sessionInsertRes.error.message);
   }
 
-  const today = todayISODate();
-  const rpcRes = await service.rpc('record_quiz_result', {
-    p_student_id: user.id,
-    p_correct_count: score,
-    p_total_count: total,
-    p_accuracy: accuracy,
-    p_violations_count: 0,
-    p_streak_date: today,
-  });
-
-  if (rpcRes.error) {
-    console.error('[chapters/submit] record_quiz_result failed:', rpcRes.error.message);
-  }
-  const xpEarned = rpcRes.data?.[0]?.xp_earned ?? 0;
+  // Streak + counters, then XP (migration 048). XP for each answer was
+  // normally credited live by the progress PUT; finishAttemptXp catches up
+  // any save that was lost, adds the 90%-accuracy bonus, and returns what
+  // this attempt earned. The attempt started when its progress row was
+  // created; with no row (every save failed) it started with this request.
+  await recordQuizStats(service, user.id, score, total, todayISODate());
+  const progressRowRes = await untypedFrom(service)
+    .from('chapter_quiz_progress')
+    .select('started_at')
+    .eq('student_id', user.id)
+    .eq('chapter_id', chapterId)
+    .maybeSingle();
+  const startedAt =
+    (progressRowRes.data as { started_at: string } | null)?.started_at ?? requestStartedAt;
+  const scoredAnswers: Record<string, string> = {};
+  for (const r of results) if (r.chosen !== null) scoredAnswers[String(r.questionId)] = r.chosen;
+  const xpEarned = await finishAttemptXp(service, user.id, scoredAnswers, startedAt, accuracy);
 
   // The attempt is now complete: drop the unfinished-attempt row
   // (chapter_quiz_progress, migration 032) so the catalogue stops

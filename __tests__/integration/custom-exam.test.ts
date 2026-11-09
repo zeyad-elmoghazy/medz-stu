@@ -480,6 +480,13 @@ describeIfSupabase('custom exam API', () => {
 
   // ------------------------------------------------------------------- submit
   describe('POST submit', () => {
+    // XP is paid once per question per student, ever (migration 048), and the
+    // student is shared across tests — start each test with no XP history so
+    // the expected amounts are for first-time correct answers.
+    beforeEach(async () => {
+      await admin.from('xp_awards').delete().eq('student_id', student.id);
+    });
+
     async function startExam(chapterIds: string[], count: number) {
       const { examId } = await (await createExam(chapterIds, count)).json();
       const { data } = await admin.from('custom_exam_progress').select('question_ids').eq('id', examId).single();
@@ -544,13 +551,16 @@ describeIfSupabase('custom exam API', () => {
     test('uses answers saved earlier via /progress when the body has none', async () => {
       const { examId, ids } = await startExam([chA1], 4);
       actAs(client);
-      await progressPut(
+      const saved = await progressPut(
         req('PUT', `/api/student/custom-exam/${examId}/progress`, {
           answers: Object.fromEntries(ids.map((id) => [String(id), 'a'])),
           currentQuestionIndex: 3,
         }),
         { params: Promise.resolve({ examId }) }
       );
+      // XP is credited live, as the answers are saved: 4 first-time correct.
+      expect((await saved.json()).xpAwarded).toBe(40);
+      // The submit then counts those 40 for this exam and adds the 50% bonus.
       const res = await submit(examId);
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({ score: 4, total: 4, accuracy: 100, xpEarned: 60 });
