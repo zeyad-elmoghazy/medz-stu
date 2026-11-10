@@ -91,9 +91,18 @@ export const reportLimiter = buildLimiter(20, '1 h', 'rl:report');
 export const usernameCheckLimiter = buildLimiter(40, '1 m', 'rl:username-check');
 
 // Question content reads: 150 per user per day. Counts every call that
-// returns full questions + answers — a chapter quiz load, plus the
-// bookmarks and notes lists (the Bookmarks page costs 2). The heaviest
+// returns full questions — a chapter quiz load, plus the bookmarks and
+// notes lists (the Bookmarks page costs 2). The heaviest
 // real student finished 25 quizzes in one day (Nov 2026), so this leaves
 // ample headroom for reloads; a script paging the whole bank chapter by
 // chapter hits the wall fast and shows up in the Upstash dashboard.
 export const contentLimiter = buildLimiter(150, '1 d', 'rl:content');
+
+// Answer checks (POST .../answer, chapter and custom exam): 2000 per user
+// per day. Each call reveals one question's answer, so this is what caps how
+// fast an account can read the bank out. The heaviest real student answered
+// ~1,100 questions in a day (25 quizzes, Nov 2026), so honest use has
+// headroom; a script walking the bank needs many accounts and shows up in
+// the Upstash dashboard. Separate from progressLimiter (600/h), which still
+// guards the position/Save & Exit PUTs.
+export const answerLimiter = buildLimiter(2000, '1 d', 'rl:answer');

@@ -3,6 +3,7 @@ import { publicDbError } from '@/lib/api-error';
 import { z } from 'zod';
 import { progressLimiter } from '@/lib/rate-limit';
 import { orderByIds } from '@/lib/server/custom-exam';
+import { gatedReveals, revealsToJson } from '@/lib/server/reveal';
 import {
   NO_STORE,
   authenticateStudent,
@@ -28,8 +29,9 @@ export const dynamic = 'force-dynamic';
  * Counterpart of /api/student/chapters/[chapterId]/questions +
  * /progress, merged: an exam's question set is fixed at creation, so
  * there is no separate "fresh start" handshake. Like the chapter route,
- * the answer key travels with the questions (practice mode); scoring is
- * recomputed server-side on submit.
+ * the questions carry NO answers: each is revealed after the student
+ * answers it, by POST .../answer (migration 049); scoring is recomputed
+ * server-side on submit.
  *
  * Ownership: every read/write is scoped to the caller's student id, so
  * another student's exam id behaves exactly like a missing one (404).
@@ -41,12 +43,7 @@ type QuestionRow = {
   id: number;
   question: string;
   choices: { id: string; text: string }[];
-  correct_answer: string;
-  explanation: string;
-  choice_rationales: Record<string, string> | null;
-  reference: string;
   topic: string;
-  reference_page: number | null;
   chapter_id: string;
   chapters:
     | { name: string; subjects: { name: string } | { name: string }[] | null }
@@ -54,8 +51,7 @@ type QuestionRow = {
     | null;
 };
 
-const QUESTION_COLUMNS =
-  'id, question, choices, correct_answer, explanation, choice_rationales, reference, topic, reference_page, chapter_id, chapters(name, subjects(name))';
+const QUESTION_COLUMNS = 'id, question, choices, topic, chapter_id, chapters(name, subjects(name))';
 
 export async function GET(
   request: NextRequest,
@@ -104,12 +100,7 @@ export async function GET(
       id: r.id,
       question: r.question,
       choices: r.choices,
-      correctAnswer: r.correct_answer,
-      explanation: r.explanation,
-      choiceRationales: r.choice_rationales ?? undefined,
-      reference: r.reference,
       topic: r.topic,
-      referencePage: r.reference_page,
       chapterId: r.chapter_id,
       chapterName: chapter?.name ?? '',
       subjectName: subject?.name ?? '',
@@ -120,6 +111,17 @@ export async function GET(
   const answers: Record<string, string> = {};
   for (const [key, choice] of Object.entries(exam.answers ?? {})) {
     if (liveIds.has(key)) answers[key] = choice;
+  }
+
+  // Feedback for the questions already answered (a resumed exam). Only
+  // reveals recorded through the answer endpoint come back, never new ones.
+  const { reveals, error: revealError } = await gatedReveals(
+    service,
+    auth.user.id,
+    Object.keys(answers).map(Number)
+  );
+  if (revealError) {
+    return NextResponse.json({ error: revealError }, { status: 500, headers: NO_STORE });
   }
 
   return NextResponse.json(
@@ -136,6 +138,7 @@ export async function GET(
           Math.max(0, exam.current_question_index),
           questions.length - 1
         ),
+        reveals: revealsToJson(reveals),
       },
     },
     { headers: NO_STORE }

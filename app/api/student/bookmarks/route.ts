@@ -6,6 +6,7 @@ import { createRouteHandlerClient, untypedFrom } from '@/lib/supabase-server';
 import { serviceRoleClient } from '@/lib/supabase-service';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { contentLimiter } from '@/lib/rate-limit';
+import { gatedReveals } from '@/lib/server/reveal';
 import type { Database } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -59,9 +60,10 @@ export async function GET(request: NextRequest) {
     }
 
     const questionIds = bookmarkRows.map((b) => b.question_id);
-    const { data: questionRows } = await untypedFrom(serviceRoleClient())
+    const service = untypedFrom(serviceRoleClient());
+    const { data: questionRows } = await service
       .from('questions')
-      .select('id, question, topic, chapter_id, choices, correct_answer, explanation, choice_rationales')
+      .select('id, question, topic, chapter_id, choices')
       .in('id', questionIds)
       .eq('status', 'published');
     type QuestionRow = {
@@ -70,13 +72,18 @@ export async function GET(request: NextRequest) {
       topic: string;
       chapter_id: string | null;
       choices: { id: string; text: string }[];
-      correct_answer: string;
-      explanation: string;
-      choice_rationales: Record<string, string> | null;
     };
     const questionById = new Map(
       ((questionRows as QuestionRow[] | null) ?? []).map((q) => [q.id, q])
     );
+
+    // The answer is shown only for questions this student has already
+    // answered (migration 049). A bookmark can be created for ANY question
+    // id, so it must never be what unlocks the answer.
+    const { reveals, error: revealError } = await gatedReveals(service, user.id, questionIds);
+    if (revealError) {
+      return NextResponse.json({ error: revealError }, { status: 500 });
+    }
 
     const chapterIds = Array.from(
       new Set(
@@ -124,9 +131,9 @@ export async function GET(request: NextRequest) {
         subjectName: embedded(chapter?.subjects)?.name ?? null,
         createdAt: b.created_at,
         choices: q?.choices ?? [],
-        correctAnswer: q?.correct_answer ?? null,
-        explanation: q?.explanation ?? '',
-        choiceRationales: q?.choice_rationales ?? null,
+        correctAnswer: reveals.get(b.question_id)?.correctAnswer ?? null,
+        explanation: reveals.get(b.question_id)?.explanation ?? '',
+        choiceRationales: reveals.get(b.question_id)?.choiceRationales ?? null,
       };
     });
 
