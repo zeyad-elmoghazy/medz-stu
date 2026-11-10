@@ -130,6 +130,7 @@ function StudentDashboardInner() {
               .mz-dash-kpis { grid-template-columns: repeat(2,1fr) !important; }
               .mz-dash-trend { grid-template-columns: 1fr !important; }
               .mz-dash-modules { grid-template-columns: repeat(auto-fit,minmax(200px,1fr)) !important; }
+              .mz-dash-exam { padding: 0 16px !important; margin-top: -16px; }
             }
           `,
         }}

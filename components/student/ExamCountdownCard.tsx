@@ -24,12 +24,14 @@ export function ExamCountdownCard({ plan, href }: { plan: ExamPlan; href: string
     cta = { label: 'Custom exam', href: '/student/exam' };
   } else {
     title = `${days} to ${plan.label}`;
-    detail = `${plan.remaining} questions left · about ${plan.perDay} a day gets you there`;
-    cta = { label: `Do today's ${plan.perDay}`, href };
+    detail = `${plan.remaining} ${plan.remaining === 1 ? 'question' : 'questions'} left · about ${plan.perDay} a day gets you there`;
+    cta = { label: plan.perDay === 1 ? "Do today's question" : `Do today's ${plan.perDay}`, href };
   }
 
   return (
-    <section style={{ padding: '14px 44px 0' }} className="mz-dash-sec">
+    // Not .mz-dash-sec: that class pads 24px/32px on phones, which puts too
+    // much air between this card and the next-step card above it.
+    <section style={{ padding: '14px 44px 0' }} className="mz-dash-exam">
       <div
         style={{
           display: 'flex',
