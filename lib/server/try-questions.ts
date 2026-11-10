@@ -19,8 +19,8 @@ export type TrySample = { year: number; moduleName: string; rows: TryRow[] };
 
 // PostgREST returns at most 1,000 rows per request, so the id list is paged.
 const PAGE_SIZE = 1000;
-// ponytail: a per-instance cache so the check route doesn't re-read a module's
-// ids on every answer; the page itself is rendered once an hour.
+// ponytail: a per-instance cache so neither the page nor the check route
+// re-reads a module's ids on every request.
 const CACHE_MS = 10 * 60 * 1000;
 const cache = new Map<string, { at: number; value: TrySample | null }>();
 

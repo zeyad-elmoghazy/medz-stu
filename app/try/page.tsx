@@ -2,13 +2,21 @@ import Link from 'next/link';
 import { TryQuiz, type TryYear } from '@/components/try/TryQuiz';
 import { loadTrySamples, toPublicQuestions } from '@/lib/server/try-questions';
 
-// The samples rarely change: render once, refresh hourly.
-export const revalidate = 3600;
+// Rendered per request, not at build time: a database hiccup during `next build`
+// must never fail a deploy. The samples are cached per server instance for a
+// few minutes (lib/server/try-questions.ts), so this stays cheap.
+export const dynamic = 'force-dynamic';
 
 const SIGNUP_HREF = '/signup?utm_source=try&utm_medium=web&utm_campaign=try-page';
 
 export default async function TryPage() {
-  const samples = await loadTrySamples();
+  let samples: Awaited<ReturnType<typeof loadTrySamples>> = [];
+  try {
+    samples = await loadTrySamples();
+  } catch (err) {
+    // Show the "coming soon" view rather than an error page.
+    console.error('[try] could not load the samples:', err);
+  }
   // Only the questions and choices cross to the browser, never the answer key.
   const years: TryYear[] = samples.map((s) => ({
     year: s.year,

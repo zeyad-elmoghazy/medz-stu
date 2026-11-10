@@ -8,7 +8,8 @@
  * page shows a short "coming soon", is marked noindex and stays out of the
  * sitemap (see lib/seo.ts). To change what visitors see, change the module
  * codes here: the questions themselves are picked on the server (spread
- * evenly across the module's published questions) and refreshed hourly.
+ * evenly across the module's published questions) and refreshed every few
+ * minutes.
  *
  * Years 4 and 5 have no published questions yet, so they are not listed.
  */
