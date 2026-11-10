@@ -90,6 +90,12 @@ export const reportLimiter = buildLimiter(20, '1 h', 'rl:report');
 // person stays well under this; a script enumerating names does not.
 export const usernameCheckLimiter = buildLimiter(40, '1 m', 'rl:username-check');
 
+// Public /try answer checks: 120 per hour per IP. A visitor answers 5
+// questions; the headroom is for a lecture hall sharing one campus IP (same
+// reasoning as loginIpLimiter). The endpoint only knows the handful of
+// featured questions, so this is a brake on hammering, not a secrecy measure.
+export const tryLimiter = buildLimiter(120, '1 h', 'rl:try');
+
 // Question content reads: 150 per user per day. Counts every call that
 // returns full questions + answers — a chapter quiz load, plus the
 // bookmarks and notes lists (the Bookmarks page costs 2). The heaviest

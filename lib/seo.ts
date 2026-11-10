@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { TRY_CONFIG } from '@/lib/try-config';
 
 // Canonical production origin. Every canonical, sitemap entry, OG url
 // and JSON-LD url is built from this — `www` is the primary host (the
@@ -40,6 +41,14 @@ export const PAGES = {
     description:
       'Log in to your MediZee account to continue your medical MCQ practice, re-quiz your mistakes and keep your daily study streak going.',
     indexable: true,
+  },
+  // Indexable only once lib/try-config.ts names a chapter to feature; until
+  // then the page is a "coming soon" and stays out of the index and sitemap.
+  '/try': {
+    title: 'Try 5 medical MCQs free, no signup | MediZee',
+    description:
+      'Answer five real medical MCQs with instant explanations, no account needed. See how MediZee works, then create your free account to keep practising.',
+    indexable: TRY_CONFIG.chapterId !== null,
   },
   '/forgot-password': {
     title: 'Reset your password | MediZee',
