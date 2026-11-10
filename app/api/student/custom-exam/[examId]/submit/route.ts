@@ -12,6 +12,7 @@ import {
   serviceClient,
 } from '@/lib/server/custom-exam-db';
 import { finishAttemptXp, recordQuizStats } from '@/lib/server/xp';
+import { revealedIds } from '@/lib/server/reveal';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -129,7 +130,21 @@ export async function POST(
     );
   }
 
-  const { results, score, total, accuracy } = scoreExam(questions, merged);
+  const { results: scoredResults, score, total, accuracy } = scoreExam(questions, merged);
+
+  // `correct` goes back only for questions this student was already shown the
+  // answer to (migration 049), so a submit can't be used to read the answer
+  // key of questions that were skipped or never revealed.
+  const shown = await revealedIds(
+    service,
+    auth.user.id,
+    questions.map((q) => q.id)
+  );
+  if (shown.error) return NextResponse.json({ error: shown.error }, { status: 500 });
+  const results = scoredResults.map((r) => ({
+    ...r,
+    correct: shown.ids.has(r.questionId) ? r.correct : null,
+  }));
 
   // Only answers to scored questions are stored on the session row.
   const scoredIds = new Set(questions.map((q) => String(q.id)));

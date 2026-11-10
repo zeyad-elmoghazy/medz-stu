@@ -7,7 +7,8 @@ import { z } from 'zod';
 import type { Database, UserRole } from '@/lib/supabase';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { progressLimiter } from '@/lib/rate-limit';
-import { awardAnswersXp } from '@/lib/server/xp';
+import { saveChapterProgress } from '@/lib/server/chapter-quiz-save';
+import { gatedReveals, revealsToJson } from '@/lib/server/reveal';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -71,17 +72,16 @@ async function authenticate(request: NextRequest): Promise<AuthResult> {
     return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
 
-  const profileQuery = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  // The role lookup and the rate-limit check don't depend on each other, so
+  // they run together: one round trip off every request through here.
+  const [profileQuery, limited] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    applyRateLimit(request, progressLimiter, user.id),
+  ]);
   const profile = profileQuery.data as { role: UserRole } | null;
   if (profile?.role !== 'student') {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
-
-  const limited = await applyRateLimit(request, progressLimiter, user.id);
   if (limited) return { error: limited };
 
   return { error: null, supabase, user };
@@ -131,14 +131,30 @@ export async function GET(
     return NextResponse.json({ progress: null }, { headers: NO_STORE });
   }
 
+  // The quiz no longer carries answers, so resuming needs the feedback for
+  // the questions already answered. Only reveals that were already recorded
+  // come back: this must NOT record new ones, or anyone could PUT a guess for
+  // every question and read the whole key back from here.
+  const answers = row.answers ?? {};
+  const answeredIds = Object.keys(answers).map(Number).filter(Number.isInteger);
+  const { reveals, error: revealError } = await gatedReveals(
+    serviceRoleClient(),
+    auth.user.id,
+    answeredIds
+  );
+  if (revealError) {
+    return NextResponse.json({ error: revealError }, { status: 500, headers: NO_STORE });
+  }
+
   return NextResponse.json(
     {
       progress: {
-        answers: row.answers ?? {},
+        answers,
         currentQuestionIndex: row.current_question_index,
         questionIds: row.question_ids,
         totalQuestions: row.total_questions,
         updatedAt: row.updated_at,
+        reveals: revealsToJson(reveals),
       },
     },
     { headers: NO_STORE }
@@ -173,111 +189,27 @@ export async function PUT(
   }
   const { answers, currentQuestionIndex, questionIds } = parsed.data;
 
-  const service = serviceRoleClient();
-
-  // Only published questions of THIS chapter can be part of an attempt
-  // — the same bank the submit route scores against.
-  const questionsRes = await service
-    .from('questions')
-    .select('id, subject_id')
-    .eq('chapter_id', chapterId)
-    .eq('status', 'published');
-  if (questionsRes.error) {
-    return NextResponse.json({ error: publicDbError(questionsRes.error) }, { status: 500 });
+  const result = await saveChapterProgress(serviceRoleClient(), auth.user.id, chapterId, {
+    answers,
+    currentQuestionIndex,
+    questionIds,
+  });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
-  const bank = (questionsRes.data ?? []) as { id: number; subject_id: string }[];
-  if (bank.length === 0) {
+  if (!result.saved) {
     return NextResponse.json(
-      { error: 'Chapter has no published questions.' },
-      { status: 400 }
+      { saved: false, answered: 0, total: result.total },
+      { headers: NO_STORE }
     );
   }
-
-  // "Practice mistakes" runs a subset; otherwise the whole chapter.
-  const bankIds = new Set(bank.map((q) => q.id));
-  let attemptIds: number[] | null = null;
-  if (questionIds && questionIds.length > 0) {
-    attemptIds = Array.from(new Set(questionIds.filter((id) => bankIds.has(id))));
-    if (attemptIds.length === 0) {
-      return NextResponse.json(
-        { error: 'None of the questionIds belong to this chapter.' },
-        { status: 400 }
-      );
-    }
-  }
-  const allowed = attemptIds ? new Set(attemptIds) : bankIds;
-  const total = attemptIds ? attemptIds.length : bank.length;
-
-  const incoming: Record<string, string> = {};
-  for (const [key, choice] of Object.entries(answers)) {
-    const id = Number(key);
-    if (Number.isInteger(id) && allowed.has(id)) incoming[String(id)] = choice;
-  }
-
-  const existingRes = await service
-    .from('chapter_quiz_progress')
-    .select('answers')
-    .eq('student_id', auth.user.id)
-    .eq('chapter_id', chapterId)
-    .maybeSingle();
-  if (existingRes.error) {
-    return NextResponse.json({ error: publicDbError(existingRes.error) }, { status: 500 });
-  }
-  const existing = (existingRes.data as { answers: Record<string, string> | null } | null)
-    ?.answers ?? {};
-
-  // Answers are final once submitted in the quiz UI, so a late or
-  // retried save that carries FEWER answers than what is already
-  // stored must never erase the newer ones: merge, incoming wins.
-  const merged: Record<string, string> = {};
-  for (const [key, choice] of Object.entries(existing)) {
-    if (allowed.has(Number(key))) merged[key] = choice;
-  }
-  Object.assign(merged, incoming);
-
-  // Nothing answered yet -> nothing to continue; make sure no stale
-  // row is left behind and report it.
-  if (Object.keys(merged).length === 0) {
-    const del = await service
-      .from('chapter_quiz_progress')
-      .delete()
-      .eq('student_id', auth.user.id)
-      .eq('chapter_id', chapterId);
-    if (del.error) {
-      return NextResponse.json({ error: publicDbError(del.error) }, { status: 500 });
-    }
-    return NextResponse.json({ saved: false, answered: 0, total }, { headers: NO_STORE });
-  }
-
-  const upsert = await service.from('chapter_quiz_progress').upsert(
-    {
-      student_id: auth.user.id,
-      chapter_id: chapterId,
-      subject_id: bank[0].subject_id,
-      answers: merged,
-      question_ids: attemptIds,
-      current_question_index: Math.min(currentQuestionIndex, total - 1),
-      total_questions: total,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'student_id,chapter_id' }
-  );
-  if (upsert.error) {
-    return NextResponse.json({ error: publicDbError(upsert.error) }, { status: 500 });
-  }
-
-  // XP for answers new in this save (migration 048: 10 XP the first time
-  // a question is answered correctly, ever). Credited AFTER the upsert so
-  // the row's started_at precedes the award and the submit-time accuracy
-  // bonus counts it as earned in this attempt.
-  const newAnswers: Record<string, string> = {};
-  for (const [key, choice] of Object.entries(incoming)) {
-    if (!(key in existing)) newAnswers[key] = choice;
-  }
-  const xpAwarded = await awardAnswersXp(service, auth.user.id, newAnswers);
-
   return NextResponse.json(
-    { saved: true, answered: Object.keys(merged).length, total, xpAwarded },
+    {
+      saved: true,
+      answered: result.answered,
+      total: result.total,
+      xpAwarded: result.xpAwarded,
+    },
     { headers: NO_STORE }
   );
 }

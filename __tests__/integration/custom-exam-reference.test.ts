@@ -13,6 +13,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@/lib/supabase-server';
 import { POST as createPost } from '@/app/api/student/custom-exam/route';
 import { GET as examGet } from '@/app/api/student/custom-exam/[examId]/route';
+import { POST as examAnswerPost } from '@/app/api/student/custom-exam/[examId]/answer/route';
 import { GET as referenceImageGet } from '@/app/api/student/chapters/[chapterId]/reference-image/route';
 import {
   supabaseTestEnvAvailable,
@@ -195,9 +196,27 @@ describeIfSupabase('custom exam — reference images', () => {
       params: Promise.resolve({ examId }),
     });
     expect(exam.status).toBe(200);
-    return exam.json() as Promise<{
-      questions: { id: number; chapterId: string; referencePage: number | null }[];
-    }>;
+    const payload = (await exam.json()) as { questions: { id: number; chapterId: string }[] };
+
+    // The page a question cites is part of its answer reveal (migration 049):
+    // it only arrives once the question has been answered.
+    const questions: { id: number; chapterId: string; referencePage: number | null }[] = [];
+    for (const q of payload.questions) {
+      expect(q).not.toHaveProperty('referencePage');
+      actAs(client);
+      const answered = await examAnswerPost(
+        req('POST', `/api/student/custom-exam/${examId}/answer`, {
+          questionId: q.id,
+          choice: 'a',
+          currentQuestionIndex: 0,
+        }),
+        { params: Promise.resolve({ examId }) }
+      );
+      expect(answered.status).toBe(200);
+      const { referencePage } = (await answered.json()) as { referencePage: number | null };
+      questions.push({ ...q, referencePage });
+    }
+    return { questions };
   }
 
   async function imageFor(chapterId: string, page: number) {

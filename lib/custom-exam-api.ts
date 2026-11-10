@@ -7,15 +7,25 @@
  * lib/chapter-quiz-api.ts as they are.
  */
 
-import type { ChapterQuizQuestion } from '@/lib/chapter-quiz-api';
+import type {
+  ChapterAnswerResult,
+  ChapterAnswerReveal,
+  ChapterQuizQuestion,
+} from '@/lib/chapter-quiz-api';
 import type { ExamSubjectOption } from '@/lib/custom-exam-rules';
 
-/** A question in an exam: a chapter-quiz question that also says where it comes from. */
+/**
+ * A question in an exam: a chapter-quiz question that also says where it comes
+ * from. Like every served question it carries no answer; see RevealedExamQuestion.
+ */
 export type CustomExamQuestion = ChapterQuizQuestion & {
   chapterId: string;
   chapterName: string;
   subjectName: string;
 };
+
+/** An exam question together with the reveal the server sent after it was answered. */
+export type RevealedExamQuestion = CustomExamQuestion & ChapterAnswerReveal;
 
 export type CustomExam = {
   examId: string;
@@ -29,6 +39,8 @@ export type CustomExam = {
     /** questions.id (string key) -> chosen choice id. */
     answers: Record<string, string>;
     currentQuestionIndex: number;
+    /** Reveals for the answered questions the server has already shown (by question id). */
+    reveals?: Record<string, ChapterAnswerReveal>;
   };
 };
 
@@ -57,7 +69,8 @@ export type CustomExamResult = {
     questionId: number;
     isCorrect: boolean;
     chosen: string | null;
-    correct: string;
+    /** null unless the server already revealed this question's answer to the student. */
+    correct: string | null;
   }>;
   /** What the results screen needs to describe each question. */
   questions: Array<{
@@ -174,6 +187,26 @@ export async function saveCustomExamProgress(
   } catch {
     return false;
   }
+}
+
+/**
+ * Answers one exam question: the server stores it, credits XP and returns the
+ * verdict with the explanation (migration 049). The exam's questions carry no
+ * answer key, so this is the only way the page learns whether an answer was
+ * right. Idempotent; throws CustomExamApiError.
+ */
+export async function submitExamAnswer(
+  examId: string,
+  input: { questionId: number; choice: string; currentQuestionIndex: number }
+): Promise<ChapterAnswerResult> {
+  const res = await fetch(`${BASE}/${encodeURIComponent(examId)}/answer`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw await failure(res);
+  return res.json();
 }
 
 /** Completes the exam: scored server-side, recorded, XP credited. */

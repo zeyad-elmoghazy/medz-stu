@@ -8,6 +8,7 @@ import type { Database, UserRole } from '@/lib/supabase';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { quizLimiter } from '@/lib/rate-limit';
 import { finishAttemptXp, recordQuizStats } from '@/lib/server/xp';
+import { revealedIds } from '@/lib/server/reveal';
 import { invalidateCache } from '@/lib/cache';
 import { CACHE_KEYS } from '@/lib/redis';
 
@@ -139,10 +140,21 @@ export async function POST(
     );
   }
 
+  // `correct` goes back only for questions this student was already shown the
+  // answer to (migration 049). Otherwise one submitted answer would return the
+  // whole chapter's answer key, skipped questions included.
+  const shown = await revealedIds(
+    service,
+    user.id,
+    questions.map((q) => q.id)
+  );
+  if (shown.error) {
+    return NextResponse.json({ error: shown.error }, { status: 500 });
+  }
   const results = questions.map((q) => ({
     questionId: q.id,
     chosen: answers[String(q.id)] ?? null,
-    correct: q.correct_answer,
+    correct: shown.ids.has(q.id) ? q.correct_answer : null,
     isCorrect: answers[String(q.id)] === q.correct_answer,
   }));
 

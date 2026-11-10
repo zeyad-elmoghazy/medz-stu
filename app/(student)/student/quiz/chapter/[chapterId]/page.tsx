@@ -40,11 +40,15 @@ import {
   fetchNote,
   saveNote,
   submitChapterQuiz,
+  submitChapterAnswer,
+  toReveal,
   fetchChapterProgress,
   saveChapterProgress,
   deleteChapterProgress,
+  type ChapterAnswerReveal,
   type ChapterQuiz,
   type ChapterQuizQuestion,
+  type RevealedQuestion,
 } from '@/lib/chapter-quiz-api';
 import { cn, letterFor } from '@/lib/utils';
 import {
@@ -146,8 +150,20 @@ export default function ChapterQuizPage() {
   const jumpToQuestion = useChapterQuizStore((s) => s.jumpToQuestion);
   const startSession = useChapterQuizStore((s) => s.startSession);
 
+  // The saved-attempt lookup doesn't depend on the questions, so it starts
+  // together with them instead of after they arrive (one fewer round trip in
+  // the way of the first question). A "start fresh" entry point discards the
+  // saved attempt instead of reading it, so nothing is prefetched then.
+  const progressPrefetchRef = useRef<ReturnType<typeof fetchChapterProgress> | null>(null);
+
   useEffect(() => {
     let cancelled = false;
+    progressPrefetchRef.current = null;
+    if (!useChapterQuizStore.getState().pendingFreshStart) {
+      const prefetch = fetchChapterProgress(chapterId);
+      prefetch.catch(() => {}); // init() below reports a failure
+      progressPrefetchRef.current = prefetch;
+    }
     fetchChapterQuiz(chapterId)
       .then((d) => {
         if (cancelled) return;
@@ -179,6 +195,17 @@ export default function ChapterQuizPage() {
 
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  // The questions carry no answer: each one's verdict, explanation and
+  // reference arrive from the server after it is answered (question id ->
+  // reveal), and are merged into the question for the post-answer screen.
+  const [reveals, setReveals] = useState<Record<string, ChapterAnswerReveal>>({});
+  const [checking, setChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
+  const [revealRetry, setRevealRetry] = useState(0);
+  const revealRequestedRef = useRef<Set<number>>(new Set());
+  const currentReveal = currentQuestion ? reveals[currentQuestion.id] : undefined;
+  const revealedQuestion: RevealedQuestion | null =
+    currentQuestion && currentReveal ? { ...currentQuestion, ...currentReveal } : null;
   const [showExitModal, setShowExitModal] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [activeTab, setActiveTab] = useState<'explanation' | 'reference'>('explanation');
@@ -253,10 +280,12 @@ export default function ChapterQuizPage() {
       }
 
       try {
-        const progress = await fetchChapterProgress(chapterId);
+        const progress = await (progressPrefetchRef.current ?? fetchChapterProgress(chapterId));
+        progressPrefetchRef.current = null;
         if (cancelled) return;
         if (progress) {
           hydrateFromProgress(progress);
+          setReveals(progress.reveals ?? {});
           setIsResuming(true);
         } else {
           // Nothing saved for this chapter: never reuse leftover local
@@ -323,7 +352,7 @@ export default function ChapterQuizPage() {
   // the commit where an answer lands, the reset runs first and the
   // fetch starts from a clean slate.
   const currentIsAnswered = !!currentQuestion && answers[currentQuestion.id] != null;
-  const currentReferencePage = currentQuestion?.referencePage ?? null;
+  const currentReferencePage = currentReveal?.referencePage ?? null;
   useEffect(() => {
     if (!currentIsAnswered || currentReferencePage == null) return;
     let cancelled = false;
@@ -340,6 +369,29 @@ export default function ChapterQuizPage() {
       cancelled = true;
     };
   }, [chapterId, currentQuestion?.id, currentIsAnswered, currentReferencePage]);
+
+  // A question that is answered but has no reveal yet: an answer saved before
+  // this version, or a reveal that never arrived. Answering is idempotent, so
+  // asking again returns the stored verdict and the explanation.
+  useEffect(() => {
+    if (!currentQuestion || !currentIsAnswered || currentReveal) return;
+    const id = currentQuestion.id;
+    if (revealRequestedRef.current.has(id)) return;
+    revealRequestedRef.current.add(id);
+    submitChapterAnswer(chapterId, {
+      questionId: id,
+      choice: answers[id],
+      currentQuestionIndex: safeIndex,
+      questionIds:
+        filterQuestionIds && filterQuestionIds.length > 0 ? filterQuestionIds : undefined,
+    })
+      .then((r) => setReveals((prev) => ({ ...prev, [id]: toReveal(r) })))
+      .catch((err) => {
+        revealRequestedRef.current.delete(id);
+        setCheckError(err instanceof Error ? err.message : "Couldn't load the explanation.");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapterId, currentQuestion?.id, currentIsAnswered, currentReveal, revealRetry]);
 
   useEffect(() => {
     if (!currentQuestion) return;
@@ -541,24 +593,42 @@ export default function ChapterQuizPage() {
     setReportedIds((prev) => new Set(prev).add(questionId));
   }
 
-  const isCorrect = !!currentQuestion && submitted && selectedChoice === currentQuestion.correctAnswer;
+  const isCorrect = !!currentReveal && submitted && selectedChoice === currentReveal.correctAnswer;
   const isLastQuestion = safeIndex === totalQuestions - 1;
   const progressPct = Math.round(((safeIndex + (submitted ? 1 : 0)) / totalQuestions) * 100);
 
-  function handleSubmit() {
-    if (!selectedChoice || submitted || !currentQuestion) return;
-    submittedRef.current = true;
-    answerQuestion(currentQuestion.id, selectedChoice);
-    setSubmitted(true);
-    exitFullscreen();
-    // Record this answer on the server right away, so it counts toward
-    // the Progress dashboard and survives a closed tab even if the
-    // student never reaches Save & Exit. Fire-and-forget: a failure
-    // here is retried by the next answer's full snapshot and, finally,
-    // by Save & Exit, which blocks until a save is confirmed.
-    void persistProgress({ ...answers, [currentQuestion.id]: selectedChoice }, safeIndex);
-    // The reference image is fetched by the effect keyed on the
-    // persisted answer, so it isn't started here.
+  async function handleSubmit() {
+    if (!selectedChoice || submitted || checking || !currentQuestion) return;
+    const question = currentQuestion;
+    const choice = selectedChoice;
+    setChecking(true);
+    setCheckError(null);
+    try {
+      // The server records the answer (so it counts toward the Progress
+      // dashboard and survives a closed tab), credits XP, and returns the
+      // verdict with the explanation: the questions carry no answer key.
+      const r = await submitChapterAnswer(chapterId, {
+        questionId: question.id,
+        choice,
+        currentQuestionIndex: safeIndex,
+        questionIds:
+          filterQuestionIds && filterQuestionIds.length > 0 ? filterQuestionIds : undefined,
+      });
+      setReveals((prev) => ({ ...prev, [question.id]: toReveal(r) }));
+      if (r.xpAwarded > 0) addXp(r.xpAwarded);
+      submittedRef.current = true;
+      answerQuestion(question.id, r.chosen);
+      setSubmitted(true);
+      exitFullscreen();
+      // The reference image is fetched by the effect keyed on the
+      // persisted answer, so it isn't started here.
+    } catch (err) {
+      setCheckError(
+        err instanceof Error ? err.message : "Couldn't check your answer. Please try again."
+      );
+    } finally {
+      setChecking(false);
+    }
   }
 
   async function handleNext() {
@@ -631,7 +701,7 @@ export default function ChapterQuizPage() {
       lines.push(`${letterFor(idx)}. ${c.text}`);
     });
     const correctIdx = currentQuestion.choices.findIndex(
-      (c) => c.id === currentQuestion.correctAnswer
+      (c) => c.id === currentReveal?.correctAnswer
     );
     if (correctIdx >= 0) {
       lines.push('', `Answer: ${letterFor(correctIdx)}`);
@@ -777,7 +847,42 @@ export default function ChapterQuizPage() {
               selectedChoice={selectedChoice}
               setSelectedChoice={setSelectedChoice}
               onSubmit={handleSubmit}
+              checking={checking}
+              error={checkError}
             />
+          </motion.section>
+        ) : !revealedQuestion ? (
+          // Answered, but the explanation hasn't arrived (resuming, or a slow
+          // connection). The effect above asks the server for it.
+          <motion.section
+            key={`phase2-wait-${currentQuestion.id}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mx-auto flex w-full max-w-3xl flex-col items-center gap-3 px-6 pt-24 pb-16 text-sm text-text-muted"
+          >
+            {checkError ? (
+              <>
+                <span style={{ color: 'var(--error)' }}>{checkError}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCheckError(null);
+                    setRevealRetry((n) => n + 1);
+                  }}
+                  className="inline-flex h-10 items-center rounded-md px-4 text-xs font-semibold text-white"
+                  style={{ backgroundColor: 'var(--accent-text)' }}
+                >
+                  Try again
+                </button>
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <SpinnerIcon size={16} className="animate-spin" />
+                Checking your answer…
+              </span>
+            )}
           </motion.section>
         ) : (
           <motion.section
@@ -794,7 +899,7 @@ export default function ChapterQuizPage() {
               transition={{ duration: 0.45, ease: 'easeOut' }}
             >
               <PhaseTwoLeft
-                question={currentQuestion}
+                question={revealedQuestion}
                 selectedChoice={selectedChoice}
                 isCorrect={isCorrect}
                 isBookmarked={bookmarked}
@@ -816,7 +921,7 @@ export default function ChapterQuizPage() {
               transition={{ duration: 0.45, ease: 'easeOut' }}
             >
               <PhaseTwoRight
-                question={currentQuestion}
+                question={revealedQuestion}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 referenceImageUrl={referenceImageUrl}
@@ -854,10 +959,10 @@ export default function ChapterQuizPage() {
           <ExitConfirmationModal
             answeredCount={Object.keys(answers).length}
             totalCount={totalQuestions}
-            correctCount={Object.entries(answers).reduce((sum, [qid, choice]) => {
-              const q = questions.find((qq) => qq.id === Number(qid));
-              return q && q.correctAnswer === choice ? sum + 1 : sum;
-            }, 0)}
+            correctCount={Object.entries(answers).reduce(
+              (sum, [qid, choice]) => (reveals[qid]?.correctAnswer === choice ? sum + 1 : sum),
+              0
+            )}
             currentIndex={safeIndex}
             saving={savingExit}
             error={exitError}
@@ -1029,11 +1134,16 @@ function PhaseOne({
   selectedChoice,
   setSelectedChoice,
   onSubmit,
+  checking,
+  error,
 }: {
   question: ChapterQuizQuestion;
   selectedChoice: string | null;
   setSelectedChoice: Dispatch<SetStateAction<string | null>>;
   onSubmit: () => void;
+  /** The answer is being checked by the server: lock the choices. */
+  checking: boolean;
+  error: string | null;
 }) {
   return (
     <div className="space-y-8">
@@ -1060,7 +1170,7 @@ function PhaseOne({
             <motion.button
               key={choice.id}
               type="button"
-              onClick={() => setSelectedChoice(choice.id)}
+              onClick={() => !checking && setSelectedChoice(choice.id)}
               whileTap={{ scale: 0.995 }}
               className={cn(
                 'flex w-full items-start gap-4 rounded-xl text-left transition',
@@ -1096,15 +1206,29 @@ function PhaseOne({
       <button
         type="button"
         onClick={onSubmit}
-        disabled={!selectedChoice}
+        disabled={!selectedChoice || checking}
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
         style={{
           backgroundColor: 'var(--accent-text)',
         }}
       >
-        Submit Answer
-        <ArrowRightIcon size={16} />
+        {checking ? (
+          <>
+            <SpinnerIcon size={16} className="animate-spin" />
+            Checking…
+          </>
+        ) : (
+          <>
+            Submit Answer
+            <ArrowRightIcon size={16} />
+          </>
+        )}
       </button>
+      {error && (
+        <p role="alert" className="text-sm" style={{ color: 'var(--error)' }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -1124,7 +1248,7 @@ function PhaseTwoLeft({
   isLastQuestion,
   submitting,
 }: {
-  question: ChapterQuizQuestion;
+  question: RevealedQuestion;
   selectedChoice: string | null;
   isCorrect: boolean;
   isBookmarked: boolean;
@@ -1350,7 +1474,7 @@ function PhaseTwoRight({
   referenceImageUrl,
   referenceImageLoading,
 }: {
-  question: ChapterQuizQuestion;
+  question: RevealedQuestion;
   activeTab: 'explanation' | 'reference';
   setActiveTab: Dispatch<SetStateAction<'explanation' | 'reference'>>;
   referenceImageUrl: string | null;
@@ -1436,7 +1560,7 @@ function TabButton({
   );
 }
 
-function StructuredExplanation({ question }: { question: ChapterQuizQuestion }) {
+function StructuredExplanation({ question }: { question: RevealedQuestion }) {
   const sentences = useMemo(
     () =>
       question.explanation
@@ -1944,7 +2068,7 @@ function stripPrefix(raw: string): string {
   return raw.replace(/^\s*(CORRECT|WRONG)\s*[—:-]\s*/i, '').trim();
 }
 
-function whyDistractorIsWrong(question: ChapterQuizQuestion, choiceId: string): string {
+function whyDistractorIsWrong(question: RevealedQuestion, choiceId: string): string {
   const choice = question.choices.find((c) => c.id === choiceId);
   if (!choice) return '';
 

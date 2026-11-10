@@ -455,6 +455,12 @@ function QuestionDetail({ choices, correctAnswer, explanation, choiceRationales 
       {explanation && (
         <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 12, lineHeight: 1.6 }}>{explanation}</p>
       )}
+      {correctAnswer === null && (
+        // Answers are shown once you have answered the question yourself.
+        <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 12, lineHeight: 1.6 }}>
+          Answer this question in a quiz to see the correct answer and explanation.
+        </p>
+      )}
     </div>
   );
 }

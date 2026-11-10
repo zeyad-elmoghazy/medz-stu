@@ -13,7 +13,12 @@ import {
   RotateCcwIcon,
 } from '@/components/icons';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
-import { fetchChapterQuiz, type ChapterQuiz } from '@/lib/chapter-quiz-api';
+import {
+  fetchChapterQuiz,
+  fetchReveals,
+  type ChapterAnswerReveal,
+  type ChapterQuiz,
+} from '@/lib/chapter-quiz-api';
 import { cn } from '@/lib/utils';
 import { LinkPending } from '@/components/ui/LinkPending';
 
@@ -56,6 +61,25 @@ export default function ChapterResultsPage() {
     };
   }, [chapterId]);
 
+  // The questions carry no answers. The explanation and correct answer of
+  // every question the student answered come from the server, which only
+  // returns the ones it has already revealed to them.
+  const [reveals, setReveals] = useState<Record<string, ChapterAnswerReveal>>({});
+  useEffect(() => {
+    if (!data) return;
+    let cancelled = false;
+    fetchReveals(data.questions.map((q) => q.id))
+      .then((r) => {
+        if (!cancelled) setReveals(r);
+      })
+      .catch(() => {
+        // Non-fatal: the breakdown simply shows no explanations.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
+
   const lastResultMap = useMemo(() => {
     if (!lastResult) return null;
     const m = new Map<number, { isCorrect: boolean; chosen: string | null }>();
@@ -76,14 +100,14 @@ export default function ChapterResultsPage() {
           topic: q.topic,
           preview: q.question.slice(0, 96) + (q.question.length > 96 ? '…' : ''),
           fullQuestion: q.question,
-          explanation: q.explanation,
+          explanation: reveals[q.id]?.explanation ?? '',
           chosenText: choiceText(r?.chosen),
-          correctText: choiceText(q.correctAnswer),
+          correctText: choiceText(reveals[q.id]?.correctAnswer),
           attempted: r ? r.chosen !== null : false,
           correct: r ? r.isCorrect : false,
         };
       }),
-    [data, lastResultMap]
+    [data, lastResultMap, reveals]
   );
 
   const correct = lastResult?.score ?? breakdown.filter((b) => b.correct).length;

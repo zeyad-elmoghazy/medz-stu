@@ -19,6 +19,10 @@ export const dynamic = 'force-dynamic';
  * route (student/quiz/chapter/[chapterId]); the Custom Exam, whose
  * questions span chapters, is served by /api/student/custom-exam/[examId].
  *
+ * The payload carries NO answers: no correct choice, explanation, rationales
+ * or reference. A student gets those one question at a time, after answering
+ * it, from POST .../answer (migration 049, question_reveals).
+ *
  * Students can't SELECT `questions` directly (migration 047 makes it
  * admin-only, so the question bank can't be paged out over PostgREST),
  * so this reads with the service role and MUST keep the explicit
@@ -68,9 +72,7 @@ export async function GET(
 
   const questionsRes = await untypedFrom(serviceRoleClient())
     .from('questions')
-    .select(
-      'id, question, choices, correct_answer, explanation, choice_rationales, reference, topic, reference_page'
-    )
+    .select('id, question, choices, topic')
     .eq('chapter_id', chapterId)
     .eq('status', 'published')
     .order('id', { ascending: true });
@@ -83,12 +85,7 @@ export async function GET(
     id: number;
     question: string;
     choices: { id: string; text: string }[];
-    correct_answer: string;
-    explanation: string;
-    choice_rationales: Record<string, string> | null;
-    reference: string;
     topic: string;
-    reference_page: number | null;
   };
   const rows = (questionsRes.data ?? []) as QuestionRow[];
 
@@ -109,12 +106,7 @@ export async function GET(
         id: r.id,
         question: r.question,
         choices: r.choices,
-        correctAnswer: r.correct_answer,
-        explanation: r.explanation,
-        choiceRationales: r.choice_rationales ?? undefined,
-        reference: r.reference,
         topic: r.topic,
-        referencePage: r.reference_page,
       })),
     },
     { headers: { 'Cache-Control': 'private, max-age=30' } }

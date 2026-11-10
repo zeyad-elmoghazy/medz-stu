@@ -349,7 +349,7 @@ describeIfSupabase('custom exam API', () => {
       expect([chA2, chB1]).toContain(q0.chapterId);
       expect(q0.chapterName).toMatch(/^(A2|B1)$/);
       expect(q0.subjectName).toMatch(/^Subject (A|B)$/);
-      expect(body.progress).toEqual({ answers: {}, currentQuestionIndex: 0 });
+      expect(body.progress).toEqual({ answers: {}, currentQuestionIndex: 0, reveals: {} });
     });
 
     test('another student’s exam id is a 404, never a leak', async () => {
