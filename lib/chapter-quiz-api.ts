@@ -14,17 +14,25 @@ export type ChapterQuizChoice = {
   text: string;
 };
 
+/** A question as served: no answer. The answer arrives per question, after it is answered. */
 export type ChapterQuizQuestion = {
   id: number;
   question: string;
   choices: ChapterQuizChoice[];
+  topic: string;
+};
+
+/** What the server reveals about a question once the student has answered it. */
+export type ChapterAnswerReveal = {
   correctAnswer: string;
   explanation: string;
   choiceRationales?: Record<string, string>;
   reference: string;
-  topic: string;
   referencePage: number | null;
 };
+
+/** A question together with its reveal: what the post-answer screen renders. */
+export type RevealedQuestion = ChapterQuizQuestion & ChapterAnswerReveal;
 
 export type ChapterQuiz = {
   chapterId: string;
@@ -153,7 +161,8 @@ export type ChapterQuizResult = {
     questionId: number;
     isCorrect: boolean;
     chosen: string | null;
-    correct: string;
+    /** null unless the server already revealed this question's answer to the student. */
+    correct: string | null;
   }>;
 };
 
@@ -192,6 +201,8 @@ export type ChapterProgress = {
   questionIds: number[] | null;
   totalQuestions: number;
   updatedAt: string;
+  /** Reveals for the answered questions the server has already shown (keyed by question id). */
+  reveals?: Record<string, ChapterAnswerReveal>;
 };
 
 /**
@@ -248,6 +259,76 @@ export async function saveChapterProgress(
   } catch {
     return false;
   }
+}
+
+export type ChapterAnswerResult = ChapterAnswerReveal & {
+  isCorrect: boolean;
+  /** The answer on record (the first one given, if the question was answered before). */
+  chosen: string;
+  /** XP credited for this answer. */
+  xpAwarded: number;
+  answered: number;
+  total: number;
+};
+
+/**
+ * Answers one question: the server stores the answer, credits XP and
+ * returns the verdict with the explanation —
+ * /api/student/chapters/[chapterId]/answer. This is the only way the quiz
+ * learns whether an answer was right. Idempotent: re-sending an answered
+ * question returns the stored verdict. Throws with a readable message.
+ */
+export async function submitChapterAnswer(
+  chapterId: string,
+  input: {
+    questionId: number;
+    choice: string;
+    currentQuestionIndex: number;
+    questionIds?: number[];
+  }
+): Promise<ChapterAnswerResult> {
+  const res = await fetch(`/api/student/chapters/${encodeURIComponent(chapterId)}/answer`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json();
+}
+
+/** The reveal part of an answer result. */
+export function toReveal(r: ChapterAnswerResult): ChapterAnswerReveal {
+  return {
+    correctAnswer: r.correctAnswer,
+    explanation: r.explanation,
+    choiceRationales: r.choiceRationales,
+    reference: r.reference,
+    referencePage: r.referencePage,
+  };
+}
+
+/**
+ * Explanations for questions this student has already answered —
+ * /api/student/reveals (200 ids per request). Questions the server has not
+ * revealed to this student are absent from the result.
+ */
+export async function fetchReveals(
+  questionIds: number[]
+): Promise<Record<string, ChapterAnswerReveal>> {
+  const out: Record<string, ChapterAnswerReveal> = {};
+  for (let i = 0; i < questionIds.length; i += 200) {
+    const res = await fetch('/api/student/reveals', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionIds: questionIds.slice(i, i + 200) }),
+    });
+    if (!res.ok) throw new Error(await readApiError(res));
+    const body = (await res.json()) as { reveals: Record<string, ChapterAnswerReveal> };
+    Object.assign(out, body.reveals);
+  }
+  return out;
 }
 
 /** Discards the saved attempt ("Start over"). Returns whether it succeeded. */

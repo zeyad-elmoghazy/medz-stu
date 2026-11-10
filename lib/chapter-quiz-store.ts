@@ -20,7 +20,8 @@ export type ChapterSubmissionResult = {
     questionId: number;
     isCorrect: boolean;
     chosen: string | null;
-    correct: string;
+    /** null unless the server already revealed this question's answer to the student. */
+    correct: string | null;
   }>;
 };
 
