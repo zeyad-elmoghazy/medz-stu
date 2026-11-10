@@ -1,17 +1,20 @@
 import Link from 'next/link';
-import { TryQuiz } from '@/components/try/TryQuiz';
-import { loadTryRows, toPublicQuestions } from '@/lib/server/try-questions';
+import { TryQuiz, type TryYear } from '@/components/try/TryQuiz';
+import { loadTrySamples, toPublicQuestions } from '@/lib/server/try-questions';
 
-// The featured questions rarely change: render once, refresh hourly. With no
-// chapter configured (lib/try-config.ts) this makes no database call at all.
+// The samples rarely change: render once, refresh hourly.
 export const revalidate = 3600;
 
 const SIGNUP_HREF = '/signup?utm_source=try&utm_medium=web&utm_campaign=try-page';
 
 export default async function TryPage() {
-  const rows = await loadTryRows();
+  const samples = await loadTrySamples();
   // Only the questions and choices cross to the browser, never the answer key.
-  const questions = rows ? toPublicQuestions(rows) : null;
+  const years: TryYear[] = samples.map((s) => ({
+    year: s.year,
+    moduleName: s.moduleName,
+    questions: toPublicQuestions(s.rows),
+  }));
 
   return (
     <main data-mz-root style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
@@ -20,15 +23,16 @@ export default async function TryPage() {
           ← Back to MediZee
         </Link>
 
-        {questions ? (
+        {years.length > 0 ? (
           <>
             <h1 style={{ margin: '24px 0 8px', fontSize: 34, fontWeight: 800, letterSpacing: '-.02em' }}>
-              Try {questions.length} real questions
+              Try real questions, free
             </h1>
             <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--text2)', marginBottom: 28 }}>
-              No account needed. Answer each question and see the explanation straight away.
+              No account needed. Pick your year, answer each question and see the explanation straight
+              away.
             </p>
-            <TryQuiz questions={questions} />
+            <TryQuiz years={years} />
           </>
         ) : (
           <>

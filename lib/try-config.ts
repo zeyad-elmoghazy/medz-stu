@@ -1,22 +1,36 @@
 /**
- * The public /try page: a few real questions anyone can answer without an
- * account, ending in a "create your free account" prompt.
+ * The public /try page: for each academic year, `questionCount` real questions
+ * sampled from ONE module, answerable without an account and ending in a
+ * "create your free account" prompt.
  *
- * TODO(owner): set `chapterId` to the id of the chapter to feature (any
- * chapter with published questions: copy its id from the catalogue URL or
- * the admin Content tab). Until then /try shows a short "coming soon" and the
- * page stays out of the sitemap and is marked noindex (see lib/seo.ts), so
- * shipping this file unchanged changes nothing visible.
+ * `modules` maps an academic year (1-5) to the module code to sample from.
+ * A year with no entry (or null) is simply not offered; with none at all the
+ * page shows a short "coming soon", is marked noindex and stays out of the
+ * sitemap (see lib/seo.ts). To change what visitors see, change the module
+ * codes here: the questions themselves are picked on the server (spread
+ * evenly across the module's published questions) and refreshed hourly.
  *
- * ponytail: the FIRST `questionCount` published questions of the chapter, by
- * id. Add a hand-picked `questionIds` list if the owner wants to choose.
+ * Years 4 and 5 have no published questions yet, so they are not listed.
  */
 export type TryConfig = {
-  chapterId: string | null;
   questionCount: number;
+  modules: Partial<Record<number, string | null>>;
 };
 
 export const TRY_CONFIG: TryConfig = {
-  chapterId: null,
-  questionCount: 5,
+  questionCount: 10,
+  modules: {
+    1: '102', // INT-102
+    2: '205', // Central Nervous System
+    3: '309', // Module 309
+  },
 };
+
+/** The academic years /try offers, in order. */
+export function tryYears(config: TryConfig = TRY_CONFIG): number[] {
+  return Object.entries(config.modules)
+    .filter(([, code]) => !!code)
+    .map(([year]) => Number(year))
+    .filter((year) => Number.isInteger(year))
+    .sort((a, b) => a - b);
+}

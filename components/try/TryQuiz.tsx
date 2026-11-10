@@ -6,17 +6,62 @@ import { letterFor } from '@/lib/utils';
 import type { TryQuestion } from '@/lib/server/try-questions';
 
 /**
- * The public /try quiz: answer a few real questions with no account, see the
- * verdict and explanation after each one, then a score and a prompt to sign
- * up. Everything is local state: nothing is stored, no cookies are set.
- * The questions arrive WITHOUT answers; each check goes to POST /api/try/check.
+ * The public /try quiz: pick your academic year, answer that year's sample of
+ * real questions with no account, see the verdict and explanation after each
+ * one, then a score and a prompt to sign up. Everything is local state:
+ * nothing is stored, no cookies are set. The questions arrive WITHOUT
+ * answers; each check goes to POST /api/try/check.
  */
+
+export type TryYear = { year: number; moduleName: string; questions: TryQuestion[] };
 
 type Verdict = { isCorrect: boolean; correctAnswer: string; explanation: string };
 
 const SIGNUP_HREF = '/signup?utm_source=try&utm_medium=web&utm_campaign=try-page';
 
-export function TryQuiz({ questions }: { questions: TryQuestion[] }) {
+export function TryQuiz({ years }: { years: TryYear[] }) {
+  const [year, setYear] = useState(years[0].year);
+  const selected = years.find((y) => y.year === year) ?? years[0];
+
+  return (
+    <div>
+      {years.length > 1 && (
+        <div role="group" aria-label="Choose your year" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
+          {years.map((y) => {
+            const active = y.year === selected.year;
+            return (
+              <button
+                key={y.year}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setYear(y.year)}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 11,
+                  border: `1px solid ${active ? 'var(--accent-text)' : 'var(--line2)'}`,
+                  background: active ? 'var(--accent-text)' : 'var(--surface)',
+                  color: active ? '#F7F9FA' : 'var(--text)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Year {y.year}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <p style={{ fontSize: 13.5, color: 'var(--text3)', margin: '0 0 12px' }}>
+        {selected.questions.length} questions from {selected.moduleName}
+      </p>
+      {/* Keyed by year: picking another year starts that quiz from scratch. */}
+      <YearQuiz key={selected.year} year={selected.year} questions={selected.questions} />
+    </div>
+  );
+}
+
+function YearQuiz({ year, questions }: { year: number; questions: TryQuestion[] }) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
@@ -36,7 +81,7 @@ export function TryQuiz({ questions }: { questions: TryQuestion[] }) {
       const res = await fetch('/api/try/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId: question.id, choice: picked }),
+        body: JSON.stringify({ year, questionId: question.id, choice: picked }),
       });
       if (!res.ok) {
         setError(
