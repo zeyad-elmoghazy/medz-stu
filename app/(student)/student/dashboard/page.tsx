@@ -20,7 +20,14 @@ import {
 } from '@/lib/dashboard-data';
 import { useChapterQuizStore } from '@/lib/chapter-quiz-store';
 import { fetchCatalogueStats, type CatalogueStats } from '@/lib/catalogue-stats';
-import { fetchModulesByYear, fetchNextStep, type ModulesByYear } from '@/lib/catalogue-api';
+import {
+  fetchExamPlan,
+  fetchModulesByYear,
+  fetchNextStep,
+  type ModulesByYear,
+} from '@/lib/catalogue-api';
+import { ExamCountdownCard } from '@/components/student/ExamCountdownCard';
+import type { ExamPlan } from '@/lib/student/exam-plan';
 import type { NextStep } from '@/lib/student/next-step';
 import { LinkPending } from '@/components/ui/LinkPending';
 
@@ -162,6 +169,7 @@ function HomeView({
   const [catalogueStats, setCatalogueStats] = useState<CatalogueStats | null>(null);
   const [modulesByYear, setModulesByYear] = useState<ModulesByYear | null>(null);
   const [nextStep, setNextStep] = useState<NextStep | null>(null);
+  const [examPlan, setExamPlan] = useState<ExamPlan | null>(null);
   const { academicYear: myYear } = useStudentProfile();
   const heroPhoto = getSubjectImage('anatomy');
 
@@ -184,6 +192,12 @@ function HomeView({
           if (!cancelled) setNextStep(n);
         })
         .catch(() => {});
+      // Null (so nothing renders) until exam dates are set in lib/exam-schedule.ts.
+      fetchExamPlan()
+        .then((p) => {
+          if (!cancelled) setExamPlan(p);
+        })
+        .catch(() => {});
     }
     return () => {
       cancelled = true;
@@ -193,6 +207,7 @@ function HomeView({
   return (
     <>
       {nextStep && <NextStepCard firstName={firstName} step={nextStep} />}
+      {examPlan && <ExamCountdownCard plan={examPlan} href={nextStep?.href ?? '/student/catalogue'} />}
 
       {/* ================= HERO ================= */}
       <section

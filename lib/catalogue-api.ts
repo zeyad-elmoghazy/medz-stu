@@ -3,6 +3,7 @@
  */
 
 import type { NextStep } from '@/lib/student/next-step';
+import type { ExamPlan } from '@/lib/student/exam-plan';
 
 export type CatalogueModule = {
   code: string;
@@ -73,6 +74,13 @@ export async function fetchNextStep(): Promise<NextStep> {
   const res = await fetch('/api/student/next-step', { credentials: 'include', cache: 'no-store' });
   const body = await json<{ nextStep: NextStep }>(res);
   return body.nextStep;
+}
+
+/** The Home exam countdown; null until exam dates are filled in lib/exam-schedule.ts. */
+export async function fetchExamPlan(): Promise<ExamPlan | null> {
+  const res = await fetch('/api/student/exam-plan', { credentials: 'include', cache: 'no-store' });
+  const body = await json<{ examPlan: ExamPlan | null }>(res);
+  return body.examPlan;
 }
 
 /**
