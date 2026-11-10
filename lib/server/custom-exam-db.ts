@@ -38,20 +38,17 @@ export async function authenticateStudent(
     return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
 
-  const profileQuery = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  // The role lookup and the rate-limit check don't depend on each other, so
+  // they run together: one round trip off every request through here.
+  const [profileQuery, limited] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    limiter ? applyRateLimit(request, limiter, user.id) : Promise.resolve(null),
+  ]);
   const profile = profileQuery.data as { role: UserRole } | null;
   if (profile?.role !== 'student') {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
-
-  if (limiter) {
-    const limited = await applyRateLimit(request, limiter, user.id);
-    if (limited) return { error: limited };
-  }
+  if (limited) return { error: limited };
 
   return { error: null, supabase, user };
 }

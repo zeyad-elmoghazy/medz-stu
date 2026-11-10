@@ -72,17 +72,16 @@ async function authenticate(request: NextRequest): Promise<AuthResult> {
     return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
 
-  const profileQuery = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  // The role lookup and the rate-limit check don't depend on each other, so
+  // they run together: one round trip off every request through here.
+  const [profileQuery, limited] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    applyRateLimit(request, progressLimiter, user.id),
+  ]);
   const profile = profileQuery.data as { role: UserRole } | null;
   if (profile?.role !== 'student') {
     return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
-
-  const limited = await applyRateLimit(request, progressLimiter, user.id);
   if (limited) return { error: limited };
 
   return { error: null, supabase, user };

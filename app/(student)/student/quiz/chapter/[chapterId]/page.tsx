@@ -150,8 +150,20 @@ export default function ChapterQuizPage() {
   const jumpToQuestion = useChapterQuizStore((s) => s.jumpToQuestion);
   const startSession = useChapterQuizStore((s) => s.startSession);
 
+  // The saved-attempt lookup doesn't depend on the questions, so it starts
+  // together with them instead of after they arrive (one fewer round trip in
+  // the way of the first question). A "start fresh" entry point discards the
+  // saved attempt instead of reading it, so nothing is prefetched then.
+  const progressPrefetchRef = useRef<ReturnType<typeof fetchChapterProgress> | null>(null);
+
   useEffect(() => {
     let cancelled = false;
+    progressPrefetchRef.current = null;
+    if (!useChapterQuizStore.getState().pendingFreshStart) {
+      const prefetch = fetchChapterProgress(chapterId);
+      prefetch.catch(() => {}); // init() below reports a failure
+      progressPrefetchRef.current = prefetch;
+    }
     fetchChapterQuiz(chapterId)
       .then((d) => {
         if (cancelled) return;
@@ -268,7 +280,8 @@ export default function ChapterQuizPage() {
       }
 
       try {
-        const progress = await fetchChapterProgress(chapterId);
+        const progress = await (progressPrefetchRef.current ?? fetchChapterProgress(chapterId));
+        progressPrefetchRef.current = null;
         if (cancelled) return;
         if (progress) {
           hydrateFromProgress(progress);

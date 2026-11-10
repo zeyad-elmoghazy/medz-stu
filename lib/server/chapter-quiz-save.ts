@@ -52,12 +52,21 @@ export async function saveChapterProgress(
   const { answers, currentQuestionIndex, questionIds, keepExisting = false } = input;
 
   // Only published questions of THIS chapter can be part of an attempt
-  // — the same bank the submit route scores against.
-  const questionsRes = await service
-    .from('questions')
-    .select('id, subject_id')
-    .eq('chapter_id', chapterId)
-    .eq('status', 'published');
+  // — the same bank the submit route scores against. The attempt saved so
+  // far is read in the same round trip: neither read depends on the other.
+  const [questionsRes, existingRes] = await Promise.all([
+    service
+      .from('questions')
+      .select('id, subject_id')
+      .eq('chapter_id', chapterId)
+      .eq('status', 'published'),
+    service
+      .from('chapter_quiz_progress')
+      .select('answers')
+      .eq('student_id', studentId)
+      .eq('chapter_id', chapterId)
+      .maybeSingle(),
+  ]);
   if (questionsRes.error) {
     return { ok: false, status: 500, error: publicDbError(questionsRes.error) };
   }
@@ -84,12 +93,6 @@ export async function saveChapterProgress(
     if (Number.isInteger(id) && allowed.has(id)) incoming[String(id)] = choice;
   }
 
-  const existingRes = await service
-    .from('chapter_quiz_progress')
-    .select('answers')
-    .eq('student_id', studentId)
-    .eq('chapter_id', chapterId)
-    .maybeSingle();
   if (existingRes.error) {
     return { ok: false, status: 500, error: publicDbError(existingRes.error) };
   }
