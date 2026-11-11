@@ -227,6 +227,7 @@ export default function LandingPage({ stats: initialStats, modules: initialModul
               {SECTION_LABELS[id]}
             </a>
           ))}
+          <Link href="/try" className="mz-link">Try it free</Link>
         </div>
         <div className="mz-nav-right" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <button type="button" onClick={toggleTheme} aria-label="Toggle theme" className="mz-ghost" style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, flex: 'none', borderRadius: 10, border: '1px solid var(--line2)', background: 'transparent', color: 'var(--text2)', cursor: 'pointer' }}>
@@ -254,6 +255,7 @@ export default function LandingPage({ stats: initialStats, modules: initialModul
           </p>
           <div style={{ display: 'flex', gap: 15, alignItems: 'center', marginTop: 38, flexWrap: 'wrap', justifyContent: 'center' }}>
             <Link href="/signup" className="mz-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 700, color: '#F7F9FA', background: 'var(--accent-text)', padding: '16px 32px', borderRadius: 12 }}>Start learning free</Link>
+            <Link href="/try" className="mz-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 16, fontWeight: 700, color: 'var(--accent-text)', background: 'transparent', border: '1px solid var(--accent-text)', padding: '16px 30px', borderRadius: 12 }}>Try 10 questions free</Link>
             <a href="#how" className="mz-ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 16, fontWeight: 700, color: 'var(--text)', background: 'transparent', border: '1px solid var(--line2)', padding: '16px 30px', borderRadius: 12 }}>See how it works</a>
           </div>
         </div>
@@ -408,6 +410,7 @@ export default function LandingPage({ stats: initialStats, modules: initialModul
               {SECTION_LABELS[id]}
             </a>
           ))}
+          <Link href="/try" className="mz-ghost" style={FOOTER_LINK_STYLE}>Try it free</Link>
           <Link href="/login" className="mz-ghost" style={FOOTER_LINK_STYLE}>Log in</Link>
           <Link href="/signup" className="mz-ghost" style={FOOTER_LINK_STYLE}>Sign up</Link>
           <Link href="/terms" className="mz-ghost" style={FOOTER_LINK_STYLE}>Terms of Service</Link>

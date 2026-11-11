@@ -3,10 +3,14 @@ jest.mock('@/lib/try-config', () => {
   const actual = jest.requireActual('@/lib/try-config');
   return { ...actual, TRY_CONFIG: { questionCount: 10, modules: {} } };
 });
+// Signing a book page needs storage; the route's own gating is what is under test.
+jest.mock('@/lib/book-reference', () => ({ getSignedBookPageUrl: jest.fn() }));
 
 import { NextRequest } from 'next/server';
 import { TRY_CONFIG } from '@/lib/try-config';
+import { getSignedBookPageUrl } from '@/lib/book-reference';
 import { POST as checkPost } from '@/app/api/try/check/route';
+import { GET as referenceImageGet } from '@/app/api/try/reference-image/route';
 import {
   clearTryCache,
   loadTrySample,
@@ -20,13 +24,14 @@ import {
 } from '../helpers/supabase-test-env';
 
 const describeIfSupabase = supabaseTestEnvAvailable() ? describe : describe.skip;
+const mockSign = getSignedBookPageUrl as jest.MockedFunction<typeof getSignedBookPageUrl>;
 
 type Json = Record<string, any>;
 
 /**
- * The public /try endpoint: no account, so it must only ever know the sampled
- * questions of each configured year, and the page must never receive the
- * answer key.
+ * The public /try endpoints: no account, so they must only ever know the
+ * sampled questions of each configured year, and the page must never receive
+ * the answer key.
  */
 describeIfSupabase('public /try (one module per year)', () => {
   const admin = getServiceRoleClient();
@@ -36,12 +41,14 @@ describeIfSupabase('public /try (one module per year)', () => {
   let bigModule: string; // year 1: 25 published questions over 2 chapters + 1 unpublished
   let smallModule: string; // year 2: 4 published questions
   let chapterIds: string[] = [];
+  let smallChapter: string;
   let bigIds: number[] = []; // published ids of the big module, in id order
   let unpublishedId: number;
   let smallIds: number[] = [];
 
   beforeEach(async () => {
     clearTryCache();
+    mockSign.mockReset();
     subjectSlug = uniqueSlug('subject');
     const { data: subject, error: subjectErr } = await admin
       .from('subjects')
@@ -71,6 +78,7 @@ describeIfSupabase('public /try (one module per year)', () => {
       chapterIds.push(id);
       return id;
     }
+    // Even-numbered questions cite book page 7; odd ones cite none.
     const row = (chapter: string, n: number, status = 'published') => ({
       chapter_id: chapter,
       subject_id: subjectSlug,
@@ -81,7 +89,11 @@ describeIfSupabase('public /try (one module per year)', () => {
         { id: 'b', text: 'Wrong' },
       ],
       correct_answer: 'a',
-      explanation: `Because of ${n}.`,
+      explanation: `Because of ${n}. It is the first choice.`,
+      choice_rationales: { a: `CORRECT - yes ${n}`, b: `WRONG - no ${n}` },
+      reference: n % 2 === 0 ? `Book p.7 (${n})` : '',
+      reference_page: n % 2 === 0 ? 7 : null,
+      topic: `Topic ${n}`,
       status,
     });
     async function insertQuestions(rows: ReturnType<typeof row>[]): Promise<number[]> {
@@ -94,14 +106,15 @@ describeIfSupabase('public /try (one module per year)', () => {
     smallModule = await makeModule('2', 'Small Module');
     const c1 = await makeChapter(bigModule);
     const c2 = await makeChapter(bigModule);
-    const c3 = await makeChapter(smallModule);
+    smallChapter = await makeChapter(smallModule);
 
     bigIds = await insertQuestions([
       ...Array.from({ length: 12 }, (_, i) => row(c1, i)),
       ...Array.from({ length: 13 }, (_, i) => row(c2, 100 + i)),
     ]);
     [unpublishedId] = await insertQuestions([row(c1, 200, 'under_review')]);
-    smallIds = await insertQuestions(Array.from({ length: 4 }, (_, i) => row(c3, 300 + i)));
+    // smallIds: Q300 (cites page 7), Q301 (no page), Q302 (page 7), Q303 (no page)
+    smallIds = await insertQuestions(Array.from({ length: 4 }, (_, i) => row(smallChapter, 300 + i)));
 
     config.modules = { 1: bigModule, 2: smallModule };
   });
@@ -124,6 +137,8 @@ describeIfSupabase('public /try (one module per year)', () => {
         body: JSON.stringify(body),
       })
     );
+  const refImage = (params: string) =>
+    referenceImageGet(new NextRequest(`http://localhost/api/try/reference-image?${params}`));
 
   test('samples 10 published questions spread across the whole module', async () => {
     const sample = await loadTrySample(1);
@@ -151,21 +166,39 @@ describeIfSupabase('public /try (one module per year)', () => {
     expect(await loadTrySamples()).toEqual([]);
   });
 
-  test('the public payload has no answers', async () => {
+  test('the public payload has no answers, explanations, rationales or references', async () => {
     const sample = await loadTrySample(1);
     const pub = toPublicQuestions(sample?.rows ?? []);
     for (const q of pub) expect(Object.keys(q).sort()).toEqual(['choices', 'id', 'question']);
-    expect(JSON.stringify(pub)).not.toMatch(/correct|explanation|Because/i);
+    expect(JSON.stringify(pub)).not.toMatch(/correct|explanation|Because|yes|Topic|Book p\./i);
   });
 
-  test('checks an answer and returns the verdict with the explanation', async () => {
-    const sample = await loadTrySample(2);
-    const q = sample!.rows[0];
+  test('checks an answer and returns the verdict', async () => {
+    const q = (await loadTrySample(2))!.rows[0];
     const right: Json = await (await check({ year: 2, questionId: q.id, choice: 'a' })).json();
-    expect(right).toEqual({ isCorrect: true, correctAnswer: 'a', explanation: q.explanation });
+    expect(right).toMatchObject({ isCorrect: true, correctAnswer: 'a' });
 
     const wrong: Json = await (await check({ year: 2, questionId: q.id, choice: 'b' })).json();
     expect(wrong).toMatchObject({ isCorrect: false, correctAnswer: 'a' });
+  });
+
+  test('returns the explanation, a rationale per choice, the topic and the book reference', async () => {
+    const [citing, uncited] = (await loadTrySample(2))!.rows; // Q300 cites page 7, Q301 none
+    const a: Json = await (await check({ year: 2, questionId: citing.id, choice: 'b' })).json();
+    expect(a).toEqual({
+      isCorrect: false,
+      correctAnswer: 'a',
+      explanation: 'Because of 300. It is the first choice.',
+      choiceRationales: { a: 'CORRECT - yes 300', b: 'WRONG - no 300' },
+      reference: 'Book p.7 (300)',
+      referencePage: 7,
+      topic: 'Topic 300',
+    });
+    expect(a).not.toHaveProperty('chapter_id'); // internal ids never reach the browser
+    expect(a).not.toHaveProperty('chapterId');
+
+    const b: Json = await (await check({ year: 2, questionId: uncited.id, choice: 'a' })).json();
+    expect(b).toMatchObject({ isCorrect: true, reference: '', referencePage: null, topic: 'Topic 301' });
   });
 
   test('knows nothing beyond each year’s sample', async () => {
@@ -195,5 +228,53 @@ describeIfSupabase('public /try (one module per year)', () => {
     config.modules = {};
     clearTryCache();
     expect((await check({ year: 2, questionId: q.id, choice: 'a' })).status).toBe(404);
+  });
+
+  describe('reference image', () => {
+    test('signs the page a sampled question cites, resolved from our own row', async () => {
+      mockSign.mockResolvedValue('https://signed.example/page-7.webp');
+      const q = (await loadTrySample(2))!.rows[0]; // Q300, cites page 7
+      const res = await refImage(`year=2&questionId=${q.id}`);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ url: 'https://signed.example/page-7.webp' });
+      // Chapter and page come from the database row, not from the request.
+      expect(mockSign).toHaveBeenCalledTimes(1);
+      expect(mockSign).toHaveBeenCalledWith(smallChapter, 7);
+    });
+
+    test('a question that cites no page gets no image and nothing is signed', async () => {
+      const q = (await loadTrySample(2))!.rows[1]; // Q301, no page
+      const res = await refImage(`year=2&questionId=${q.id}`);
+      expect(await res.json()).toEqual({ url: null });
+      expect(mockSign).not.toHaveBeenCalled();
+    });
+
+    test('never signs anything for a question outside the year’s sample', async () => {
+      const sample = await loadTrySample(1);
+      const sampled = new Set(sample!.rows.map((r) => r.id));
+      const notSampled = bigIds.find((id) => !sampled.has(id))!;
+      const inYearOne = sample!.rows[0].id;
+
+      expect((await refImage(`year=1&questionId=${notSampled}`)).status).toBe(404);
+      expect((await refImage(`year=2&questionId=${inYearOne}`)).status).toBe(404); // another year's question
+      expect((await refImage(`year=1&questionId=${unpublishedId}`)).status).toBe(404);
+      expect((await refImage(`year=3&questionId=${inYearOne}`)).status).toBe(404); // year not offered
+      expect(mockSign).not.toHaveBeenCalled();
+    });
+
+    test('rejects malformed requests', async () => {
+      expect((await refImage('year=2')).status).toBe(400);
+      expect((await refImage('year=x&questionId=1')).status).toBe(400);
+      expect((await refImage('')).status).toBe(400);
+      expect(mockSign).not.toHaveBeenCalled();
+    });
+
+    test('a signing failure degrades to "no image" instead of an error', async () => {
+      mockSign.mockRejectedValue(new Error('storage down'));
+      const q = (await loadTrySample(2))!.rows[0];
+      const res = await refImage(`year=2&questionId=${q.id}`);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ url: null });
+    });
   });
 });
