@@ -26,7 +26,8 @@ export default async function TryPage() {
 
   return (
     <main data-mz-root style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 24px 96px' }}>
+      {/* Wide enough for the split view (question + explanation/reference); the text stays narrow. */}
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 24px 96px' }}>
         <Link href="/" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--accent-text)' }}>
           ← Back to MediZee
         </Link>
@@ -36,9 +37,9 @@ export default async function TryPage() {
             <h1 style={{ margin: '24px 0 8px', fontSize: 34, fontWeight: 800, letterSpacing: '-.02em' }}>
               Try real questions, free
             </h1>
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--text2)', marginBottom: 28 }}>
-              No account needed. Pick your year, answer each question and see the explanation straight
-              away.
+            <p style={{ maxWidth: 720, fontSize: 15, lineHeight: 1.7, color: 'var(--text2)', marginBottom: 28 }}>
+              No account needed. Pick your year, answer each question and see the explanation, the
+              choice-by-choice breakdown and the textbook page straight away.
             </p>
             <TryQuiz years={years} />
           </>

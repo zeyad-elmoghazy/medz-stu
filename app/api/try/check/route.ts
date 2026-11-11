@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { applyRateLimit } from '@/lib/apply-rate-limit';
 import { tryLimiter } from '@/lib/rate-limit';
-import { loadTrySample } from '@/lib/server/try-questions';
+import { loadTrySample, toTryReveal } from '@/lib/server/try-questions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,9 +19,12 @@ const BodySchema = z.object({
  * POST /api/try/check  { year, questionId, choice }
  *
  * The public /try page (no account): checks one answer and returns the
- * verdict with the explanation. Public on purpose, but it only knows the
- * few questions /try features for that year (lib/try-config.ts), so it cannot
- * be used to look up the answer to any other question; and it is limited per IP.
+ * verdict together with everything the student quiz shows after answering:
+ * the explanation, a rationale for each choice, the topic and the book
+ * reference (text + page; the page image comes from /api/try/reference-image).
+ * Public on purpose, but it only knows the few questions /try features for
+ * that year (lib/try-config.ts), so it cannot be used to look up the answer
+ * to any other question; and it is limited per IP.
  */
 export async function POST(request: NextRequest) {
   const limited = await applyRateLimit(request, tryLimiter);
@@ -55,11 +58,7 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(
-    {
-      isCorrect: choice === row.correct_answer,
-      correctAnswer: row.correct_answer,
-      explanation: row.explanation,
-    },
+    { isCorrect: choice === row.correct_answer, ...toTryReveal(row) },
     { headers: NO_STORE }
   );
 }

@@ -14,7 +14,25 @@ import { TRY_CONFIG, tryYears, type TryConfig } from '@/lib/try-config';
 
 export type TryChoice = { id: string; text: string };
 export type TryQuestion = { id: number; question: string; choices: TryChoice[] };
-export type TryRow = TryQuestion & { correct_answer: string; explanation: string };
+export type TryRow = TryQuestion & {
+  correct_answer: string;
+  explanation: string;
+  choice_rationales: Record<string, string> | null;
+  reference: string;
+  reference_page: number | null;
+  topic: string;
+  chapter_id: string;
+};
+
+/** Everything revealed about a question once it has been answered (never includes chapter_id). */
+export type TryReveal = {
+  correctAnswer: string;
+  explanation: string;
+  choiceRationales?: Record<string, string>;
+  reference: string;
+  referencePage: number | null;
+  topic: string;
+};
 export type TrySample = { year: number; moduleName: string; rows: TryRow[] };
 
 // PostgREST returns at most 1,000 rows per request, so the id list is paged.
@@ -67,7 +85,9 @@ async function loadUncached(year: number, config: TryConfig): Promise<TrySample 
 
   const rowsRes = await db
     .from('questions')
-    .select('id, question, choices, correct_answer, explanation')
+    .select(
+      'id, question, choices, correct_answer, explanation, choice_rationales, reference, reference_page, topic, chapter_id'
+    )
     .in('id', picked)
     .eq('status', 'published');
   if (rowsRes.error) throw new Error(`[try] could not load the sample of ${code}: ${rowsRes.error.message}`);
@@ -98,6 +118,18 @@ export async function loadTrySamples(config: TryConfig = TRY_CONFIG): Promise<Tr
 /** Forget cached samples (tests). */
 export function clearTryCache(): void {
   cache.clear();
+}
+
+/** What the check route returns after an answer: the explanation, per-choice rationales and the book reference. */
+export function toTryReveal(row: TryRow): TryReveal {
+  return {
+    correctAnswer: row.correct_answer,
+    explanation: row.explanation ?? '',
+    ...(row.choice_rationales ? { choiceRationales: row.choice_rationales } : {}),
+    reference: row.reference ?? '',
+    referencePage: row.reference_page,
+    topic: row.topic ?? '',
+  };
 }
 
 /** What the browser may see: the question and its choices, never the answer. */
