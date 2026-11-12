@@ -3,6 +3,8 @@
  * b2c-pivot-rebuild) plus the standalone JSON import route.
  */
 
+import type { RetentionPoint, RetentionRange, RetentionStep } from '@/lib/retention-series';
+
 export type AdminModule = {
   code: string;
   name: string;
@@ -109,6 +111,25 @@ async function json<T>(res: Response): Promise<T> {
 
 export async function fetchOverview(): Promise<AdminOverview> {
   const res = await fetch('/api/admin/content/overview', { credentials: 'include', cache: 'no-store' });
+  return json(res);
+}
+
+/** Response of GET /api/admin/content/retention. `available: false` = migration 050 not applied. */
+export type AdminRetention = {
+  range: RetentionRange;
+  step: RetentionStep;
+  series: RetentionPoint[];
+  current: RetentionPoint | null;
+  baseline: RetentionPoint | null;
+  baselineDate: string;
+  available: boolean;
+};
+
+export async function fetchRetention(range: RetentionRange): Promise<AdminRetention> {
+  const res = await fetch(`/api/admin/content/retention?range=${range}`, {
+    credentials: 'include',
+    cache: 'no-store',
+  });
   return json(res);
 }
 
