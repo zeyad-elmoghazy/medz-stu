@@ -2,34 +2,60 @@
  * Exam dates for the Home countdown. Zero dependencies: safe in client
  * components, route handlers and unit tests.
  *
- * TODO(owner): fill in the dates below when the faculty confirms them.
- * While a date is `null` the countdown card, and the /api/student/exam-plan
- * route behind it, stay completely hidden: shipping this file with every
- * date null changes nothing a student sees.
+ * Every module has up to two exams (End of Module, Final). A student sees a
+ * countdown to the nearest exam that has not passed, across the modules of
+ * their academic year. A module with no entry here has no countdown.
  *
- * Format: 'YYYY-MM-DD', the exam day itself, Africa/Cairo.
- *   byYear   one date for every module of an academic year (1-5).
- *   byModule optional override for a single module code, e.g. { '205': '2026-11-27' }.
- *            A module not listed here falls back to its year's date.
+ * Format: 'YYYY-MM-DD', the exam day itself, Africa/Cairo. `label` is shown
+ * verbatim on Home ("12 days to End of Module ISK 101").
+ *
+ * TODO(owner): Year 2 final exams (205, 206) are not announced yet; add them
+ * as a second entry in each list when they are. Year 4-5 have no modules yet.
  */
 
 export type ExamDate = string | null;
 
+export interface ModuleExam {
+  date: ExamDate;
+  label: string;
+}
+
 export interface ExamSchedule {
-  byYear: Record<number, ExamDate>;
-  byModule: Record<string, ExamDate>;
+  /** Keyed by module code, e.g. '205'. */
+  byModule: Record<string, ModuleExam[]>;
 }
 
 export const EXAM_SCHEDULE: ExamSchedule = {
-  byYear: { 1: null, 2: null, 3: null, 4: null, 5: null },
-  byModule: {},
+  byModule: {
+    // Year 1
+    '101': [
+      { date: '2026-12-02', label: 'End of Module ISK 101' },
+      { date: '2026-12-12', label: 'Final ISK 101' },
+    ],
+    '102': [
+      { date: '2026-12-07', label: 'End of Module INT 102' },
+      { date: '2026-12-21', label: 'Final INT 102' },
+    ],
+    // Year 2
+    '205': [{ date: '2026-11-16', label: 'End of Module 205' }],
+    '206': [{ date: '2026-12-30', label: 'End of Module 206' }],
+    // Year 3
+    '310': [
+      { date: '2026-12-19', label: 'End of Module PAT 310' },
+      { date: '2026-12-22', label: 'Final PAT 310' },
+    ],
+    '309': [
+      { date: '2026-12-30', label: 'End of Module INF 309' },
+      { date: '2027-01-02', label: 'Final INF 309' },
+    ],
+  },
 };
 
 const TIME_ZONE = 'Africa/Cairo';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 86_400_000;
 
-function validDate(value: ExamDate | undefined): ExamDate {
+function validDate(value: ExamDate | undefined): string | null {
   // The file is edited by hand: ignore anything that is not a real calendar date.
   if (typeof value !== 'string' || !DATE_RE.test(value)) return null;
   return Number.isNaN(Date.parse(`${value}T00:00:00Z`)) ? null : value;
@@ -45,25 +71,25 @@ export function cairoToday(now: Date = new Date()): string {
   }).format(now);
 }
 
-/** The exam date for one module of a year: the module override, else the year's, else null. */
-export function examDateFor(
-  year: number,
+/** The exams of one module that have a valid date (invalid or null dates are dropped). */
+export function examsFor(
   moduleCode: string,
   schedule: ExamSchedule = EXAM_SCHEDULE
-): ExamDate {
-  const override = validDate(schedule.byModule[moduleCode]);
-  return override ?? validDate(schedule.byYear[year]);
+): { date: string; label: string }[] {
+  const out: { date: string; label: string }[] = [];
+  for (const exam of schedule.byModule[moduleCode] ?? []) {
+    const date = validDate(exam.date);
+    if (date) out.push({ date, label: exam.label });
+  }
+  return out;
 }
 
 /**
- * Whether any date at all is set for this year (its own, or a module override).
- * Lets the API return "no countdown" without touching the database.
+ * Whether any exam at all has a valid date. Lets the API answer "no countdown"
+ * without touching the database.
  */
-export function hasExamDates(year: number, schedule: ExamSchedule = EXAM_SCHEDULE): boolean {
-  return (
-    validDate(schedule.byYear[year]) !== null ||
-    Object.values(schedule.byModule).some((d) => validDate(d) !== null)
-  );
+export function hasExamDates(schedule: ExamSchedule = EXAM_SCHEDULE): boolean {
+  return Object.keys(schedule.byModule).some((code) => examsFor(code, schedule).length > 0);
 }
 
 /** Whole days from `today` to `date` (both 'YYYY-MM-DD'): 0 on the day, negative once past. */

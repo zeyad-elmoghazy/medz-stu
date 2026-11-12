@@ -4,7 +4,7 @@ import { currentAcademicYear } from '@/lib/academic-year';
 import {
   EXAM_SCHEDULE,
   cairoToday,
-  examDateFor,
+  examsFor,
   hasExamDates,
   type ExamSchedule,
 } from '@/lib/exam-schedule';
@@ -27,10 +27,12 @@ export interface ExamChapterRow {
  * per-question reveals table if students report the number feeling off):
  *   - A chapter the student has finished at least once counts as fully covered.
  *   - A chapter with an unfinished attempt is credited with the answers saved so far.
- *   - Modules with no date set are left out; modules sharing a date form one group.
+ *   - Each exam of each module is one group (its label comes from the schedule);
+ *     two exams on the same day are merged, labels joined with " + ".
+ *   - Modules with no exam in the schedule are left out.
+ *   - End of Module and Final both count the whole module's remaining questions.
  */
 export function buildExamGroups(
-  year: number,
   modules: ExamModuleRow[],
   chapters: ExamChapterRow[],
   completedChapterIds: ReadonlySet<string>,
@@ -38,33 +40,28 @@ export function buildExamGroups(
   schedule: ExamSchedule = EXAM_SCHEDULE
 ): ExamGroup[] {
   const remainingByModule = new Map<string, number>();
+  const publishedByModule = new Map<string, number>();
   for (const c of chapters) {
     const left = completedChapterIds.has(c.id)
       ? 0
       : Math.max(0, c.published_count - (answeredByChapter.get(c.id) ?? 0));
     remainingByModule.set(c.module_code, (remainingByModule.get(c.module_code) ?? 0) + left);
+    publishedByModule.set(c.module_code, (publishedByModule.get(c.module_code) ?? 0) + c.published_count);
   }
 
-  // "Is this date a module override?" = does it survive with the year dates removed.
-  const overrideOnly: ExamSchedule = { byYear: {}, byModule: schedule.byModule };
-
-  const byDate = new Map<string, ExamModuleRow[]>();
+  const byDate = new Map<string, ExamGroup>();
   for (const m of modules) {
-    const date = examDateFor(year, m.code, schedule);
-    if (!date) continue;
-    byDate.set(date, [...(byDate.get(date) ?? []), m]);
+    for (const exam of examsFor(m.code, schedule)) {
+      const prev = byDate.get(exam.date);
+      byDate.set(exam.date, {
+        date: exam.date,
+        label: prev ? `${prev.label} + ${exam.label}` : exam.label,
+        remainingQuestions: (prev?.remainingQuestions ?? 0) + (remainingByModule.get(m.code) ?? 0),
+        publishedQuestions: (prev?.publishedQuestions ?? 0) + (publishedByModule.get(m.code) ?? 0),
+      });
+    }
   }
-
-  return [...byDate.entries()].map(([date, mods]) => {
-    const single = mods.length === 1 ? mods[0] : null;
-    const label =
-      single && examDateFor(year, single.code, overrideOnly) ? `${single.name} exam` : `Year ${year} exams`;
-    return {
-      date,
-      label,
-      remainingQuestions: mods.reduce((sum, m) => sum + (remainingByModule.get(m.code) ?? 0), 0),
-    };
-  });
+  return [...byDate.values()];
 }
 
 /**
@@ -91,7 +88,7 @@ export async function getExamPlan(
   } | null;
   const year = currentAcademicYear(profile?.academic_year, profile?.academic_year_session, now);
   // Placeholders: with no dates configured this is the whole request, one query.
-  if (year === null || !hasExamDates(year, schedule)) return null;
+  if (year === null || !hasExamDates(schedule)) return null;
 
   const modulesRes = await client
     .from('modules')
@@ -139,6 +136,6 @@ export async function getExamPlan(
 
   return planExam(
     cairoToday(now),
-    buildExamGroups(year, modules, chapters, completed, answered, schedule)
+    buildExamGroups(modules, chapters, completed, answered, schedule)
   );
 }

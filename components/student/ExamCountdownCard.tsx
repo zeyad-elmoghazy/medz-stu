@@ -18,6 +18,10 @@ export function ExamCountdownCard({ plan, href }: { plan: ExamPlan; href: string
     title = `${plan.label}: today`;
     detail = "You've put in the work. Good luck!";
     cta = null;
+  } else if (plan.status === 'empty') {
+    title = `${days} to ${plan.label}`;
+    detail = "Questions for this module aren't published yet. We'll add them soon.";
+    cta = null;
   } else if (plan.status === 'done') {
     title = `${days} to ${plan.label}`;
     detail = "You've covered everything. Keep sharp with a custom exam.";

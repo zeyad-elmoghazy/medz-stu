@@ -2,62 +2,96 @@ import {
   EXAM_SCHEDULE,
   cairoToday,
   daysUntil,
-  examDateFor,
+  examsFor,
   hasExamDates,
 } from '@/lib/exam-schedule';
 
-describe('EXAM_SCHEDULE (the placeholders)', () => {
-  it('ships with no dates, so the countdown stays hidden until the owner fills them in', () => {
-    expect(Object.values(EXAM_SCHEDULE.byYear).every((d) => d === null)).toBe(true);
-    expect(EXAM_SCHEDULE.byModule).toEqual({});
-    for (const year of [1, 2, 3, 4, 5]) {
-      expect(examDateFor(year, '205')).toBeNull();
+describe('EXAM_SCHEDULE (the real dates)', () => {
+  const codes = ['101', '102', '205', '206', '309', '310'];
+
+  it('has an entry for every module that has an exam', () => {
+    expect(Object.keys(EXAM_SCHEDULE.byModule).sort()).toEqual(codes);
+  });
+
+  it('every date is a real calendar date, so the countdown never silently drops one', () => {
+    for (const code of codes) {
+      const listed = EXAM_SCHEDULE.byModule[code];
+      expect(examsFor(code)).toHaveLength(listed.length);
     }
+  });
+
+  it('every label names its exam', () => {
+    for (const code of codes) {
+      for (const exam of EXAM_SCHEDULE.byModule[code]) {
+        expect(exam.label).toMatch(/^(End of Module|Final) /);
+      }
+    }
+  });
+
+  it('the Final comes after the End of Module exam of the same module', () => {
+    for (const code of codes) {
+      const exams = examsFor(code);
+      if (exams.length < 2) continue;
+      const end = exams.find((e) => e.label.startsWith('End of Module'))!;
+      const final = exams.find((e) => e.label.startsWith('Final'))!;
+      expect(daysUntil(final.date, end.date)).toBeGreaterThan(0);
+    }
+  });
+
+  it('matches the dates the faculty announced', () => {
+    const dates = (code: string) => examsFor(code).map((e) => e.date);
+    expect(dates('101')).toEqual(['2026-12-02', '2026-12-12']);
+    expect(dates('102')).toEqual(['2026-12-07', '2026-12-21']);
+    expect(dates('205')).toEqual(['2026-11-16']);
+    expect(dates('206')).toEqual(['2026-12-30']);
+    expect(dates('310')).toEqual(['2026-12-19', '2026-12-22']);
+    expect(dates('309')).toEqual(['2026-12-30', '2027-01-02']);
   });
 });
 
-describe('examDateFor', () => {
+describe('examsFor', () => {
   const schedule = {
-    byYear: { 1: null, 2: '2026-11-27', 3: '2026-12-19' },
-    byModule: { '205': '2026-12-02', '210': null },
+    byModule: {
+      '205': [
+        { date: '2026-11-16', label: 'End of Module 205' },
+        { date: null, label: 'Final 205' },
+      ],
+      '206': [{ date: '16/11/2026', label: 'Bad format' }],
+      '207': [{ date: '2026-13-45', label: 'Impossible' }],
+    },
   };
 
-  it('uses the year date when the module has no override', () => {
-    expect(examDateFor(2, '201', schedule)).toBe('2026-11-27');
+  it('returns the exams of a module in the order listed', () => {
+    expect(examsFor('205', schedule)).toEqual([{ date: '2026-11-16', label: 'End of Module 205' }]);
   });
 
-  it('lets a module override its year', () => {
-    expect(examDateFor(2, '205', schedule)).toBe('2026-12-02');
+  it('drops null, malformed and impossible dates instead of showing a wrong countdown', () => {
+    expect(examsFor('206', schedule)).toEqual([]);
+    expect(examsFor('207', schedule)).toEqual([]);
   });
 
-  it('falls back to the year when the override is null', () => {
-    expect(examDateFor(2, '210', schedule)).toBe('2026-11-27');
-  });
-
-  it('returns null when neither is set', () => {
-    expect(examDateFor(1, '101', schedule)).toBeNull();
-    expect(examDateFor(5, '501', schedule)).toBeNull();
-  });
-
-  it('ignores a malformed or impossible date instead of showing a wrong countdown', () => {
-    const bad = { byYear: { 2: '27/11/2026', 3: '2026-13-45' }, byModule: {} };
-    expect(examDateFor(2, 'x', bad)).toBeNull();
-    expect(examDateFor(3, 'x', bad)).toBeNull();
+  it('returns nothing for a module with no entry', () => {
+    expect(examsFor('999', schedule)).toEqual([]);
   });
 });
 
 describe('hasExamDates', () => {
-  it('is false for the shipped placeholders', () => {
-    for (const year of [1, 2, 3, 4, 5]) expect(hasExamDates(year)).toBe(false);
+  it('is true for the shipped schedule', () => {
+    expect(hasExamDates()).toBe(true);
   });
 
-  it('is true when the year or any module has a valid date', () => {
-    expect(hasExamDates(2, { byYear: { 2: '2026-11-27' }, byModule: {} })).toBe(true);
-    expect(hasExamDates(2, { byYear: {}, byModule: { '205': '2026-12-02' } })).toBe(true);
-  });
-
-  it('ignores invalid dates', () => {
-    expect(hasExamDates(2, { byYear: { 2: 'soon' }, byModule: { '205': '' } })).toBe(false);
+  it('is false for an empty schedule or one with only invalid dates', () => {
+    expect(hasExamDates({ byModule: {} })).toBe(false);
+    expect(
+      hasExamDates({
+        byModule: {
+          '205': [
+            { date: 'soon', label: 'x' },
+            { date: null, label: 'y' },
+          ],
+        },
+      })
+    ).toBe(false);
   });
 });
 
@@ -68,8 +102,9 @@ describe('daysUntil', () => {
     expect(daysUntil('2026-11-27', '2026-11-28')).toBe(-1);
   });
 
-  it('counts across a month boundary', () => {
+  it('counts across a month and a year boundary', () => {
     expect(daysUntil('2026-12-02', '2026-11-30')).toBe(2);
+    expect(daysUntil('2027-01-02', '2026-12-30')).toBe(3);
   });
 });
 

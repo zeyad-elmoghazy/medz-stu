@@ -13,9 +13,12 @@ export interface ExamGroup {
   date: string;
   label: string;
   remainingQuestions: number;
+  /** Published questions in the module(s) behind this exam; 0 = no content yet. */
+  publishedQuestions: number;
 }
 
-export type ExamPlanStatus = 'upcoming' | 'today' | 'done';
+/** 'empty' = the exam is coming but its module has no published questions yet. */
+export type ExamPlanStatus = 'upcoming' | 'today' | 'done' | 'empty';
 
 export interface ExamPlan {
   examDate: string;
@@ -61,6 +64,8 @@ export function planExam(today: string, groups: ExamGroup[]): ExamPlan | null {
   const base = { examDate: g.date, label: g.label, daysLeft, remaining };
 
   if (daysLeft === 0) return { ...base, perDay: 0, status: 'today' };
+  // Nothing published is not "you've covered everything": say the content is not there yet.
+  if (g.publishedQuestions <= 0) return { ...base, perDay: 0, status: 'empty' };
   if (remaining === 0) return { ...base, perDay: 0, status: 'done' };
   return { ...base, perDay: chooseDailyTarget(remaining, daysLeft), status: 'upcoming' };
 }
