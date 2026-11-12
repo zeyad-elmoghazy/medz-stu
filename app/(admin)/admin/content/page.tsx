@@ -12,8 +12,9 @@ import { AdminUploadWizard } from '@/components/admin-content/AdminUploadWizard'
 import { AdminQuestionReview } from '@/components/admin-content/AdminQuestionReview';
 import { AdminModulesPanel } from '@/components/admin-content/AdminModulesPanel';
 import { AdminFlagsPanel } from '@/components/admin-content/AdminFlagsPanel';
+import { AdminRetentionPanel } from '@/components/admin-content/AdminRetentionPanel';
 
-type View = 'overview' | 'upload' | 'review' | 'reports' | 'modules';
+type View = 'overview' | 'upload' | 'review' | 'reports' | 'modules' | 'retention';
 
 type NavDef = { key: View; label: string; badge?: number; badgeTone?: 'info' | 'alert' };
 
@@ -95,6 +96,7 @@ export default function AdminContentPage() {
       badgeTone: 'alert',
     },
     { key: 'modules', label: 'Modules' },
+    { key: 'retention', label: 'Retention' },
   ];
 
   const titles: Record<View, [string, string]> = {
@@ -103,6 +105,7 @@ export default function AdminContentPage() {
     review: ['Review Queue', 'Browse, review, and publish every question in the bank.'],
     reports: ['Reports', 'Questions students have flagged from the chapter quiz — review and resolve them.'],
     modules: ['Modules', 'Assign each module its reference book. Books are added directly via SQL — this is selection only.'],
+    retention: ['Retention', 'How many signups confirm, start, finish and come back — now and over time.'],
   };
 
   const initials =
@@ -350,6 +353,7 @@ export default function AdminContentPage() {
         {view === 'review' && <AdminQuestionReview onChanged={refreshOverview} />}
         {view === 'reports' && <AdminFlagsPanel onChanged={refreshOverview} />}
         {view === 'modules' && <AdminModulesPanel />}
+        {view === 'retention' && <AdminRetentionPanel />}
       </main>
     </div>
   );
