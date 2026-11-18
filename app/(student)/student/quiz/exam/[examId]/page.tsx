@@ -1652,10 +1652,11 @@ function ReferenceCard({
 
       <div className="mt-5 pt-4" style={{ borderTop: '1px dashed var(--reference-border)' }}>
         <span
-          className="inline-flex items-center gap-1 rounded-2xl px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent"
+          className="inline-flex items-center rounded-lg px-2.5 py-1 text-[10px] font-semibold uppercase leading-snug tracking-[0.18em]"
           style={{
-            backgroundColor: 'rgb(var(--accent-text-rgb) / 0.18)',
-            border: '1px solid rgb(var(--accent-text-rgb) / 0.4)',
+            color: 'var(--reference-text)',
+            backgroundColor: 'color-mix(in srgb, var(--reference-accent) 14%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--reference-accent) 50%, transparent)',
           }}
         >
           {topic}
