@@ -1147,18 +1147,6 @@ function PhaseOne({
 }) {
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-2">
-        <span
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent"
-          style={{
-            backgroundColor: 'rgb(var(--accent-text-rgb) / 0.18)',
-            border: '1px solid rgb(var(--accent-text-rgb) / 0.4)',
-          }}
-        >
-          {question.topic}
-        </span>
-      </div>
-
       <h1 className="text-2xl font-semibold leading-relaxed text-text-primary md:text-[28px] md:leading-snug">
         {question.question}
       </h1>
@@ -1524,7 +1512,11 @@ function PhaseTwoRight({
                   Loading reference image…
                 </div>
               ) : (
-                <ReferenceCard reference={question.reference} imageUrl={referenceImageUrl} />
+                <ReferenceCard
+                  reference={question.reference}
+                  imageUrl={referenceImageUrl}
+                  topic={question.topic}
+                />
               )}
             </motion.div>
           )}
@@ -1665,9 +1657,11 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 function ReferenceCard({
   reference,
   imageUrl,
+  topic,
 }: {
   reference: string;
   imageUrl: string | null;
+  topic: string;
 }) {
   const [zoomOpen, setZoomOpen] = useState(false);
   const zoomTriggerRef = useRef<HTMLButtonElement>(null);
@@ -1754,6 +1748,18 @@ function ReferenceCard({
       <p className="mt-5 font-handwritten leading-relaxed" style={{ fontSize: '1.4rem', color: 'var(--reference-text)' }}>
         {reference}
       </p>
+
+      <div className="mt-5 pt-4" style={{ borderTop: '1px dashed var(--reference-border)' }}>
+        <span
+          className="inline-flex items-center gap-1 rounded-2xl px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent"
+          style={{
+            backgroundColor: 'rgb(var(--accent-text-rgb) / 0.18)',
+            border: '1px solid rgb(var(--accent-text-rgb) / 0.4)',
+          }}
+        >
+          {topic}
+        </span>
+      </div>
 
       <p className="mt-6 text-right text-xs italic" style={{ color: 'var(--reference-accent)' }}>
         Module Reference Book
