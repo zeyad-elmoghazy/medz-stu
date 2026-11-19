@@ -251,6 +251,9 @@ export default function ChapterQuizPage() {
   const [referenceImageLoading, setReferenceImageLoading] = useState(false);
 
   const submittedRef = useRef(false);
+  // `checking` is state, so it only blocks taps after the next render. This
+  // ref blocks a second tap in the same tick as the first.
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
     if (!data) return;
@@ -597,10 +600,13 @@ export default function ChapterQuizPage() {
   const isLastQuestion = safeIndex === totalQuestions - 1;
   const progressPct = Math.round(((safeIndex + (submitted ? 1 : 0)) / totalQuestions) * 100);
 
-  async function handleSubmit() {
-    if (!selectedChoice || submitted || checking || !currentQuestion) return;
+  // Tapping a choice submits it. The choice is passed in rather than read
+  // from `selectedChoice`: that state hasn't updated yet when the tap fires.
+  async function handleSubmit(choice: string) {
+    if (submitted || checking || inFlightRef.current || !currentQuestion) return;
+    inFlightRef.current = true;
     const question = currentQuestion;
-    const choice = selectedChoice;
+    setSelectedChoice(choice);
     setChecking(true);
     setCheckError(null);
     try {
@@ -627,6 +633,7 @@ export default function ChapterQuizPage() {
         err instanceof Error ? err.message : "Couldn't check your answer. Please try again."
       );
     } finally {
+      inFlightRef.current = false;
       setChecking(false);
     }
   }
@@ -838,14 +845,15 @@ export default function ChapterQuizPage() {
             key={`phase1-${currentQuestion.id}`}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            // mode="wait" holds the reveal until this exit finishes, so keep
+            // it short: the student is waiting for the answer right now.
+            exit={{ opacity: 0, transition: { duration: 0.1 } }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="mx-auto w-full max-w-3xl px-6 pt-12 pb-16"
           >
             <PhaseOne
               question={currentQuestion}
               selectedChoice={selectedChoice}
-              setSelectedChoice={setSelectedChoice}
               onSubmit={handleSubmit}
               checking={checking}
               error={checkError}
@@ -894,9 +902,9 @@ export default function ChapterQuizPage() {
             className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-6 px-6 pt-10 pb-20 lg:grid-cols-[3fr_2fr]"
           >
             <motion.div
-              initial={{ x: -60, opacity: 0 }}
+              initial={{ x: -24, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
             >
               <PhaseTwoLeft
                 question={revealedQuestion}
@@ -916,9 +924,9 @@ export default function ChapterQuizPage() {
             </motion.div>
 
             <motion.div
-              initial={{ x: 60, opacity: 0 }}
+              initial={{ x: 24, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
             >
               <PhaseTwoRight
                 question={revealedQuestion}
@@ -1132,15 +1140,14 @@ function IconButton({
 function PhaseOne({
   question,
   selectedChoice,
-  setSelectedChoice,
   onSubmit,
   checking,
   error,
 }: {
   question: ChapterQuizQuestion;
   selectedChoice: string | null;
-  setSelectedChoice: Dispatch<SetStateAction<string | null>>;
-  onSubmit: () => void;
+  /** Tapping a choice submits it: there is no separate Submit button. */
+  onSubmit: (choice: string) => void;
   /** The answer is being checked by the server: lock the choices. */
   checking: boolean;
   error: string | null;
@@ -1158,7 +1165,7 @@ function PhaseOne({
             <motion.button
               key={choice.id}
               type="button"
-              onClick={() => !checking && setSelectedChoice(choice.id)}
+              onClick={() => !checking && onSubmit(choice.id)}
               whileTap={{ scale: 0.995 }}
               className={cn(
                 'flex w-full items-start gap-4 rounded-xl text-left transition',
@@ -1167,6 +1174,8 @@ function PhaseOne({
               style={{
                 backgroundColor: isSelected ? 'rgb(var(--accent-text-rgb) / 0.12)' : 'var(--surface)',
                 border: `1px solid ${isSelected ? 'var(--accent-text)' : 'var(--line)'}`,
+                // While the server checks, the tapped row stays lit and the rest recede.
+                opacity: checking && !isSelected ? 0.5 : 1,
               }}
               onMouseEnter={(e) => {
                 if (!isSelected && window.matchMedia('(hover: hover)').matches) e.currentTarget.style.borderColor = 'var(--accent-text)';
@@ -1186,32 +1195,18 @@ function PhaseOne({
               <span className="pt-1 text-sm leading-relaxed text-text-primary md:text-base">
                 {choice.text}
               </span>
+              {checking && isSelected && (
+                <SpinnerIcon
+                  size={18}
+                  className="ml-auto mt-1.5 shrink-0 animate-spin"
+                  aria-label="Checking your answer"
+                />
+              )}
             </motion.button>
           );
         })}
       </div>
 
-      <button
-        type="button"
-        onClick={onSubmit}
-        disabled={!selectedChoice || checking}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
-        style={{
-          backgroundColor: 'var(--accent-text)',
-        }}
-      >
-        {checking ? (
-          <>
-            <SpinnerIcon size={16} className="animate-spin" />
-            Checking…
-          </>
-        ) : (
-          <>
-            Submit Answer
-            <ArrowRightIcon size={16} />
-          </>
-        )}
-      </button>
       {error && (
         <p role="alert" className="text-sm" style={{ color: 'var(--error)' }}>
           {error}
