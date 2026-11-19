@@ -62,7 +62,7 @@ export async function saveChapterProgress(
       .eq('status', 'published'),
     service
       .from('chapter_quiz_progress')
-      .select('answers')
+      .select('answers, current_question_index')
       .eq('student_id', studentId)
       .eq('chapter_id', chapterId)
       .maybeSingle(),
@@ -96,8 +96,11 @@ export async function saveChapterProgress(
   if (existingRes.error) {
     return { ok: false, status: 500, error: publicDbError(existingRes.error) };
   }
-  const existing =
-    (existingRes.data as { answers: Record<string, string> | null } | null)?.answers ?? {};
+  const storedRow = existingRes.data as {
+    answers: Record<string, string> | null;
+    current_question_index: number | null;
+  } | null;
+  const existing = storedRow?.answers ?? {};
 
   // Answers are final once submitted in the quiz UI, so a late or retried
   // save that carries FEWER answers than what is already stored must never
@@ -124,6 +127,16 @@ export async function saveChapterProgress(
     return { ok: true, saved: false, answered: 0, total, xpAwarded: 0, merged, existing };
   }
 
+  // Re-sending an answer that is already stored (the page does this to
+  // re-fetch a missing explanation) changes nothing, and that includes where
+  // the student is: the page asks from whatever question happens to be on
+  // screen, which on load is not yet the saved position. The index moves only
+  // when an answer is new or the caller sends a snapshot (progress PUT).
+  const addsNewAnswer = Object.keys(incoming).some((key) => !(key in existing));
+  const keepStoredIndex =
+    keepExisting && !addsNewAnswer && typeof storedRow?.current_question_index === 'number';
+  const indexToStore = keepStoredIndex ? storedRow!.current_question_index! : currentQuestionIndex;
+
   const upsert = await service.from('chapter_quiz_progress').upsert(
     {
       student_id: studentId,
@@ -131,7 +144,7 @@ export async function saveChapterProgress(
       subject_id: bank[0].subject_id,
       answers: merged,
       question_ids: attemptIds,
-      current_question_index: Math.min(currentQuestionIndex, total - 1),
+      current_question_index: Math.min(indexToStore, total - 1),
       total_questions: total,
       updated_at: new Date().toISOString(),
     },
