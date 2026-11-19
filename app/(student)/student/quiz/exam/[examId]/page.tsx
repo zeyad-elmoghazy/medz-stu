@@ -21,12 +21,15 @@ import {
   CopyIcon,
   ExpandIcon,
   FlagIcon,
+  ListIcon,
   LogOutIcon,
   SpinnerIcon,
   StickyNoteIcon,
   ZoomInIcon,
 } from '@/components/icons';
 import { ImageZoomViewer } from '@/components/quiz/ImageZoomViewer';
+import { QuestionNavigatorPanel } from '@/components/quiz/QuestionNavigator';
+import { isJumpable, navigatorState } from '@/lib/quiz-navigator';
 import { isTouchDevice } from '@/lib/is-touch-device';
 import { useCustomExamStore } from '@/lib/custom-exam-store';
 import {
@@ -127,6 +130,7 @@ export default function CustomExamQuizPage() {
   const revealedQuestion: RevealedExamQuestion | null =
     currentQuestion && currentReveal ? { ...currentQuestion, ...currentReveal } : null;
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showNavigator, setShowNavigator] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(false);
   const [activeTab, setActiveTab] = useState<'explanation' | 'reference'>('explanation');
   const [copied, setCopied] = useState(false);
@@ -442,7 +446,7 @@ export default function CustomExamQuizPage() {
     // Leave only once the server has confirmed the save. On failure
     // stay put, keep the answers, and say so — never claim "saved"
     // when it wasn't.
-    const saved = await persistProgress(answers, safeIndex);
+    const saved = await persistProgress(answers, resumeIndex);
     if (!saved) {
       setSavingExit(false);
       setExitError(
@@ -502,7 +506,17 @@ export default function CustomExamQuizPage() {
 
   const isCorrect = !!currentReveal && submitted && selectedChoice === currentReveal.correctAnswer;
   const isLastQuestion = safeIndex === totalQuestions - 1;
-  const progressPct = Math.round(((safeIndex + (submitted ? 1 : 0)) / totalQuestions) * 100);
+  // Per-question status for the question list, plus the answered count that
+  // drives the progress bar (position-based progress would be wrong once the
+  // student goes back to an earlier question).
+  const nav = useMemo(
+    () => navigatorState(questions, answers, reveals),
+    [questions, answers, reveals]
+  );
+  const progressPct = Math.round((nav.answeredCount / totalQuestions) * 100);
+  // Where "Continue" should resume. After the student went back to an earlier
+  // question this is the furthest answered one, not the one on screen.
+  const resumeIndex = Math.max(safeIndex, nav.furthestIndex);
 
   // Tapping a choice submits it. The choice is passed in rather than read
   // from `selectedChoice`: that state hasn't updated yet when the tap fires.
@@ -549,6 +563,24 @@ export default function CustomExamQuizPage() {
     setSubmitted(false);
     submittedRef.current = false;
     nextQuestion(totalQuestions);
+  }
+
+  // Go to a question picked in the question list: any answered question
+  // (review only, the answer is final) or the next unanswered one. The local
+  // state is set to the target's state in the same batch as the index change
+  // (as handleNext does), so there is no frame of the wrong phase.
+  function handleJump(index: number) {
+    if (checking || inFlightRef.current || submitting) return;
+    const target = questions[index];
+    if (!target || !isJumpable(nav.statuses[index])) return;
+    setShowNavigator(false);
+    if (index === safeIndex) return;
+    const chosen = answers[target.id] ?? null;
+    setCheckError(null);
+    setSelectedChoice(chosen);
+    setSubmitted(chosen !== null);
+    submittedRef.current = chosen !== null;
+    jumpToQuestion(index);
   }
 
   /**
@@ -669,6 +701,8 @@ export default function CustomExamQuizPage() {
         currentIndex={safeIndex}
         total={totalQuestions}
         progressPct={progressPct}
+        onNavigatorOpen={() => setShowNavigator(true)}
+        navigatorDisabled={checking || submitting}
         isBookmarked={bookmarked}
         bookmarkLoading={bookmarkLoading}
         onBookmarkToggle={toggleBookmark}
@@ -861,6 +895,15 @@ export default function CustomExamQuizPage() {
         )}
       </AnimatePresence>
 
+      <QuestionNavigatorPanel
+        open={showNavigator}
+        statuses={nav.statuses}
+        currentIndex={safeIndex}
+        answeredCount={nav.answeredCount}
+        onJump={handleJump}
+        onClose={() => setShowNavigator(false)}
+      />
+
       <AnimatePresence>
         {showExitModal && (
           <ExitConfirmationModal
@@ -870,7 +913,7 @@ export default function CustomExamQuizPage() {
               (sum, [qid, choice]) => (reveals[qid]?.correctAnswer === choice ? sum + 1 : sum),
               0
             )}
-            currentIndex={safeIndex}
+            currentIndex={resumeIndex}
             saving={savingExit}
             error={exitError}
             onSaveAndExit={handleSaveAndExit}
@@ -897,6 +940,8 @@ function TopBar({
   currentIndex,
   total,
   progressPct,
+  onNavigatorOpen,
+  navigatorDisabled,
   isBookmarked,
   bookmarkLoading,
   onBookmarkToggle,
@@ -912,6 +957,8 @@ function TopBar({
   currentIndex: number;
   total: number;
   progressPct: number;
+  onNavigatorOpen: () => void;
+  navigatorDisabled: boolean;
   isBookmarked: boolean;
   bookmarkLoading: boolean;
   onBookmarkToggle: () => void;
@@ -952,9 +999,21 @@ function TopBar({
               transition={{ duration: 0.4, ease: 'easeOut' }}
             />
           </div>
-          <span className="shrink-0 text-xs font-medium text-text-muted">
-            Question <span className="text-text-primary">{currentIndex + 1}</span> of {total}
-          </span>
+          <button
+            type="button"
+            onClick={onNavigatorOpen}
+            disabled={navigatorDisabled}
+            aria-haspopup="dialog"
+            aria-label={`Question ${currentIndex + 1} of ${total}. Show all questions`}
+            title="Show all questions"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-text-muted transition hover:text-text-primary disabled:cursor-default disabled:opacity-60 max-sm:min-h-10"
+            style={{ border: '1px solid var(--line2)' }}
+          >
+            <ListIcon size={14} />
+            <span>
+              Question <span className="text-text-primary">{currentIndex + 1}</span> of {total}
+            </span>
+          </button>
         </div>
 
         <div className="flex items-center gap-2 max-sm:ml-auto">
