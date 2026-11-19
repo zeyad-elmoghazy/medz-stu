@@ -12,7 +12,12 @@ const token = process.env.UPSTASH_REDIS_TOKEN;
  * call as a cache miss. The app keeps working, just slower; no
  * route handler is ever blocked by a missing Upstash account.
  */
-export const redis = url && token ? new Redis({ url, token }) : null;
+//
+// `retry: false`: by default the client retries a failed request 5 times with
+// exponential backoff (~4s in total). Every caller already fails open (cache
+// miss, request allowed), so when Redis is unreachable we want that to happen
+// immediately, not after seconds on every request.
+export const redis = url && token ? new Redis({ url, token, retry: false }) : null;
 
 // Cache key patterns — centralize all keys here
 // so you never have typos across files.
