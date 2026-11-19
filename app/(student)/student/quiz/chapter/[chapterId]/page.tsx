@@ -375,8 +375,13 @@ export default function ChapterQuizPage() {
 
   // A question that is answered but has no reveal yet: an answer saved before
   // this version, or a reveal that never arrived. Answering is idempotent, so
-  // asking again returns the stored verdict and the explanation.
+  // asking again returns the stored verdict and the explanation. Waits for
+  // the saved attempt to be restored first: until then `answers` and the
+  // position are leftovers in this browser, and the reveals that came with
+  // the saved attempt haven't been loaded, so this would ask for nothing the
+  // server doesn't already know.
   useEffect(() => {
+    if (!progressChecked) return;
     if (!currentQuestion || !currentIsAnswered || currentReveal) return;
     const id = currentQuestion.id;
     if (revealRequestedRef.current.has(id)) return;
@@ -394,7 +399,14 @@ export default function ChapterQuizPage() {
         setCheckError(err instanceof Error ? err.message : "Couldn't load the explanation.");
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapterId, currentQuestion?.id, currentIsAnswered, currentReveal, revealRetry]);
+  }, [
+    chapterId,
+    currentQuestion?.id,
+    currentIsAnswered,
+    currentReveal,
+    revealRetry,
+    progressChecked,
+  ]);
 
   useEffect(() => {
     if (!currentQuestion) return;

@@ -212,6 +212,48 @@ describeIfSupabase('answer endpoint + question_reveals gate', () => {
     expect((data as { answers: Json }).answers).toEqual({ [String(qIds[0])]: 'b' });
   });
 
+  test('re-sending an answered question does not move the saved resume position', async () => {
+    await answer(qIds[0], 'a', { currentQuestionIndex: 0 });
+    await answer(qIds[1], 'b', { currentQuestionIndex: 1 });
+    await answer(qIds[2], 'a', { currentQuestionIndex: 2 });
+
+    const savedIndex = async () => {
+      const { data } = await admin
+        .from('chapter_quiz_progress')
+        .select('current_question_index')
+        .eq('student_id', student.id)
+        .eq('chapter_id', chapterId)
+        .single();
+      return (data as { current_question_index: number }).current_question_index;
+    };
+    expect(await savedIndex()).toBe(2);
+
+    // The page re-asking for the explanation of question 1 on load, before it
+    // knows where the student was: the same answer again, from index 0.
+    const again: Json = await (await answer(qIds[0], 'a', { currentQuestionIndex: 0 })).json();
+    expect(again).toMatchObject({ chosen: 'a', xpAwarded: 0, answered: 3 });
+    expect(await savedIndex()).toBe(2);
+
+    // Save & Exit sends a snapshot and does set the position.
+    const put = await progressPut(
+      new NextRequest(`http://localhost/api/student/chapters/${chapterId}/progress`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          answers: {
+            [String(qIds[0])]: 'a',
+            [String(qIds[1])]: 'b',
+            [String(qIds[2])]: 'a',
+          },
+          currentQuestionIndex: 1,
+        }),
+      }),
+      chapterParams()
+    );
+    expect(put.status).toBe(200);
+    expect(await savedIndex()).toBe(1);
+  });
+
   test('rejects an invalid choice, an unknown question and a question of another chapter', async () => {
     expect((await answer(qIds[0], 'zzz')).status).toBe(400);
     expect((await answer(999_999_999, 'a')).status).toBe(404);
