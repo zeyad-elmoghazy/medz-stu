@@ -27,6 +27,10 @@ function buildLimiter(
     limiter: Ratelimit.slidingWindow(tokens, window),
     analytics: true,
     prefix,
+    // After this long without an answer from Redis the request is allowed
+    // (the library default is 5000ms, which made every API call 5s slower
+    // while Redis was down). A healthy check takes tens of milliseconds.
+    timeout: 1000,
   });
 }
 
