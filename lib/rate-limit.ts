@@ -13,19 +13,26 @@ import { redis } from './redis';
  * the smoothest distribution (no burst at minute boundaries) and
  * costs the same as fixed-window on Upstash.
  *
- * `analytics: true` reports each .limit() call to the Upstash
- * dashboard so you can spot abuse without instrumenting the app.
+ * `analytics` (on by default) reports each .limit() call to the Upstash
+ * dashboard so you can spot abuse without instrumenting the app. It costs
+ * a second Redis command per check, so apiLimiter and progressLimiter,
+ * the two highest-volume limiters, turn it off.
  */
 function buildLimiter(
   tokens: number,
   window: Parameters<typeof Ratelimit.slidingWindow>[1],
-  prefix: string
+  prefix: string,
+  // Each analytics record is a second Redis command per check, and the free
+  // plan has a 500K/month cap. Only switched off for the two highest-volume
+  // limiters (see apiLimiter, progressLimiter), which are circuit breakers
+  // rather than abuse monitors.
+  analytics = true
 ): Ratelimit | null {
   if (!redis) return null;
   return new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(tokens, window),
-    analytics: true,
+    analytics,
     prefix,
     // After this long without an answer from Redis the request is allowed
     // (the library default is 5000ms, which made every API call 5s slower
@@ -63,12 +70,12 @@ export const quizLimiter = buildLimiter(30, '1 h', 'rl:quiz');
 // is a few dozen calls. Deliberately separate from quizLimiter
 // (30/h, shared with the final submit) — per-answer saves must never
 // be able to exhaust the budget the submit needs.
-export const progressLimiter = buildLimiter(600, '1 h', 'rl:progress');
+export const progressLimiter = buildLimiter(600, '1 h', 'rl:progress', false);
 
 // API general: 100 requests per minute per user
 // Mostly here as a runaway-loop circuit breaker. A real
 // dashboard load makes ~3-5 calls — 100/min has 20-30x headroom.
-export const apiLimiter = buildLimiter(100, '1 m', 'rl:api');
+export const apiLimiter = buildLimiter(100, '1 m', 'rl:api', false);
 
 // Admin actions: 20 per minute (protect bulk ops)
 // Admins are highly trusted but their endpoints are destructive
